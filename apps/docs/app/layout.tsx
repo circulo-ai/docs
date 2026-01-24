@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RootProvider } from "fumadocs-ui/provider/next";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -22,9 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`flex flex-col min-h-screen ${geistSans.variable} ${geistMono.variable}`}
+      >
+        <RootProvider>{children}</RootProvider>
       </body>
     </html>
   );
