@@ -22,6 +22,7 @@
 ## Cleanup
 
 - [ ] Remove extra apps/packages once v1 is ready
+- [ ] Check and remove logs before production
 
 ## Done
 
