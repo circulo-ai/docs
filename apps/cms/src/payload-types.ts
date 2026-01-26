@@ -69,6 +69,10 @@ export interface Config {
   collections: {
     users: User
     media: Media
+    services: Service
+    docVersions: DocVersion
+    docPages: DocPage
+    redirects: Redirect
     'payload-kv': PayloadKv
     'payload-locked-documents': PayloadLockedDocument
     'payload-preferences': PayloadPreference
@@ -78,6 +82,10 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>
     media: MediaSelect<false> | MediaSelect<true>
+    services: ServicesSelect<false> | ServicesSelect<true>
+    docVersions: DocVersionsSelect<false> | DocVersionsSelect<true>
+    docPages: DocPagesSelect<false> | DocPagesSelect<true>
+    redirects: RedirectsSelect<false> | RedirectsSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
     'payload-locked-documents':
       | PayloadLockedDocumentsSelect<false>
@@ -163,6 +171,115 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services".
+ */
+export interface Service {
+  id: number
+  name: string
+  /**
+   * URL prefix for this service (e.g. "api", "cli").
+   */
+  slug: string
+  theme?: {
+    /**
+     * CSS color token for primary UI elements.
+     */
+    primaryColor?: string | null
+    /**
+     * CSS color token for secondary UI elements.
+     */
+    secondaryColor?: string | null
+    /**
+     * CSS color token for accents and highlights.
+     */
+    accentColor?: string | null
+    logo?: (number | null) | Media
+  }
+  searchDefaults?: {
+    /**
+     * Placeholder text for the search input.
+     */
+    placeholder?: string | null
+    includeOlderVersions?: boolean | null
+    resultsLimit?: number | null
+  }
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docVersions".
+ */
+export interface DocVersion {
+  id: number
+  service: number | Service
+  /**
+   * Semver string without a leading "v" (e.g. "1.2.3").
+   */
+  version: string
+  /**
+   * Computed sortable key derived from the semver.
+   */
+  versionKey?: string | null
+  isPrerelease?: boolean | null
+  status: 'draft' | 'published'
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docPages".
+ */
+export interface DocPage {
+  id: number
+  service: number | Service
+  version: number | DocVersion
+  /**
+   * Path segments for the page (use "/" for nested paths).
+   */
+  slug: string
+  title: string
+  content: {
+    root: {
+      type: string
+      children: {
+        type: any
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  }
+  status: 'draft' | 'published'
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects".
+ */
+export interface Redirect {
+  id: number
+  /**
+   * Incoming path to redirect (e.g. "/guides/old").
+   */
+  from: string
+  /**
+   * Destination path or URL.
+   */
+  to: string
+  service?: (number | null) | Service
+  version?: (number | null) | DocVersion
+  permanent?: boolean | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -192,6 +309,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media'
         value: number | Media
+      } | null)
+    | ({
+        relationTo: 'services'
+        value: number | Service
+      } | null)
+    | ({
+        relationTo: 'docVersions'
+        value: number | DocVersion
+      } | null)
+    | ({
+        relationTo: 'docPages'
+        value: number | DocPage
+      } | null)
+    | ({
+        relationTo: 'redirects'
+        value: number | Redirect
       } | null)
   globalSlug?: string | null
   user: {
@@ -274,6 +407,71 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T
   focalX?: T
   focalY?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services_select".
+ */
+export interface ServicesSelect<T extends boolean = true> {
+  name?: T
+  slug?: T
+  theme?:
+    | T
+    | {
+        primaryColor?: T
+        secondaryColor?: T
+        accentColor?: T
+        logo?: T
+      }
+  searchDefaults?:
+    | T
+    | {
+        placeholder?: T
+        includeOlderVersions?: T
+        resultsLimit?: T
+      }
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docVersions_select".
+ */
+export interface DocVersionsSelect<T extends boolean = true> {
+  service?: T
+  version?: T
+  versionKey?: T
+  isPrerelease?: T
+  status?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docPages_select".
+ */
+export interface DocPagesSelect<T extends boolean = true> {
+  service?: T
+  version?: T
+  slug?: T
+  title?: T
+  content?: T
+  status?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects_select".
+ */
+export interface RedirectsSelect<T extends boolean = true> {
+  from?: T
+  to?: T
+  service?: T
+  version?: T
+  permanent?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

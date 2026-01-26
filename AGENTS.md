@@ -54,10 +54,10 @@ Baseline collections
 
 Core docs model
 
-- [ ] Create `services` collection (slug, name, theme tokens, search defaults).
-- [ ] Create `docVersions` collection (semver string, `versionKey`, prerelease flag, status).
-- [ ] Create `docPages` collection (service/version relations, slug, title, Lexical content, status).
-- [ ] Add optional `redirects` collection.
+- [x] Create `services` collection (slug, name, theme tokens, search defaults).
+- [x] Create `docVersions` collection (semver string, `versionKey`, prerelease flag, status).
+- [x] Create `docPages` collection (service/version relations, slug, title, Lexical content, status).
+- [x] Add optional `redirects` collection.
 
 Data integrity + access
 
