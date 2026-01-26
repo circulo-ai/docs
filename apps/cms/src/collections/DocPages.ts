@@ -6,6 +6,12 @@ export const DocPages: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'service', 'version', 'slug', 'status', 'updatedAt'],
   },
+  indexes: [
+    {
+      fields: ['service', 'version', 'slug'],
+      unique: true,
+    },
+  ],
   fields: [
     {
       name: 'service',

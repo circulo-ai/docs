@@ -61,7 +61,7 @@ Core docs model
 
 Data integrity + access
 
-- [ ] Enforce compound uniqueness `(service, version, slug)`.
+- [x] Enforce compound uniqueness `(service, version, slug)`.
 - [ ] Add semver validation + `versionKey` computation hooks.
 - [ ] Define roles (writer/editor/admin) and access rules for draft/publish.
 - [ ] Implement “latest version per service” logic.
