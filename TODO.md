@@ -13,6 +13,10 @@
 - [ ] Replace the "My App" string in `apps/docs/lib/layout.shared.tsx`
 - [ ] Add analytics
 
+## CMS app polish
+
+- [ ] Convert with the web app
+
 ## Ops
 
 - [ ] Add logs
@@ -23,6 +27,8 @@
 
 - [ ] Remove extra apps/packages once v1 is ready
 - [ ] Check and remove logs before production
+- [ ] Run `turbo lint`
+- [ ] Lint Markdown files
 
 ## Done
 
