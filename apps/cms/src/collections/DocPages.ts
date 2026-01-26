@@ -1,10 +1,22 @@
 import type { CollectionConfig } from 'payload'
 
+import { isEditor, isWriter, readPublishedOrRoles, writerRoles } from '../access/roles'
+import { enforcePublishPermissions } from '../access/publish'
+
 export const DocPages: CollectionConfig = {
   slug: 'docPages',
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'service', 'version', 'slug', 'status', 'updatedAt'],
+  },
+  access: {
+    read: readPublishedOrRoles(writerRoles),
+    create: isWriter,
+    update: isWriter,
+    delete: isEditor,
+  },
+  hooks: {
+    beforeChange: [enforcePublishPermissions('Doc page')],
   },
   indexes: [
     {

@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
+import { isAdmin } from '../access/roles'
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
@@ -8,6 +10,21 @@ export const Users: CollectionConfig = {
   auth: true,
   fields: [
     // Email added by default
-    // Add more fields as needed
+    {
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'Writer', value: 'writer' },
+        { label: 'Editor', value: 'editor' },
+        { label: 'Admin', value: 'admin' },
+      ],
+      defaultValue: ['writer'],
+      required: true,
+      saveToJWT: true,
+      access: {
+        update: isAdmin,
+      },
+    },
   ],
 }

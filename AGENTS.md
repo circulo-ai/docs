@@ -62,8 +62,8 @@ Core docs model
 Data integrity + access
 
 - [x] Enforce compound uniqueness `(service, version, slug)`.
-- [ ] Add semver validation + `versionKey` computation hooks.
-- [ ] Define roles (writer/editor/admin) and access rules for draft/publish.
+- [x] Add semver validation + `versionKey` computation hooks.
+- [x] Define roles (writer/editor/admin) and access rules for draft/publish.
 - [ ] Implement “latest version per service” logic.
 
 ## Phase 2 — Docs site foundation (Next.js + Fumadocs + routing)
