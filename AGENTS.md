@@ -77,7 +77,7 @@ Fumadocs baseline
 CMS-backed source adapter
 
 - [x] Create `packages/docs-source` with `getServices`, `getVersions`, `getLatestVersion`, `getPage`, `getNav`.
-- [ ] Replace local MDX source with CMS-backed adapter.
+- [x] Replace local MDX source with CMS-backed adapter.
 
 Routing + UI
 

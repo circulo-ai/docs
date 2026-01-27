@@ -1,6 +1,12 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "DOCS_CMS_URL",
+    "DOCS_INCLUDE_DRAFTS",
+    "DOCS_EMAIL",
+    "DOCS_PASSWORD"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

@@ -1,7 +1,10 @@
 export type DocsSourceConfig = {
   baseUrl: string;
-  token?: string;
   includeDrafts?: boolean;
+  auth?: {
+    email: string;
+    password: string;
+  };
 };
 
 export type Service = {
@@ -66,12 +69,16 @@ type FetchOptions = {
 
 const normalizeBaseUrl = (baseUrl: string) => baseUrl.replace(/\/+$/, "");
 
-const buildHeaders = (config: DocsSourceConfig) => {
+let cachedToken: string | undefined;
+let cachedTokenExpiresAt = 0;
+const DEFAULT_TOKEN_TTL_MS = 10 * 60 * 1000;
+
+const buildHeaders = (token?: string) => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  if (config.token) {
-    headers.Authorization = `Bearer ${config.token}`;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
   return headers;
 };
@@ -80,6 +87,7 @@ const request = async <T>(
   config: DocsSourceConfig,
   path: string,
   options: FetchOptions = {},
+  token?: string,
 ): Promise<T> => {
   const url = new URL(path, normalizeBaseUrl(config.baseUrl));
   if (options.params) {
@@ -89,7 +97,7 @@ const request = async <T>(
   }
 
   const response = await fetch(url.toString(), {
-    headers: buildHeaders(config),
+    headers: buildHeaders(token),
   });
 
   if (!response.ok) {
@@ -102,21 +110,61 @@ const request = async <T>(
   return (await response.json()) as T;
 };
 
+const resolveAuthToken = async (config: DocsSourceConfig) => {
+  const now = Date.now();
+  if (cachedToken && cachedTokenExpiresAt > now) {
+    return cachedToken;
+  }
+  if (!config.auth) return undefined;
+
+  const response = await fetch(
+    new URL("/api/users/login", normalizeBaseUrl(config.baseUrl)).toString(),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(config.auth),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => response.statusText);
+    throw new Error(
+      `Docs source login failed (${response.status}): ${message}`,
+    );
+  }
+
+  const data = (await response.json()) as { token?: string };
+  if (!data.token) {
+    throw new Error("Docs source login did not return a token.");
+  }
+  cachedToken = data.token;
+  cachedTokenExpiresAt = now + DEFAULT_TOKEN_TTL_MS;
+  return data.token;
+};
+
 const fetchAll = async <T>(
   config: DocsSourceConfig,
   path: string,
   params: Record<string, string>,
 ): Promise<T[]> => {
+  const token = await resolveAuthToken(config);
   const items: T[] = [];
   let page = 1;
 
   while (true) {
-    const response = await request<PayloadListResponse<T>>(config, path, {
-      params: {
-        ...params,
-        page: String(page),
+    const response = await request<PayloadListResponse<T>>(
+      config,
+      path,
+      {
+        params: {
+          ...params,
+          page: String(page),
+        },
       },
-    });
+      token,
+    );
 
     items.push(...response.docs);
 
@@ -149,6 +197,7 @@ const getServiceBySlug = async (
   slug: string,
   depth = 1,
 ): Promise<Service | null> => {
+  const token = await resolveAuthToken(config);
   const response = await request<PayloadListResponse<Service>>(
     config,
     "/api/services",
@@ -159,6 +208,7 @@ const getServiceBySlug = async (
         "where[slug][equals]": slug,
       },
     },
+    token,
   );
 
   return response.docs[0] ?? null;
@@ -180,17 +230,23 @@ const getVersionById = async (
   id: number | string,
   depth = 0,
 ): Promise<DocVersion> =>
-  request<DocVersion>(config, `/api/docVersions/${id}`, {
-    params: {
-      depth: String(depth),
+  request<DocVersion>(
+    config,
+    `/api/docVersions/${id}`,
+    {
+      params: {
+        depth: String(depth),
+      },
     },
-  });
+    await resolveAuthToken(config),
+  );
 
 const getVersionId = async (
   config: DocsSourceConfig,
   serviceId: number | string,
   version: string,
 ): Promise<number | string> => {
+  const token = await resolveAuthToken(config);
   const response = await request<PayloadListResponse<DocVersion>>(
     config,
     "/api/docVersions",
@@ -203,6 +259,7 @@ const getVersionId = async (
         ...getStatusFilter(config),
       },
     },
+    token,
   );
 
   const doc = response.docs[0];
@@ -219,6 +276,7 @@ export const getServices = async (
   config: DocsSourceConfig,
   options: { depth?: number; limit?: number } = {},
 ): Promise<Service[]> => {
+  const token = await resolveAuthToken(config);
   const response = await request<PayloadListResponse<Service>>(
     config,
     "/api/services",
@@ -229,6 +287,7 @@ export const getServices = async (
         sort: "name",
       },
     },
+    token,
   );
 
   return response.docs;
@@ -239,6 +298,7 @@ export const getVersions = async (
   serviceSlug: string,
   options: { limit?: number } = {},
 ): Promise<DocVersion[]> => {
+  const token = await resolveAuthToken(config);
   const serviceId = await getServiceId(config, serviceSlug);
   const response = await request<PayloadListResponse<DocVersion>>(
     config,
@@ -252,6 +312,7 @@ export const getVersions = async (
         ...getStatusFilter(config),
       },
     },
+    token,
   );
 
   return response.docs;
@@ -261,6 +322,7 @@ export const getLatestVersion = async (
   config: DocsSourceConfig,
   serviceSlug: string,
 ): Promise<DocVersion | null> => {
+  const token = await resolveAuthToken(config);
   const service = await getServiceBySlug(config, serviceSlug, 1);
   if (!service) return null;
 
@@ -283,6 +345,7 @@ export const getLatestVersion = async (
         ...getStatusFilter(config),
       },
     },
+    token,
   );
 
   return response.docs[0] ?? null;
@@ -296,6 +359,7 @@ export const getPage = async (
     slug: string;
   },
 ): Promise<DocPage | null> => {
+  const token = await resolveAuthToken(config);
   const serviceId = await getServiceId(config, params.serviceSlug);
   const versionId = await getVersionId(config, serviceId, params.version);
 
@@ -312,6 +376,7 @@ export const getPage = async (
         ...getStatusFilter(config),
       },
     },
+    token,
   );
 
   return response.docs[0] ?? null;
