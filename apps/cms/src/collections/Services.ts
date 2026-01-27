@@ -78,5 +78,14 @@ export const Services: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'latestVersion',
+      type: 'relationship',
+      relationTo: 'docVersions',
+      admin: {
+        readOnly: true,
+        description: 'Automatically set to the newest published version for this service.',
+      },
+    },
   ],
 }

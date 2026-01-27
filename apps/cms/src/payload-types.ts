@@ -204,6 +204,10 @@ export interface Service {
     includeOlderVersions?: boolean | null
     resultsLimit?: number | null
   }
+  /**
+   * Automatically set to the newest published version for this service.
+   */
+  latestVersion?: (number | null) | DocVersion
   updatedAt: string
   createdAt: string
 }
@@ -432,6 +436,7 @@ export interface ServicesSelect<T extends boolean = true> {
         includeOlderVersions?: T
         resultsLimit?: T
       }
+  latestVersion?: T
   updatedAt?: T
   createdAt?: T
 }

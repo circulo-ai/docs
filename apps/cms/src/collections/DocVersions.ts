@@ -1,7 +1,13 @@
-import type { CollectionBeforeValidateHook, CollectionConfig } from 'payload'
+import type {
+  CollectionAfterChangeHook,
+  CollectionAfterDeleteHook,
+  CollectionBeforeValidateHook,
+  CollectionConfig,
+} from 'payload'
 
 import { isWriter, readPublishedOrRoles, writerRoles, isEditor } from '../access/roles'
 import { enforcePublishPermissions } from '../access/publish'
+import { extractServiceId, syncLatestVersionForServices } from '../utils/latestVersion'
 import { buildVersionKey, parseSemver } from '../utils/semver'
 
 const syncSemverFields: CollectionBeforeValidateHook = ({ data, originalDoc }) => {
@@ -14,6 +20,18 @@ const syncSemverFields: CollectionBeforeValidateHook = ({ data, originalDoc }) =
     versionKey: buildVersionKey(parsed),
     isPrerelease: parsed.prerelease !== null,
   }
+}
+
+const updateLatestVersion: CollectionAfterChangeHook = async ({ doc, previousDoc, req }) => {
+  const currentServiceId = extractServiceId(doc.service)
+  const previousServiceId = extractServiceId(previousDoc?.service)
+
+  await syncLatestVersionForServices(req, currentServiceId, previousServiceId)
+}
+
+const updateLatestVersionOnDelete: CollectionAfterDeleteHook = async ({ doc, req }) => {
+  const serviceId = extractServiceId(doc.service)
+  await syncLatestVersionForServices(req, serviceId, null)
 }
 
 export const DocVersions: CollectionConfig = {
@@ -31,6 +49,8 @@ export const DocVersions: CollectionConfig = {
   hooks: {
     beforeValidate: [syncSemverFields],
     beforeChange: [enforcePublishPermissions('Doc version')],
+    afterChange: [updateLatestVersion],
+    afterDelete: [updateLatestVersionOnDelete],
   },
   fields: [
     {

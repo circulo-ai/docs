@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isEditor, isWriter, readPublishedOrRoles, writerRoles } from '../access/roles'
-import { enforcePublishPermissions } from '../access/publish'
+import { enforcePublishPermissions, enforceVersionPublished } from '../access/publish'
 
 export const DocPages: CollectionConfig = {
   slug: 'docPages',
@@ -16,7 +16,7 @@ export const DocPages: CollectionConfig = {
     delete: isEditor,
   },
   hooks: {
-    beforeChange: [enforcePublishPermissions('Doc page')],
+    beforeChange: [enforcePublishPermissions('Doc page'), enforceVersionPublished],
   },
   indexes: [
     {
