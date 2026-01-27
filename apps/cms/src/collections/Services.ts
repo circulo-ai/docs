@@ -6,6 +6,9 @@ export const Services: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'updatedAt'],
   },
+  access: {
+    read: () => true,
+  },
   fields: [
     {
       name: 'name',

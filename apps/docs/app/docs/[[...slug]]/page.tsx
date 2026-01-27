@@ -10,8 +10,26 @@ import { getMDXComponents } from "@/mdx-components";
 import type { Metadata } from "next";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 
-export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
+type DocsPageProps = {
+  params: { slug?: string[] } | Promise<{ slug?: string[] }>;
+};
+
+export default async function Page(props: DocsPageProps) {
   const params = await props.params;
+  if (!params.slug || params.slug.length === 0) {
+    return (
+      <DocsPage>
+        <DocsTitle>Documentation</DocsTitle>
+        <DocsDescription>
+          Select a service and version to get started.
+        </DocsDescription>
+        <DocsBody>
+          <p>Use the sidebar to navigate documentation.</p>
+        </DocsBody>
+      </DocsPage>
+    );
+  }
+
   const source = await getSource();
   const page = source.getPage(params.slug);
   if (!page) notFound();
@@ -40,9 +58,15 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<"/docs/[[...slug]]">,
+  props: DocsPageProps,
 ): Promise<Metadata> {
   const params = await props.params;
+  if (!params.slug || params.slug.length === 0) {
+    return {
+      title: "Documentation",
+      description: "Browse services and versions.",
+    };
+  }
   const source = await getSource();
   const page = source.getPage(params.slug);
   if (!page) notFound();
