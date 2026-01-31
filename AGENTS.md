@@ -58,6 +58,7 @@ Core docs model
 - [x] Create `docVersions` collection (semver string, `versionKey`, prerelease flag, status).
 - [x] Create `docPages` collection (service/version relations, slug, title, Lexical content, status).
 - [x] Add optional `redirects` collection.
+- [ ] Add required `defaultPageSlug` on `docVersions` for the per-version default landing page.
 
 Data integrity + access
 
@@ -81,7 +82,10 @@ CMS-backed source adapter
 
 Routing + UI
 
-- [ ] Add routes: `/[service]/` → latest version redirect.
+- [ ] Add routes: `/[service]/` → latest version default slug redirect.
+- [ ] Add redirect: `/docs/[service]/[...slug]` → `/docs/[service]/v[latest]/[...slug]` (CMS redirects remain separate).
+- [ ] Add redirect: `/docs/[service]/v[semver]` → `/docs/[service]/v[semver]/[defaultDocSlug]`.
+- [ ] Ensure `/docs/[service]` always redirects directly to `/docs/[service]/[latestDefaultDocSlug]`.
 - [ ] Add routes: `/[service]/v[semver]/[...slug]` for docs pages.
 - [ ] Add service + version dropdowns in layout.
 - [ ] Build nav tree + TOC from CMS data.
