@@ -20,6 +20,7 @@
 - [ ] Block publishing a doc version without pages (or without published pages) and show UI error
 - [ ] Validate doc page slug format (lowercase, no leading slash, no spaces, no "..") with UI error
 - [ ] Validate redirects: `from` must start with `/`, `to` must be `/...` or `https://...` with UI error
+- [ ] Fix an issue where a document page from one service can be versioned using another service’s version.
 
 ## Ops
 

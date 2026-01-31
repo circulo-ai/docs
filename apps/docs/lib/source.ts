@@ -7,6 +7,7 @@ import type { TOCItemType } from "fumadocs-core/toc";
 import { cache, createElement, JSX } from "react";
 
 import { CmsContent } from "@/lib/cms-content";
+import { getCmsConfig } from "@/lib/cms-config";
 
 type VirtualPage<PageData> = {
   type: "page";
@@ -31,15 +32,6 @@ type CmsPageData = PageData & {
 
 type CmsMetaData = MetaData;
 
-type CmsConfig = {
-  baseUrl: string;
-  includeDrafts: boolean;
-  auth?: {
-    email: string;
-    password: string;
-  };
-};
-
 const normalizeSlug = (slug: string) =>
   slug
     .split("/")
@@ -54,21 +46,6 @@ const buildMetaPath = (segments: string[]) =>
 
 const toTitle = (segment: string) =>
   segment.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-
-const getCmsConfig = (): CmsConfig => {
-  const baseUrl = process.env.DOCS_CMS_URL ?? "http://localhost:3000";
-  const includeDrafts = process.env.DOCS_INCLUDE_DRAFTS === "true";
-  const email = process.env.DOCS_EMAIL;
-  const password = process.env.DOCS_PASSWORD;
-  const auth =
-    email && password
-      ? {
-          email,
-          password,
-        }
-      : undefined;
-  return { baseUrl, includeDrafts, auth };
-};
 
 const buildSource = async () => {
   const config = getCmsConfig();
