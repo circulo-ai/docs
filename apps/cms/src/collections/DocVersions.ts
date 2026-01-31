@@ -69,6 +69,14 @@ export const DocVersions: CollectionConfig = {
       },
     },
     {
+      name: 'defaultPageSlug',
+      type: 'text',
+      required: true,
+      admin: {
+        description: 'Doc page slug to use as the default landing page for this version.',
+      },
+    },
+    {
       name: 'versionKey',
       type: 'text',
       admin: {

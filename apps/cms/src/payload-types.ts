@@ -223,6 +223,10 @@ export interface DocVersion {
    */
   version: string
   /**
+   * Doc page slug to use as the default landing page for this version.
+   */
+  defaultPageSlug: string
+  /**
    * Computed sortable key derived from the semver.
    */
   versionKey?: string | null
@@ -447,6 +451,7 @@ export interface ServicesSelect<T extends boolean = true> {
 export interface DocVersionsSelect<T extends boolean = true> {
   service?: T
   version?: T
+  defaultPageSlug?: T
   versionKey?: T
   isPrerelease?: T
   status?: T

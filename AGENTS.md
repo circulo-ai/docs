@@ -58,7 +58,7 @@ Core docs model
 - [x] Create `docVersions` collection (semver string, `versionKey`, prerelease flag, status).
 - [x] Create `docPages` collection (service/version relations, slug, title, Lexical content, status).
 - [x] Add optional `redirects` collection.
-- [ ] Add required `defaultPageSlug` on `docVersions` for the per-version default landing page.
+- [x] Add required `defaultPageSlug` on `docVersions` for the per-version default landing page.
 
 Data integrity + access
 
