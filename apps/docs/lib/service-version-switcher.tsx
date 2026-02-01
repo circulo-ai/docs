@@ -2,6 +2,15 @@
 
 import { useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import type {
   ServiceVersionOptions,
@@ -70,52 +79,50 @@ export function ServiceVersionSwitcher({
   if (services.length === 0) return null;
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <label className="sr-only" htmlFor="service-select">
-        Service
-      </label>
-      <select
-        id="service-select"
-        className="h-8 max-w-38 rounded-md border border-fd-border bg-fd-background px-2 text-xs text-fd-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring/50"
+    <div className="flex flex-col gap-3">
+      <Select
         value={serviceValue}
-        onChange={(event) => {
-          const nextService = event.target.value;
+        onValueChange={(nextService) => {
           if (!nextService) return;
           router.push(`/docs/${nextService}`);
         }}
       >
-        <option value="" disabled>
-          Service
-        </option>
-        {services.map((service) => (
-          <option key={service.slug} value={service.slug}>
-            {service.name}
-          </option>
-        ))}
-      </select>
-      <label className="sr-only" htmlFor="version-select">
-        Version
-      </label>
-      <select
-        id="version-select"
-        className="h-8 max-w-34 rounded-md border border-fd-border bg-fd-background px-2 text-xs text-fd-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Service" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Services</SelectLabel>
+            {services.map((service) => (
+              <SelectItem key={service.slug} value={service.slug}>
+                {service.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <Select
         value={versionValue}
         disabled={!serviceValue || versions.length === 0}
-        onChange={(event) => {
-          const nextVersion = event.target.value;
+        onValueChange={(nextVersion) => {
           if (!nextVersion || !serviceValue) return;
           router.push(`/docs/${serviceValue}/v${nextVersion}`);
         }}
       >
-        {!serviceValue || versions.length === 0 ? (
-          <option value="">Version</option>
-        ) : null}
-        {versions.map((version) => (
-          <option key={version.version} value={version.version}>
-            v{version.version}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Version" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Versions</SelectLabel>
+            {versions.map((version) => (
+              <SelectItem key={version.version} value={version.version}>
+                v{version.version}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

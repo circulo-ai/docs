@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`flex flex-col min-h-screen antialiased ${fontSans.variable}`}
+        className={`flex flex-col min-h-screen antialiased font-sans ${fontSans.variable}`}
       >
         <RootProvider>{children}</RootProvider>
       </body>
