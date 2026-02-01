@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
 import { RootProvider } from "fumadocs-ui/provider/next";
-import localFont from "next/font/local";
+import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-});
+const fontSans = Noto_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -25,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`flex flex-col min-h-screen ${geistSans.variable} ${geistMono.variable}`}
+        className={`flex flex-col min-h-screen antialiased ${fontSans.variable}`}
       >
         <RootProvider>{children}</RootProvider>
       </body>
