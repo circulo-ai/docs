@@ -29,6 +29,7 @@ export type DocVersion = {
   id: number | string;
   service: number | string | Service;
   version: string;
+  defaultPageSlug: string;
   versionKey?: string;
   isPrerelease?: boolean;
   status?: "draft" | "published";
