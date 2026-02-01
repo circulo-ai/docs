@@ -30,7 +30,7 @@ export default async function DocsIndex() {
   const { title, description, content } = resolved;
 
   return (
-    <DocsPage>
+    <DocsPage full>
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
