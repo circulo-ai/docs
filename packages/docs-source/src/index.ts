@@ -319,6 +319,30 @@ export const getVersions = async (
   return response.docs;
 };
 
+export const getVersion = async (
+  config: DocsSourceConfig,
+  params: { serviceSlug: string; version: string },
+): Promise<DocVersion | null> => {
+  const token = await resolveAuthToken(config);
+  const serviceId = await getServiceId(config, params.serviceSlug);
+  const response = await request<PayloadListResponse<DocVersion>>(
+    config,
+    "/api/docVersions",
+    {
+      params: {
+        depth: "0",
+        limit: "1",
+        "where[service][equals]": String(serviceId),
+        "where[version][equals]": params.version,
+        ...getStatusFilter(config),
+      },
+    },
+    token,
+  );
+
+  return response.docs[0] ?? null;
+};
+
 export const getLatestVersion = async (
   config: DocsSourceConfig,
   serviceSlug: string,
