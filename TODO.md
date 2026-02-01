@@ -15,6 +15,7 @@
 - [ ] Replace Fumadocs icons with Huge Icons
 - [ ] Ignore version or service changes when the selected value is unchanged
 - [ ] Remove the `docs` route
+- [ ] Update internal links to omit the version when it’s the latest
 
 ## CMS app polish
 

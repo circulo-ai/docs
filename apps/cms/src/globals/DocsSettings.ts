@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { isEditor } from '../access/roles'
+import { docsLexicalEditor } from '../utils/docsEditor'
 
 export const DocsSettings: GlobalConfig = {
   slug: 'docsSettings',
@@ -27,6 +28,7 @@ export const DocsSettings: GlobalConfig = {
       name: 'homeContent',
       type: 'richText',
       required: true,
+      editor: docsLexicalEditor,
       admin: {
         description: 'Landing page content shown at /docs.',
       },

@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { isEditor, isWriter, readPublishedOrRoles, writerRoles } from '../access/roles'
 import { enforcePublishPermissions, enforceVersionPublished } from '../access/publish'
+import { docsLexicalEditor } from '../utils/docsEditor'
 
 export const DocPages: CollectionConfig = {
   slug: 'docPages',
@@ -56,6 +57,7 @@ export const DocPages: CollectionConfig = {
       name: 'content',
       type: 'richText',
       required: true,
+      editor: docsLexicalEditor,
     },
     {
       name: 'status',

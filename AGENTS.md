@@ -98,7 +98,7 @@ Caching
 
 Editor constraints
 
-- [ ] Define allowed Lexical features for docs in Payload.
+- [x] Define allowed Lexical features for docs in Payload.
 
 Renderer
 
