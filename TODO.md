@@ -12,6 +12,8 @@
 - [ ] Set default font via `next/font`
 - [ ] Replace the "My App" string in `apps/docs/lib/layout.shared.tsx`
 - [ ] Add analytics
+- [ ] Replace Fumadocs icons with Huge Icons
+- [ ] Ignore version or service changes when the selected value is unchanged
 
 ## CMS app polish
 

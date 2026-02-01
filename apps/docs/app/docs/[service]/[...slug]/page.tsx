@@ -1,4 +1,4 @@
-import { getLatestVersion } from "@repo/docs-source";
+import { getLatestVersion, getServices } from "@repo/docs-source";
 import {
   DocsBody,
   DocsDescription,
@@ -11,6 +11,7 @@ import { createRelativeLink } from "fumadocs-ui/mdx";
 import { cloneElement, isValidElement, type ComponentProps } from "react";
 
 import { getMDXComponents } from "@/mdx-components";
+import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
 
@@ -50,6 +51,11 @@ const resolvePage = async (service: string, segments: string[]) => {
   const source = await getSource();
   const page = source.getPage([service, versionSegment, ...slugParts]);
   return page ? { page, source, service, versionSegment, isAlias } : null;
+};
+
+const resolveServiceName = async (serviceSlug: string) => {
+  const services = await getServices(getCmsConfig(), { depth: 0, limit: 200 });
+  return services.find((service) => service.slug === serviceSlug)?.name;
 };
 
 const rewriteHrefForAlias = (
@@ -99,6 +105,24 @@ export default async function Page(props: LatestAliasProps) {
   if (!resolved) notFound();
 
   const { page, source, service, versionSegment, isAlias } = resolved;
+  const serviceName = (await resolveServiceName(service)) ?? service;
+  const breadcrumbItems = [
+    {
+      label: serviceName,
+      href: `/docs/${service}`,
+    },
+    {
+      label: versionSegment,
+      href: `/docs/${service}/${versionSegment}`,
+    },
+    ...(page.data.title
+      ? [
+          {
+            label: page.data.title,
+          },
+        ]
+      : []),
+  ];
   const MDX = page.data.body;
   const RelativeLink = createRelativeLink(source, page);
   const aliasAwareLink = (props: ComponentProps<"a">) => {
@@ -113,7 +137,13 @@ export default async function Page(props: LatestAliasProps) {
   };
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
+    <DocsPage
+      toc={page.data.toc}
+      full={page.data.full}
+      breadcrumb={{
+        component: <DocsBreadcrumb items={breadcrumbItems} />,
+      }}
+    >
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
