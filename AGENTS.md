@@ -85,8 +85,8 @@ Routing + UI
 - [x] Add routes: `/docs/[service]/` → latest version default slug redirect.
 - [x] Add alias route: `/docs/[service]/[...slug]` renders latest version content without redirect (CMS redirects remain separate).
 - [x] Add redirect: `/docs/[service]/v[semver]` → `/docs/[service]/v[semver]/[defaultDocSlug]`.
-- [ ] Ensure `/docs/[service]` always redirects directly to `/docs/[service]/[latestDefaultDocSlug]`.
-- [ ] Add routes: `/[service]/v[semver]/[...slug]` for docs pages.
+- [x] Ensure `/docs/[service]` always redirects directly to `/docs/[service]/[latestDefaultDocSlug]`.
+- [x] Add routes: `/[service]/v[semver]/[...slug]` for docs pages.
 - [ ] Add service + version dropdowns in layout.
 - [ ] Build nav tree + TOC from CMS data.
 

@@ -45,6 +45,12 @@ export type DocPage = {
   status?: "draft" | "published";
 };
 
+export type DocsSettings = {
+  homeTitle?: string | null;
+  homeDescription?: string | null;
+  homeContent?: unknown | null;
+};
+
 export type NavNode = {
   title: string;
   slug: string;
@@ -374,6 +380,23 @@ export const getLatestVersion = async (
   );
 
   return response.docs[0] ?? null;
+};
+
+export const getDocsSettings = async (
+  config: DocsSourceConfig,
+  options: { depth?: number } = {},
+): Promise<DocsSettings> => {
+  const token = await resolveAuthToken(config);
+  return request<DocsSettings>(
+    config,
+    "/api/globals/docsSettings",
+    {
+      params: {
+        depth: String(options.depth ?? 0),
+      },
+    },
+    token,
+  );
 };
 
 export const getPage = async (

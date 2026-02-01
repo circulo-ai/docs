@@ -97,8 +97,12 @@ export interface Config {
     defaultIDType: number
   }
   fallbackLocale: null
-  globals: {}
-  globalsSelect: {}
+  globals: {
+    docsSettings: DocsSetting
+  }
+  globalsSelect: {
+    docsSettings: DocsSettingsSelect<false> | DocsSettingsSelect<true>
+  }
   locale: null
   user: User & {
     collection: 'users'
@@ -524,6 +528,53 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T
   updatedAt?: T
   createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docsSettings".
+ */
+export interface DocsSetting {
+  id: number
+  /**
+   * Optional title displayed on the /docs landing page.
+   */
+  homeTitle?: string | null
+  /**
+   * Optional description displayed on the /docs landing page.
+   */
+  homeDescription?: string | null
+  /**
+   * Landing page content shown at /docs.
+   */
+  homeContent: {
+    root: {
+      type: string
+      children: {
+        type: any
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  }
+  updatedAt?: string | null
+  createdAt?: string | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docsSettings_select".
+ */
+export interface DocsSettingsSelect<T extends boolean = true> {
+  homeTitle?: T
+  homeDescription?: T
+  homeContent?: T
+  updatedAt?: T
+  createdAt?: T
+  globalType?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

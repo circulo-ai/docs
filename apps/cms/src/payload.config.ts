@@ -11,6 +11,7 @@ import { Services } from './collections/Services'
 import { DocVersions } from './collections/DocVersions'
 import { DocPages } from './collections/DocPages'
 import { Redirects } from './collections/Redirects'
+import { DocsSettings } from './globals/DocsSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -23,6 +24,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Services, DocVersions, DocPages, Redirects],
+  globals: [DocsSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

@@ -22,6 +22,27 @@ const syncSemverFields: CollectionBeforeValidateHook = ({ data, originalDoc }) =
   }
 }
 
+const DEFAULT_PAGE_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/
+
+const normalizeDefaultPageSlug = (value: string) =>
+  value
+    .trim()
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/\/+/g, '/')
+
+const normalizeDefaultPageSlugHook: CollectionBeforeValidateHook = ({ data }) => {
+  if (!data?.defaultPageSlug) return data
+
+  return {
+    ...data,
+    defaultPageSlug: normalizeDefaultPageSlug(data.defaultPageSlug),
+  }
+}
+
 const updateLatestVersion: CollectionAfterChangeHook = async ({ doc, previousDoc, req }) => {
   const currentServiceId = extractServiceId(doc.service)
   const previousServiceId = extractServiceId(previousDoc?.service)
@@ -47,7 +68,7 @@ export const DocVersions: CollectionConfig = {
     delete: isEditor,
   },
   hooks: {
-    beforeValidate: [syncSemverFields],
+    beforeValidate: [syncSemverFields, normalizeDefaultPageSlugHook],
     beforeChange: [enforcePublishPermissions('Doc version')],
     afterChange: [updateLatestVersion],
     afterDelete: [updateLatestVersionOnDelete],
@@ -74,6 +95,31 @@ export const DocVersions: CollectionConfig = {
       required: true,
       admin: {
         description: 'Doc page slug to use as the default landing page for this version.',
+      },
+      validate: (value: unknown) => {
+        if (typeof value !== 'string' || value.trim().length === 0) {
+          return 'Default page slug is required.'
+        }
+
+        const trimmed = value.trim()
+
+        if (trimmed.startsWith('/')) {
+          return 'Default page slug must not start with "/".'
+        }
+
+        if (/\s/.test(trimmed)) {
+          return 'Default page slug must not include spaces.'
+        }
+
+        if (trimmed.includes('..')) {
+          return 'Default page slug must not include "..".'
+        }
+
+        if (!DEFAULT_PAGE_SLUG_REGEX.test(trimmed)) {
+          return 'Default page slug must be lowercase kebab-case segments separated by "/".'
+        }
+
+        return true
       },
     },
     {
