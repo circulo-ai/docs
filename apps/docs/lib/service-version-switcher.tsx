@@ -102,7 +102,7 @@ export function ServiceVersionSwitcher({
         </SelectContent>
       </Select>
       <Select
-        value={versionValue}
+        value={`v${versionValue}`}
         disabled={!serviceValue || versions.length === 0}
         onValueChange={(nextVersion) => {
           if (!nextVersion || !serviceValue) return;

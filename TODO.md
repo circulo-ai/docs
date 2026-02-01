@@ -14,6 +14,7 @@
 - [ ] Add analytics
 - [ ] Replace Fumadocs icons with Huge Icons
 - [ ] Ignore version or service changes when the selected value is unchanged
+- [ ] Remove the `docs` route
 
 ## CMS app polish
 

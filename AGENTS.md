@@ -87,8 +87,8 @@ Routing + UI
 - [x] Add redirect: `/docs/[service]/v[semver]` → `/docs/[service]/v[semver]/[defaultDocSlug]`.
 - [x] Ensure `/docs/[service]` always redirects directly to `/docs/[service]/[latestDefaultDocSlug]`.
 - [x] Add routes: `/[service]/v[semver]/[...slug]` for docs pages.
-- [ ] Add service + version dropdowns in layout.
-- [ ] Build nav tree + TOC from CMS data.
+- [x] Add service + version dropdowns in layout.
+- [x] Build nav tree + TOC from CMS data.
 
 Caching
 
