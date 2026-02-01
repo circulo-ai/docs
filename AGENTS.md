@@ -83,7 +83,7 @@ CMS-backed source adapter
 Routing + UI
 
 - [x] Add routes: `/docs/[service]/` → latest version default slug redirect.
-- [ ] Add redirect: `/docs/[service]/[...slug]` → `/docs/[service]/v[latest]/[...slug]` (CMS redirects remain separate).
+- [x] Add alias route: `/docs/[service]/[...slug]` renders latest version content without redirect (CMS redirects remain separate).
 - [ ] Add redirect: `/docs/[service]/v[semver]` → `/docs/[service]/v[semver]/[defaultDocSlug]`.
 - [ ] Ensure `/docs/[service]` always redirects directly to `/docs/[service]/[latestDefaultDocSlug]`.
 - [ ] Add routes: `/[service]/v[semver]/[...slug]` for docs pages.
