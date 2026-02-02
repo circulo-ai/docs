@@ -12,6 +12,7 @@ import type { Root, Folder, Item, Node } from "fumadocs-core/page-tree";
 import { loader, source as createSource } from "fumadocs-core/source";
 import type { MetaData, PageData } from "fumadocs-core/source";
 import type { TOCItemType } from "fumadocs-core/toc";
+import { ComponentMap } from "./lexical-renderer";
 import { cache, createElement, JSX } from "react";
 
 import { CmsContent } from "@/lib/cms-content";
@@ -34,7 +35,7 @@ type VirtualMeta<MetaData> = {
 };
 
 type CmsPageData = PageData & {
-  body: (props: { components?: Record<string, unknown> }) => JSX.Element;
+  body: (props: { components?: ComponentMap }) => JSX.Element;
   toc?: TOCItemType[];
   full?: boolean;
 };
@@ -196,7 +197,11 @@ const buildSource = async () => {
           ? slugsWithService
           : [serviceSlug, versionSlug, "index"];
 
-        const body = () => createElement(CmsContent, { content: page.content });
+        const body = (props: { components?: ComponentMap }) =>
+          createElement(CmsContent, {
+            content: page.content,
+            components: props.components,
+          });
         const toc = extractToc(page.content);
 
         pages.push({
