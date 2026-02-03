@@ -106,8 +106,10 @@ Renderer
 - [x] Replace the custom Lexical JSON renderer with Payload RichText rendering (e.g. `@payloadcms/richtext-lexical` RichText component) including headings + TOC extraction.
 - [ ] Extend Payload RichText rendering to cover code blocks, callouts, tables, images, and links.
 - [ ] Replace custom TOC + heading slugging with Payload RichText utilities or renderer output.
+- [ ] Add internal link resolution rules for Payload `linkType: internal` (service/version-aware docs routes).
+- [ ] Align heading/TOC slug rules with existing docs conventions (Fumadocs/MDX/GitHub-style anchors as decided).
 - [ ] Normalize heading slugs and link rules across services/versions (aligned with Payload RichText output).
-- [ ] Retire `apps/docs/lib/lexical-renderer.tsx` + `apps/docs/lib/cms-toc.ts` once Payload RichText renderer is in place.
+- [x] Retire `apps/docs/lib/lexical-renderer.tsx` + `apps/docs/lib/cms-toc.ts` once Payload RichText renderer is in place.
 
 Shared UI components
 
