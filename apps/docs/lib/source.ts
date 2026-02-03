@@ -12,12 +12,14 @@ import type { Root, Folder, Item, Node } from "fumadocs-core/page-tree";
 import { loader, source as createSource } from "fumadocs-core/source";
 import type { MetaData, PageData } from "fumadocs-core/source";
 import type { TOCItemType } from "fumadocs-core/toc";
-import { ComponentMap } from "./lexical-renderer";
 import { cache, createElement, JSX } from "react";
 
 import { CmsContent } from "@/lib/cms-content";
 import { getCmsConfig } from "@/lib/cms-config";
-import { extractToc } from "@/lib/cms-toc";
+import {
+  extractTocFromRichText,
+  type RichTextComponentMap,
+} from "@/lib/richtext";
 
 type VirtualPage<PageData> = {
   type: "page";
@@ -35,7 +37,7 @@ type VirtualMeta<MetaData> = {
 };
 
 type CmsPageData = PageData & {
-  body: (props: { components?: ComponentMap }) => JSX.Element;
+  body: (props: { components?: RichTextComponentMap }) => JSX.Element;
   toc?: TOCItemType[];
   full?: boolean;
 };
@@ -197,12 +199,12 @@ const buildSource = async () => {
           ? slugsWithService
           : [serviceSlug, versionSlug, "index"];
 
-        const body = (props: { components?: ComponentMap }) =>
+        const body = (props: { components?: RichTextComponentMap }) =>
           createElement(CmsContent, {
             content: page.content,
             components: props.components,
           });
-        const toc = extractToc(page.content);
+        const toc = extractTocFromRichText(page.content);
 
         pages.push({
           type: "page",

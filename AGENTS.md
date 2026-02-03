@@ -103,7 +103,7 @@ Editor constraints
 
 Renderer
 
-- [ ] Replace the custom Lexical JSON renderer with Payload RichText rendering (e.g. `@payloadcms/richtext-lexical` RichText component) including headings + TOC extraction.
+- [x] Replace the custom Lexical JSON renderer with Payload RichText rendering (e.g. `@payloadcms/richtext-lexical` RichText component) including headings + TOC extraction.
 - [ ] Extend Payload RichText rendering to cover code blocks, callouts, tables, images, and links.
 - [ ] Replace custom TOC + heading slugging with Payload RichText utilities or renderer output.
 - [ ] Normalize heading slugs and link rules across services/versions (aligned with Payload RichText output).

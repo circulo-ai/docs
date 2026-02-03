@@ -1,11 +1,10 @@
-import { ComponentMap, renderLexicalContent } from "@/lib/lexical-renderer";
+import { renderRichText, type RichTextComponentMap } from "@/lib/richtext";
 
 type CmsContentProps = {
   content: unknown;
-  components?: ComponentMap;
+  components?: RichTextComponentMap;
 };
 
 export function CmsContent({ content, components }: CmsContentProps) {
-  const { content: rendered } = renderLexicalContent(content, { components });
-  return <>{rendered}</>;
+  return <>{renderRichText(content, components)}</>;
 }
