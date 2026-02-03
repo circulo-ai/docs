@@ -17,7 +17,7 @@ Repo scaffolding
 - [x] Create shared UI package (`packages/ui`).
 - [x] Create shared ESLint config (`packages/eslint-config`).
 - [x] Create shared TypeScript config (`packages/typescript-config`).
-- [ ] Create `packages/types` for cross-app CMS-derived types.
+- [ ] Create `packages/types` for cross-app CMS-derived types (generated from Payload `payload-types.ts`).
 - [ ] Create `packages/search` for indexing/query utilities.
 - [ ] Create `packages/config` (shared Tailwind config).
 - [ ] Create `packages/env` for env validation (zod or similar).
@@ -79,6 +79,7 @@ CMS-backed source adapter
 
 - [x] Create `packages/docs-source` with `getServices`, `getVersions`, `getLatestVersion`, `getPage`, `getNav`.
 - [x] Replace local MDX source with CMS-backed adapter.
+- [ ] Replace the manual CMS fetch + auth layer in `packages/docs-source` with Payload local API or GraphQL when co-located.
 
 Routing + UI
 
@@ -102,9 +103,11 @@ Editor constraints
 
 Renderer
 
-- [ ] Implement Lexical JSON → React renderer with headings + TOC extraction.
-- [ ] Add code blocks, callouts, tables, images, and links handling.
-- [ ] Normalize heading slugs and link rules across services/versions.
+- [ ] Replace the custom Lexical JSON renderer with Payload RichText rendering (e.g. `@payloadcms/richtext-lexical` RichText component) including headings + TOC extraction.
+- [ ] Extend Payload RichText rendering to cover code blocks, callouts, tables, images, and links.
+- [ ] Replace custom TOC + heading slugging with Payload RichText utilities or renderer output.
+- [ ] Normalize heading slugs and link rules across services/versions (aligned with Payload RichText output).
+- [ ] Retire `apps/docs/lib/lexical-renderer.tsx` + `apps/docs/lib/cms-toc.ts` once Payload RichText renderer is in place.
 
 Shared UI components
 
