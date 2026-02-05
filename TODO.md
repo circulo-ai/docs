@@ -13,6 +13,9 @@
 - [ ] Replace the "My App" string in `apps/docs/lib/layout.shared.tsx`
 - [ ] Add analytics
 - [ ] Replace Fumadocs icons with Huge Icons
+- [ ] Evaluate additional Fumadocs components (or shadcn/ui alternatives) for docs UI
+- [ ] Polish styles now that the shadcn theme is applied (search results, etc.)
+- [ ] Add AI skills
 - [ ] Ignore version or service changes when the selected value is unchanged
 - [ ] Remove the `docs` route
 - [ ] Update internal links to omit the version when it’s the latest
