@@ -5,15 +5,15 @@ import {
   DocsPage,
   DocsTitle,
 } from "fumadocs-ui/layouts/docs/page";
+import { createRelativeLink } from "fumadocs-ui/mdx";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createRelativeLink } from "fumadocs-ui/mdx";
 import { cloneElement, isValidElement, type ComponentProps } from "react";
 
-import { getMDXComponents } from "@/mdx-components";
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
+import { getMDXComponents } from "@/mdx-components";
 
 type LatestAliasProps = {
   params:

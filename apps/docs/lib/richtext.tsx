@@ -1,9 +1,9 @@
-import type { TOCItemType } from "fumadocs-core/toc";
 import {
   RichText,
   defaultJSXConverters,
   type JSXConverters,
 } from "@payloadcms/richtext-lexical/react";
+import type { TOCItemType } from "fumadocs-core/toc";
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";

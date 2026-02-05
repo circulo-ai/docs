@@ -1,6 +1,6 @@
-import type { Root, Node, Item, Folder } from "fumadocs-core/page-tree";
-import { cache } from "react";
 import { getLatestVersion, getServices } from "@repo/docs-source";
+import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
+import { cache } from "react";
 
 import { getCmsConfig } from "@/lib/cms-config";
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import type { Folder, Node, Root } from "fumadocs-core/page-tree";
 import type { DocsLayoutProps } from "fumadocs-ui/layouts/docs";
-import type { Root, Node, Folder } from "fumadocs-core/page-tree";
+import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
