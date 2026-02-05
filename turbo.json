@@ -5,6 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "NODE_ENV",
         "DOCS_CMS_URL",
         "DOCS_INCLUDE_DRAFTS",
         "DOCS_EMAIL",

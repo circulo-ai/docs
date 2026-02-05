@@ -416,7 +416,7 @@ export const getPage = async (
     "/api/docPages",
     {
       params: {
-        depth: "0",
+        depth: "2",
         limit: "1",
         "where[service][equals]": String(serviceId),
         "where[version][equals]": String(versionId),

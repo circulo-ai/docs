@@ -1,3 +1,4 @@
+import { getCmsConfig } from "@/lib/cms-config";
 import { renderRichText, type RichTextComponentMap } from "@/lib/richtext";
 
 type CmsContentProps = {
@@ -6,5 +7,6 @@ type CmsContentProps = {
 };
 
 export function CmsContent({ content, components }: CmsContentProps) {
-  return <>{renderRichText(content, components)}</>;
+  const { baseUrl } = getCmsConfig();
+  return <>{renderRichText(content, components, { baseUrl })}</>;
 }

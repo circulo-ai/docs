@@ -3,25 +3,29 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "check-types": "turbo run check-types",
     "clean:all": "pwsh scripts/clean-all.ps1",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "format": "prettier . --write",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.7.5",
-    "typescript": "5.9.2"
+    "@repo/prettier-config": "workspace:*",
+    "prettier": "3.8.1",
+    "prettier-plugin-organize-imports": "4.3.0",
+    "prettier-plugin-packagejson": "3.0.0",
+    "turbo": "^2.8.3",
+    "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.28.1",
+  "packageManager": "pnpm@10.28.2",
   "engines": {
     "node": ">=18"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "sharp",
       "esbuild",
+      "msw",
+      "sharp",
       "unrs-resolver"
     ]
   }

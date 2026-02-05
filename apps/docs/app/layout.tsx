@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 
-const fontSans = Noto_Sans({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = Noto_Sans({ variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -16,10 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`flex flex-col min-h-screen antialiased font-sans ${fontSans.variable}`}
-      >
+    <html lang="en" className={fontSans.variable} suppressHydrationWarning>
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <RootProvider>{children}</RootProvider>
       </body>
     </html>

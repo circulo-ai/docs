@@ -12,7 +12,7 @@ import { getCmsConfig } from "@/lib/cms-config";
 import { CmsContent } from "@/lib/cms-content";
 
 const resolveDocsSettings = async () => {
-  const settings = await getDocsSettings(getCmsConfig());
+  const settings = await getDocsSettings(getCmsConfig(), { depth: 2 });
   const content = settings.homeContent ?? null;
   if (!content) return null;
 

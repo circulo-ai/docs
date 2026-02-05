@@ -8,14 +8,14 @@ import {
   type DocPage,
   type NavNode,
 } from "@repo/docs-source";
-import type { Root, Folder, Item, Node } from "fumadocs-core/page-tree";
-import { loader, source as createSource } from "fumadocs-core/source";
+import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
 import type { MetaData, PageData } from "fumadocs-core/source";
+import { source as createSource, loader } from "fumadocs-core/source";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { cache, createElement, JSX } from "react";
 
-import { CmsContent } from "@/lib/cms-content";
 import { getCmsConfig } from "@/lib/cms-config";
+import { CmsContent } from "@/lib/cms-content";
 import {
   extractTocFromRichText,
   type RichTextComponentMap,

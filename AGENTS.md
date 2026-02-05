@@ -104,7 +104,8 @@ Editor constraints
 Renderer
 
 - [x] Replace the custom Lexical JSON renderer with Payload RichText rendering (e.g. `@payloadcms/richtext-lexical` RichText component) including headings + TOC extraction.
-- [ ] Extend Payload RichText rendering to cover code blocks, callouts, tables, images, and links.
+- [x] Extend Payload RichText rendering to cover code blocks, callouts, tables, images, and links.
+- [ ] Use Fumadocs `DynamicCodeBlock` for rich text code blocks.
 - [ ] Replace custom TOC + heading slugging with Payload RichText utilities or renderer output.
 - [ ] Add internal link resolution rules for Payload `linkType: internal` (service/version-aware docs routes).
 - [ ] Align heading/TOC slug rules with existing docs conventions (Fumadocs/MDX/GitHub-style anchors as decided).

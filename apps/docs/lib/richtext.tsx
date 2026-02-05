@@ -103,15 +103,199 @@ const resolveLinkNewTab = (node: SerializedLexicalNode) => {
   return Boolean(fields && (fields as { newTab?: boolean }).newTab);
 };
 
+const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, "");
+
+const prefixAssetUrl = (baseUrl: string | undefined, url: string) => {
+  if (!baseUrl) return url;
+  if (!url.startsWith("/")) return url;
+  return `${normalizeBaseUrl(baseUrl)}${url}`;
+};
+
 const buildConverters = (options: {
+  baseUrl?: string;
   components?: RichTextComponentMap;
   slugger: (value: string) => string;
 }): JSXConverters => {
-  const { components, slugger } = options;
+  const { baseUrl, components, slugger } = options;
   const linkComponent = components?.a ?? "a";
+  const calloutComponent = components?.Callout ?? "div";
+  const codeBlockComponent = components?.CodeBlock ?? components?.pre ?? "pre";
+
+  const renderCodeBlockFromFields = (fields?: Record<string, unknown>) => {
+    if (!fields) return null;
+    const code = typeof fields.code === "string" ? (fields.code as string) : "";
+    if (!code) return null;
+    const language =
+      typeof fields.language === "string"
+        ? (fields.language as string)
+        : undefined;
+    const codeProps: ComponentProps<"code"> = language
+      ? { className: `language-${language}` }
+      : {};
+    const codeNode = createElement("code", codeProps, code);
+    return createElement(
+      codeBlockComponent,
+      {
+        className: "code-block",
+        "data-language": language,
+      },
+      codeNode,
+    );
+  };
+
+  const renderCalloutFromFields = (fields?: Record<string, unknown>) => {
+    if (!fields) return null;
+    const title = typeof fields.title === "string" ? fields.title : "";
+    const variant =
+      typeof fields.variant === "string"
+        ? fields.variant
+        : typeof fields.type === "string"
+          ? fields.type
+          : undefined;
+    const body =
+      typeof fields.body === "string"
+        ? fields.body
+        : typeof fields.content === "string"
+          ? fields.content
+          : "";
+    const nested =
+      fields.content &&
+      typeof fields.content === "object" &&
+      isSerializedEditorState(fields.content)
+        ? renderRichText(fields.content, components, { baseUrl })
+        : null;
+    if (!title && !body && !nested) return null;
+    return createElement(
+      calloutComponent,
+      {
+        className: "callout",
+        "data-variant": variant,
+      },
+      [
+        title ? createElement("strong", {}, title) : null,
+        nested ?? (body ? createElement("p", {}, body) : null),
+      ],
+    );
+  };
 
   return {
     ...defaultJSXConverters,
+    upload: ({ node }) => {
+      const uploadNode = node as {
+        fields?: { alt?: string };
+        value?: Record<string, unknown>;
+      };
+      if (!uploadNode.value || typeof uploadNode.value !== "object") {
+        return null;
+      }
+
+      const uploadDoc = uploadNode.value as Record<string, unknown>;
+      const alt =
+        uploadNode.fields?.alt ||
+        (typeof uploadDoc.alt === "string" ? uploadDoc.alt : "") ||
+        "";
+      const urlValue =
+        typeof uploadDoc.url === "string" ? (uploadDoc.url as string) : "";
+      const url = prefixAssetUrl(baseUrl, urlValue);
+      const mimeType =
+        typeof uploadDoc.mimeType === "string"
+          ? (uploadDoc.mimeType as string)
+          : "";
+
+      if (!mimeType.startsWith("image")) {
+        const filename =
+          typeof uploadDoc.filename === "string"
+            ? (uploadDoc.filename as string)
+            : "Download";
+        return createElement(
+          linkComponent,
+          { href: url, rel: "noopener noreferrer" },
+          filename,
+        );
+      }
+
+      const sizes =
+        typeof uploadDoc.sizes === "object" && uploadDoc.sizes !== null
+          ? (uploadDoc.sizes as Record<string, unknown>)
+          : null;
+
+      if (!sizes || Object.keys(sizes).length === 0) {
+        const width =
+          typeof uploadDoc.width === "number"
+            ? (uploadDoc.width as number)
+            : undefined;
+        const height =
+          typeof uploadDoc.height === "number"
+            ? (uploadDoc.height as number)
+            : undefined;
+        const ImageComponent = components?.img ?? "img";
+        return createElement(ImageComponent, { alt, height, src: url, width });
+      }
+
+      const pictureNodes: ReactNode[] = [];
+      for (const [sizeKey, sizeValue] of Object.entries(sizes)) {
+        if (!sizeValue || typeof sizeValue !== "object") continue;
+        const size = sizeValue as Record<string, unknown>;
+        const sizeUrl =
+          typeof size.url === "string" ? (size.url as string) : "";
+        if (!sizeUrl) continue;
+        const sizeWidth =
+          typeof size.width === "number" ? (size.width as number) : undefined;
+        const sizeHeight =
+          typeof size.height === "number" ? (size.height as number) : undefined;
+        const sizeMimeType =
+          typeof size.mimeType === "string" ? (size.mimeType as string) : "";
+        if (!sizeWidth || !sizeHeight || !sizeMimeType) continue;
+        const srcSet = prefixAssetUrl(baseUrl, sizeUrl);
+        pictureNodes.push(
+          createElement("source", {
+            key: sizeKey,
+            media: `(max-width: ${sizeWidth}px)`,
+            srcSet,
+            type: sizeMimeType,
+          }),
+        );
+      }
+
+      const fallbackWidth =
+        typeof uploadDoc.width === "number"
+          ? (uploadDoc.width as number)
+          : undefined;
+      const fallbackHeight =
+        typeof uploadDoc.height === "number"
+          ? (uploadDoc.height as number)
+          : undefined;
+      const ImageComponent = components?.img ?? "img";
+      pictureNodes.push(
+        createElement(ImageComponent, {
+          key: "image",
+          alt,
+          height: fallbackHeight,
+          src: url,
+          width: fallbackWidth,
+        }),
+      );
+
+      return createElement("picture", {}, pictureNodes);
+    },
+    blocks: {
+      Code: ({ node }) => {
+        const fields = (node as { fields?: Record<string, unknown> }).fields;
+        return renderCodeBlockFromFields(fields);
+      },
+      code: ({ node }) => {
+        const fields = (node as { fields?: Record<string, unknown> }).fields;
+        return renderCodeBlockFromFields(fields);
+      },
+      Callout: ({ node }) => {
+        const fields = (node as { fields?: Record<string, unknown> }).fields;
+        return renderCalloutFromFields(fields);
+      },
+      callout: ({ node }) => {
+        const fields = (node as { fields?: Record<string, unknown> }).fields;
+        return renderCalloutFromFields(fields);
+      },
+    },
     heading: ({ node, nodesToJSX }) => {
       const depth = getHeadingDepth(node);
       const tag = getHeadingTag(node, depth);
@@ -123,9 +307,31 @@ const buildConverters = (options: {
       const HeadingComponent = components?.[tag] ?? tag;
       return createElement(HeadingComponent, id ? { id } : {}, children);
     },
+    code: ({ node, nodesToJSX }) => {
+      const children =
+        "children" in node && Array.isArray(node.children)
+          ? nodesToJSX({ nodes: node.children })
+          : collectText(node);
+      const language =
+        typeof (node as { language?: string }).language === "string"
+          ? ((node as { language?: string }).language as string)
+          : undefined;
+      const codeProps: ComponentProps<"code"> = language
+        ? { className: `language-${language}` }
+        : {};
+      const codeNode = createElement("code", codeProps, children);
+      return createElement(
+        codeBlockComponent,
+        {
+          className: "code-block",
+          "data-language": language,
+        },
+        codeNode,
+      );
+    },
     link: ({ node, nodesToJSX }) => {
       const children = nodesToJSX({ nodes: node.children });
-      const href = resolveLinkHref(node);
+      const href = prefixAssetUrl(baseUrl, resolveLinkHref(node));
       const newTab = resolveLinkNewTab(node);
       const props: ComponentProps<"a"> = {
         href: href || undefined,
@@ -138,7 +344,7 @@ const buildConverters = (options: {
     },
     autolink: ({ node, nodesToJSX }) => {
       const children = nodesToJSX({ nodes: node.children });
-      const href = resolveLinkHref(node);
+      const href = prefixAssetUrl(baseUrl, resolveLinkHref(node));
       const newTab = resolveLinkNewTab(node);
       const props: ComponentProps<"a"> = {
         href: href || undefined,
@@ -149,17 +355,62 @@ const buildConverters = (options: {
       }
       return createElement(linkComponent, props, children);
     },
+    unknown: ({ node, nodesToJSX }) => {
+      if (node.type === "block") {
+        const fields = (node as { fields?: Record<string, unknown> }).fields;
+        const blockType =
+          typeof fields?.blockType === "string"
+            ? fields.blockType.toLowerCase()
+            : "";
+        if (fields?.code && typeof fields.code === "string") {
+          return renderCodeBlockFromFields(fields);
+        }
+        if (blockType.includes("code")) {
+          const rendered = renderCodeBlockFromFields(fields);
+          if (rendered) return rendered;
+        }
+        if (
+          fields?.title ||
+          fields?.body ||
+          (fields?.content && typeof fields.content === "string")
+        ) {
+          const rendered = renderCalloutFromFields(fields);
+          if (rendered) return rendered;
+        }
+        if (blockType.includes("callout") || blockType.includes("alert")) {
+          const rendered = renderCalloutFromFields(fields);
+          if (rendered) return rendered;
+        }
+      }
+
+      if ("children" in node && Array.isArray(node.children)) {
+        return createElement("span", {}, nodesToJSX({ nodes: node.children }));
+      }
+
+      return null;
+    },
   };
 };
 
 export const renderRichText = (
   content: unknown,
   components?: RichTextComponentMap,
+  options?: { baseUrl?: string },
 ): ReactNode => {
   if (!isSerializedEditorState(content)) return null;
   const slugger = createSlugger();
-  const converters = buildConverters({ components, slugger });
-  return <RichText data={content} converters={converters} disableContainer />;
+  const converters = buildConverters({
+    baseUrl: options?.baseUrl,
+    components,
+    slugger,
+  });
+  return (
+    <RichText
+      data={content}
+      converters={converters}
+      className="payload-richtext prose"
+    />
+  );
 };
 
 export const extractTocFromRichText = (content: unknown): TOCItemType[] => {
