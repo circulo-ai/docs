@@ -59,529 +59,530 @@ export type SupportedTimezones =
   | 'Pacific/Guam'
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
-  | 'Pacific/Fiji';
+  | 'Pacific/Fiji'
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
-  };
-  blocks: {};
+    users: UserAuthOperations
+  }
+  blocks: {}
   collections: {
-    users: User;
-    media: Media;
-    services: Service;
-    docVersions: DocVersion;
-    docPages: DocPage;
-    redirects: Redirect;
-    'payload-kv': PayloadKv;
-    'payload-locked-documents': PayloadLockedDocument;
-    'payload-preferences': PayloadPreference;
-    'payload-migrations': PayloadMigration;
-  };
-  collectionsJoins: {};
+    users: User
+    media: Media
+    services: Service
+    docVersions: DocVersion
+    docPages: DocPage
+    redirects: Redirect
+    'payload-kv': PayloadKv
+    'payload-locked-documents': PayloadLockedDocument
+    'payload-preferences': PayloadPreference
+    'payload-migrations': PayloadMigration
+  }
+  collectionsJoins: {}
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
-    services: ServicesSelect<false> | ServicesSelect<true>;
-    docVersions: DocVersionsSelect<false> | DocVersionsSelect<true>;
-    docPages: DocPagesSelect<false> | DocPagesSelect<true>;
-    redirects: RedirectsSelect<false> | RedirectsSelect<true>;
-    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
-    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
-    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
-    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
-  };
+    users: UsersSelect<false> | UsersSelect<true>
+    media: MediaSelect<false> | MediaSelect<true>
+    services: ServicesSelect<false> | ServicesSelect<true>
+    docVersions: DocVersionsSelect<false> | DocVersionsSelect<true>
+    docPages: DocPagesSelect<false> | DocPagesSelect<true>
+    redirects: RedirectsSelect<false> | RedirectsSelect<true>
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
+    'payload-locked-documents':
+      | PayloadLockedDocumentsSelect<false>
+      | PayloadLockedDocumentsSelect<true>
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>
+  }
   db: {
-    defaultIDType: number;
-  };
-  fallbackLocale: null;
+    defaultIDType: number
+  }
+  fallbackLocale: null
   globals: {
-    docsSettings: DocsSetting;
-  };
+    docsSettings: DocsSetting
+  }
   globalsSelect: {
-    docsSettings: DocsSettingsSelect<false> | DocsSettingsSelect<true>;
-  };
-  locale: null;
+    docsSettings: DocsSettingsSelect<false> | DocsSettingsSelect<true>
+  }
+  locale: null
   user: User & {
-    collection: 'users';
-  };
+    collection: 'users'
+  }
   jobs: {
-    tasks: unknown;
-    workflows: unknown;
-  };
+    tasks: unknown
+    workflows: unknown
+  }
 }
 export interface UserAuthOperations {
   forgotPassword: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   login: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   registerFirstUser: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   unlock: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: number;
-  roles: ('writer' | 'editor' | 'admin')[];
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
+  id: number
+  roles: ('writer' | 'editor' | 'admin')[]
+  updatedAt: string
+  createdAt: string
+  email: string
+  resetPasswordToken?: string | null
+  resetPasswordExpiration?: string | null
+  salt?: string | null
+  hash?: string | null
+  loginAttempts?: number | null
+  lockUntil?: string | null
   sessions?:
     | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
+        id: string
+        createdAt?: string | null
+        expiresAt: string
       }[]
-    | null;
-  password?: string | null;
+    | null
+  password?: string | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
+  id: number
+  alt: string
+  updatedAt: string
+  createdAt: string
+  url?: string | null
+  thumbnailURL?: string | null
+  filename?: string | null
+  mimeType?: string | null
+  filesize?: number | null
+  width?: number | null
+  height?: number | null
+  focalX?: number | null
+  focalY?: number | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services".
  */
 export interface Service {
-  id: number;
-  name: string;
+  id: number
+  name: string
   /**
    * URL prefix for this service (e.g. "api", "cli").
    */
-  slug: string;
+  slug: string
   theme?: {
     /**
      * CSS color token for primary UI elements.
      */
-    primaryColor?: string | null;
+    primaryColor?: string | null
     /**
      * CSS color token for secondary UI elements.
      */
-    secondaryColor?: string | null;
+    secondaryColor?: string | null
     /**
      * CSS color token for accents and highlights.
      */
-    accentColor?: string | null;
-    logo?: (number | null) | Media;
-  };
+    accentColor?: string | null
+    logo?: (number | null) | Media
+  }
   searchDefaults?: {
     /**
      * Placeholder text for the search input.
      */
-    placeholder?: string | null;
-    includeOlderVersions?: boolean | null;
-    resultsLimit?: number | null;
-  };
+    placeholder?: string | null
+    includeOlderVersions?: boolean | null
+    resultsLimit?: number | null
+  }
   /**
    * Automatically set to the newest published version for this service.
    */
-  latestVersion?: (number | null) | DocVersion;
-  updatedAt: string;
-  createdAt: string;
+  latestVersion?: (number | null) | DocVersion
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docVersions".
  */
 export interface DocVersion {
-  id: number;
-  service: number | Service;
+  id: number
+  service: number | Service
   /**
    * Semver string without a leading "v" (e.g. "1.2.3").
    */
-  version: string;
+  version: string
   /**
    * Doc page slug to use as the default landing page for this version.
    */
-  defaultPageSlug: string;
+  defaultPageSlug: string
   /**
    * Computed sortable key derived from the semver.
    */
-  versionKey?: string | null;
-  isPrerelease?: boolean | null;
-  status: 'draft' | 'published';
-  updatedAt: string;
-  createdAt: string;
+  versionKey?: string | null
+  isPrerelease?: boolean | null
+  status: 'draft' | 'published'
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docPages".
  */
 export interface DocPage {
-  id: number;
-  service: number | Service;
-  version: number | DocVersion;
+  id: number
+  service: number | Service
+  version: number | DocVersion
   /**
    * Path segments for the page (use "/" for nested paths).
    */
-  slug: string;
-  title: string;
+  slug: string
+  title: string
   content: {
     root: {
-      type: string;
+      type: string
       children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  status: 'draft' | 'published';
-  updatedAt: string;
-  createdAt: string;
+        type: any
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  }
+  status: 'draft' | 'published'
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
-  id: number;
+  id: number
   /**
    * Incoming path to redirect (e.g. "/guides/old").
    */
-  from: string;
+  from: string
   /**
    * Destination path or URL.
    */
-  to: string;
-  service?: (number | null) | Service;
-  version?: (number | null) | DocVersion;
-  permanent?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
+  to: string
+  service?: (number | null) | Service
+  version?: (number | null) | DocVersion
+  permanent?: boolean | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number;
-  key: string;
+  id: number
+  key: string
   data:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
+    | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number;
+  id: number
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'users'
+        value: number | User
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
+        relationTo: 'media'
+        value: number | Media
       } | null)
     | ({
-        relationTo: 'services';
-        value: number | Service;
+        relationTo: 'services'
+        value: number | Service
       } | null)
     | ({
-        relationTo: 'docVersions';
-        value: number | DocVersion;
+        relationTo: 'docVersions'
+        value: number | DocVersion
       } | null)
     | ({
-        relationTo: 'docPages';
-        value: number | DocPage;
+        relationTo: 'docPages'
+        value: number | DocPage
       } | null)
     | ({
-        relationTo: 'redirects';
-        value: number | Redirect;
-      } | null);
-  globalSlug?: string | null;
+        relationTo: 'redirects'
+        value: number | Redirect
+      } | null)
+  globalSlug?: string | null
   user: {
-    relationTo: 'users';
-    value: number | User;
-  };
-  updatedAt: string;
-  createdAt: string;
+    relationTo: 'users'
+    value: number | User
+  }
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number;
+  id: number
   user: {
-    relationTo: 'users';
-    value: number | User;
-  };
-  key?: string | null;
+    relationTo: 'users'
+    value: number | User
+  }
+  key?: string | null
   value?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number;
-  name?: string | null;
-  batch?: number | null;
-  updatedAt: string;
-  createdAt: string;
+  id: number
+  name?: string | null
+  batch?: number | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  roles?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
+  roles?: T
+  updatedAt?: T
+  createdAt?: T
+  email?: T
+  resetPasswordToken?: T
+  resetPasswordExpiration?: T
+  salt?: T
+  hash?: T
+  loginAttempts?: T
+  lockUntil?: T
   sessions?:
     | T
     | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
+        id?: T
+        createdAt?: T
+        expiresAt?: T
+      }
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
+  alt?: T
+  updatedAt?: T
+  createdAt?: T
+  url?: T
+  thumbnailURL?: T
+  filename?: T
+  mimeType?: T
+  filesize?: T
+  width?: T
+  height?: T
+  focalX?: T
+  focalY?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services_select".
  */
 export interface ServicesSelect<T extends boolean = true> {
-  name?: T;
-  slug?: T;
+  name?: T
+  slug?: T
   theme?:
     | T
     | {
-        primaryColor?: T;
-        secondaryColor?: T;
-        accentColor?: T;
-        logo?: T;
-      };
+        primaryColor?: T
+        secondaryColor?: T
+        accentColor?: T
+        logo?: T
+      }
   searchDefaults?:
     | T
     | {
-        placeholder?: T;
-        includeOlderVersions?: T;
-        resultsLimit?: T;
-      };
-  latestVersion?: T;
-  updatedAt?: T;
-  createdAt?: T;
+        placeholder?: T
+        includeOlderVersions?: T
+        resultsLimit?: T
+      }
+  latestVersion?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docVersions_select".
  */
 export interface DocVersionsSelect<T extends boolean = true> {
-  service?: T;
-  version?: T;
-  defaultPageSlug?: T;
-  versionKey?: T;
-  isPrerelease?: T;
-  status?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  service?: T
+  version?: T
+  defaultPageSlug?: T
+  versionKey?: T
+  isPrerelease?: T
+  status?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docPages_select".
  */
 export interface DocPagesSelect<T extends boolean = true> {
-  service?: T;
-  version?: T;
-  slug?: T;
-  title?: T;
-  content?: T;
-  status?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  service?: T
+  version?: T
+  slug?: T
+  title?: T
+  content?: T
+  status?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects_select".
  */
 export interface RedirectsSelect<T extends boolean = true> {
-  from?: T;
-  to?: T;
-  service?: T;
-  version?: T;
-  permanent?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  from?: T
+  to?: T
+  service?: T
+  version?: T
+  permanent?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
-  key?: T;
-  data?: T;
+  key?: T
+  data?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T;
-  globalSlug?: T;
-  user?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  document?: T
+  globalSlug?: T
+  user?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences_select".
  */
 export interface PayloadPreferencesSelect<T extends boolean = true> {
-  user?: T;
-  key?: T;
-  value?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  user?: T
+  key?: T
+  value?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations_select".
  */
 export interface PayloadMigrationsSelect<T extends boolean = true> {
-  name?: T;
-  batch?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  name?: T
+  batch?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docsSettings".
  */
 export interface DocsSetting {
-  id: number;
+  id: number
   /**
-   * Optional title displayed on the /docs landing page.
+   * Optional title displayed on the landing page.
    */
-  homeTitle?: string | null;
+  homeTitle?: string | null
   /**
-   * Optional description displayed on the /docs landing page.
+   * Optional description displayed on the landing page.
    */
-  homeDescription?: string | null;
+  homeDescription?: string | null
   /**
-   * Landing page content shown at /docs.
+   * Landing page content shown at /.
    */
   homeContent: {
     root: {
-      type: string;
+      type: string
       children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  updatedAt?: string | null;
-  createdAt?: string | null;
+        type: any
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  }
+  updatedAt?: string | null
+  createdAt?: string | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docsSettings_select".
  */
 export interface DocsSettingsSelect<T extends boolean = true> {
-  homeTitle?: T;
-  homeDescription?: T;
-  homeContent?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
+  homeTitle?: T
+  homeDescription?: T
+  homeContent?: T
+  updatedAt?: T
+  createdAt?: T
+  globalType?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
-  [k: string]: unknown;
+  [k: string]: unknown
 }
-
 
 declare module 'payload' {
   export interface GeneratedTypes extends Config {}

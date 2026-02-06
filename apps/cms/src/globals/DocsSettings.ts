@@ -14,14 +14,14 @@ export const DocsSettings: GlobalConfig = {
       name: 'homeTitle',
       type: 'text',
       admin: {
-        description: 'Optional title displayed on the /docs landing page.',
+        description: 'Optional title displayed on the landing page.',
       },
     },
     {
       name: 'homeDescription',
       type: 'textarea',
       admin: {
-        description: 'Optional description displayed on the /docs landing page.',
+        description: 'Optional description displayed on the landing page.',
       },
     },
     {
@@ -30,7 +30,7 @@ export const DocsSettings: GlobalConfig = {
       required: true,
       editor: docsLexicalEditor,
       admin: {
-        description: 'Landing page content shown at /docs.',
+        description: 'Landing page content shown at /.',
       },
     },
   ],

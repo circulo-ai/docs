@@ -50,11 +50,9 @@ const normalizeSlug = (slug: string) =>
     .map((part) => part.trim())
     .filter(Boolean);
 
-const buildVirtualPath = (segments: string[]) =>
-  ["docs", ...segments].join("/") + ".mdx";
+const buildVirtualPath = (segments: string[]) => segments.join("/") + ".mdx";
 
-const buildMetaPath = (segments: string[]) =>
-  ["docs", ...segments].join("/") + ".json";
+const buildMetaPath = (segments: string[]) => segments.join("/") + ".json";
 
 const toTitle = (segment: string) =>
   segment.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -68,12 +66,7 @@ const buildPageUrl = (
   slug: string,
 ) => {
   const segments = normalizeSlug(slug);
-  const encoded = encodePathSegments([
-    "docs",
-    serviceSlug,
-    versionSlug,
-    ...segments,
-  ]);
+  const encoded = encodePathSegments([serviceSlug, versionSlug, ...segments]);
   return `/${encoded.join("/")}`;
 };
 
@@ -248,7 +241,7 @@ const buildSource = async () => {
   }
 
   const source = loader({
-    baseUrl: "/docs",
+    baseUrl: "/",
     source: createSource({
       pages,
       metas,

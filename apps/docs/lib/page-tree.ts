@@ -21,7 +21,7 @@ const getLatestVersionMap = cache(async () => {
 });
 
 const rewriteUrl = (url: string, latestMap: Map<string, string>) => {
-  const match = url.match(/^\/docs\/([^/]+)\/([^/]+)(\/.*)?$/);
+  const match = url.match(/^\/([^/]+)\/([^/]+)(\/.*)?$/);
   if (!match) return url;
 
   const [, service, versionSegment, rest = ""] = match;
@@ -30,7 +30,7 @@ const rewriteUrl = (url: string, latestMap: Map<string, string>) => {
   const latest = service ? latestMap.get(service) : undefined;
   if (!latest || latest !== versionSegment) return url;
 
-  return `/docs/${service}${rest}`;
+  return `/${service}${rest}`;
 };
 
 const rewriteItem = (item: Item, latestMap: Map<string, string>): Item => ({

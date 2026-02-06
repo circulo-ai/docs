@@ -13,7 +13,6 @@ import { cloneElement, isValidElement, type ComponentProps } from "react";
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
-import { getMDXComponents } from "@/mdx-components";
 
 type LatestAliasProps = {
   params:
@@ -82,17 +81,16 @@ const rewriteHrefForAlias = (
     return href;
   }
 
-  const versionPrefix = `/docs/${service}/${versionSegment}/`;
-  const versionRoot = `/docs/${service}/${versionSegment}`;
+  const versionPrefix = `/${service}/${versionSegment}/`;
+  const versionRoot = `/${service}/${versionSegment}`;
 
   if (url.pathname.startsWith(versionPrefix)) {
-    url.pathname =
-      `/docs/${service}/` + url.pathname.slice(versionPrefix.length);
+    url.pathname = `/${service}/` + url.pathname.slice(versionPrefix.length);
     return url.pathname + url.search + url.hash;
   }
 
   if (url.pathname === versionRoot) {
-    url.pathname = `/docs/${service}`;
+    url.pathname = `/${service}`;
     return url.pathname + url.search + url.hash;
   }
 
@@ -109,11 +107,11 @@ export default async function Page(props: LatestAliasProps) {
   const breadcrumbItems = [
     {
       label: serviceName,
-      href: `/docs/${service}`,
+      href: `/${service}`,
     },
     {
       label: versionSegment,
-      href: `/docs/${service}/${versionSegment}`,
+      href: `/${service}/${versionSegment}`,
     },
     ...(page.data.title
       ? [
@@ -147,11 +145,7 @@ export default async function Page(props: LatestAliasProps) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <MDX
-          components={getMDXComponents({
-            a: aliasAwareLink,
-          })}
-        />
+        <MDX components={{ a: aliasAwareLink }} />
       </DocsBody>
     </DocsPage>
   );

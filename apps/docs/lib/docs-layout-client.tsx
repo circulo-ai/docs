@@ -12,7 +12,7 @@ type DocsLayoutClientProps = Omit<DocsLayoutProps, "tree"> & {
 };
 
 const VERSIONED_PATH_REGEX =
-  /^\/docs\/[^/]+\/v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?(?:\/|$)/;
+  /^\/[^/]+\/v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?(?:\/|$)/;
 const VERSION_SEGMENT_REGEX =
   /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
@@ -23,12 +23,10 @@ type ParsedPath = {
 
 const parseDocsPath = (pathname: string): ParsedPath => {
   const segments = pathname.split("/").filter(Boolean);
-  if (segments[0] !== "docs") return {};
-
-  const service = segments[1];
+  const service = segments[0];
   if (!service) return {};
 
-  const versionSegment = segments[2];
+  const versionSegment = segments[1];
   if (versionSegment && VERSION_SEGMENT_REGEX.test(versionSegment)) {
     return {
       service,
@@ -58,7 +56,7 @@ const findServiceFolder = (tree: Root, service: string): Folder | null => {
   for (const folder of children) {
     const url = findFirstPageUrl(folder);
     if (!url) continue;
-    const match = url.match(/^\/docs\/([^/]+)/);
+    const match = url.match(/^\/([^/]+)/);
     if (match?.[1] === service) return folder;
   }
 
@@ -74,8 +72,8 @@ const findVersionFolder = (
   if (versionFolders.length === 0) return null;
 
   const matchPrefix = version
-    ? new RegExp(`^/docs/${service}/v${version}(?:/|$)`)
-    : new RegExp(`^/docs/${service}/(?!v\\d)`);
+    ? new RegExp(`^/${service}/v${version}(?:/|$)`)
+    : new RegExp(`^/${service}/(?!v\\d)`);
 
   for (const folder of versionFolders) {
     const url = findFirstPageUrl(folder);

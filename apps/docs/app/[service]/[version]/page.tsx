@@ -49,7 +49,7 @@ export default async function VersionRoute(props: VersionRouteProps) {
     notFound();
   }
 
-  redirect(`/docs/${service}/${version}/${defaultSlug}`);
+  redirect(`/${service}/${version}/${defaultSlug}`);
 }
 
 export async function generateMetadata(

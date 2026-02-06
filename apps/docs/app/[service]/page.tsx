@@ -33,5 +33,5 @@ export default async function ServiceRoute(props: ServiceRouteProps) {
     notFound();
   }
 
-  redirect(`/docs/${service}/${defaultSlug}`);
+  redirect(`/${service}/${defaultSlug}`);
 }

@@ -27,12 +27,10 @@ type ParsedPath = {
 
 const parseDocsPath = (pathname: string): ParsedPath => {
   const segments = pathname.split("/").filter(Boolean);
-  if (segments[0] !== "docs") return {};
-
-  const service = segments[1];
+  const service = segments[0];
   if (!service) return {};
 
-  const versionSegment = segments[2];
+  const versionSegment = segments[1];
   if (versionSegment && VERSION_SEGMENT_REGEX.test(versionSegment)) {
     return {
       service,
@@ -84,7 +82,7 @@ export function ServiceVersionSwitcher({
         value={serviceValue}
         onValueChange={(nextService) => {
           if (!nextService) return;
-          router.push(`/docs/${nextService}`);
+          router.push(`/${nextService}`);
         }}
       >
         <SelectTrigger className="w-full">
@@ -106,7 +104,7 @@ export function ServiceVersionSwitcher({
         disabled={!serviceValue || versions.length === 0}
         onValueChange={(nextVersion) => {
           if (!nextVersion || !serviceValue) return;
-          router.push(`/docs/${serviceValue}/v${nextVersion}`);
+          router.push(`/${serviceValue}/v${nextVersion}`);
         }}
       >
         <SelectTrigger className="w-full">
