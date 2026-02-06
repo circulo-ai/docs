@@ -1,6 +1,7 @@
 export type ServiceOption = {
   slug: string;
   name: string;
+  primaryColor?: string;
 };
 
 export type VersionOption = {

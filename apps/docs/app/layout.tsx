@@ -1,12 +1,15 @@
 import { DocsLayoutClient } from "@/lib/docs-layout-client";
 import { baseOptions } from "@/lib/layout.shared";
 import { buildAliasTree } from "@/lib/page-tree";
+import { ServicePrimaryColor } from "@/lib/service-primary-color";
 import { getServiceVersionOptions } from "@/lib/service-version-options";
 import { ServiceVersionSwitcher } from "@/lib/service-version-switcher";
 import { getSource } from "@/lib/source";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
+import { headers } from "next/headers";
+import type { CSSProperties } from "react";
 import "./globals.css";
 
 const fontSans = Noto_Sans({ variable: "--font-sans" });
@@ -17,10 +20,25 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const requestHeaders = await headers();
   const [source, serviceVersionOptions] = await Promise.all([
     getSource(),
     getServiceVersionOptions(),
   ]);
+  const serviceSlug = requestHeaders.get("x-service-slug");
+  const servicePrimaryColor = serviceVersionOptions.services
+    .find((service) => service.slug === serviceSlug)
+    ?.primaryColor?.trim();
+  const htmlStyle: CSSProperties | undefined = servicePrimaryColor
+    ? ({
+        "--primary": servicePrimaryColor,
+        "--accent": servicePrimaryColor,
+        "--sidebar-primary": servicePrimaryColor,
+        "--sidebar-accent": servicePrimaryColor,
+        "--chart-2": servicePrimaryColor,
+      } as CSSProperties)
+    : undefined;
+
   const tree = source.getPageTree();
   const aliasTree = await buildAliasTree(tree);
   const navChildren = (
@@ -31,9 +49,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   );
 
   return (
-    <html lang="en" className={fontSans.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={fontSans.variable}
+      style={htmlStyle}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <RootProvider>
+          <ServicePrimaryColor services={serviceVersionOptions.services} />
           <DocsLayoutClient
             tree={tree}
             aliasTree={aliasTree}
