@@ -13,6 +13,7 @@ import { cloneElement, isValidElement, type ComponentProps } from "react";
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
+import { getRichTextComponents } from "@/mdx-components";
 
 type LatestAliasProps = {
   params:
@@ -137,7 +138,7 @@ export default async function Page(props: LatestAliasProps) {
   return (
     <DocsPage
       toc={page.data.toc}
-      full={page.data.full}
+      tableOfContent={{ style: "clerk" }}
       breadcrumb={{
         component: <DocsBreadcrumb items={breadcrumbItems} />,
       }}
@@ -145,7 +146,11 @@ export default async function Page(props: LatestAliasProps) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <MDX components={{ a: aliasAwareLink }} />
+        <MDX
+          components={getRichTextComponents({
+            a: aliasAwareLink,
+          })}
+        />
       </DocsBody>
     </DocsPage>
   );

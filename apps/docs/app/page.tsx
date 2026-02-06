@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 
 import { getCmsConfig } from "@/lib/cms-config";
 import { CmsContent } from "@/lib/cms-content";
+import { extractTocFromRichText } from "@/lib/richtext";
 
 const resolveDocsSettings = async () => {
   const settings = await getDocsSettings(getCmsConfig(), { depth: 2 });
@@ -28,9 +29,10 @@ export default async function DocsIndex() {
   if (!resolved) notFound();
 
   const { title, description, content } = resolved;
+  const toc = extractTocFromRichText(content);
 
   return (
-    <DocsPage full>
+    <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
