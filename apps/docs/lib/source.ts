@@ -59,13 +59,22 @@ const buildMetaPath = (segments: string[]) =>
 const toTitle = (segment: string) =>
   segment.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
+const encodePathSegments = (segments: string[]) =>
+  segments.map((segment) => encodeURIComponent(segment));
+
 const buildPageUrl = (
   serviceSlug: string,
   versionSlug: string,
   slug: string,
 ) => {
   const segments = normalizeSlug(slug);
-  return `/${["docs", serviceSlug, versionSlug, ...segments].join("/")}`;
+  const encoded = encodePathSegments([
+    "docs",
+    serviceSlug,
+    versionSlug,
+    ...segments,
+  ]);
+  return `/${encoded.join("/")}`;
 };
 
 const collectNavSlugs = (nav: NavNode[]): string[] => {

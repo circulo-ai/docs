@@ -20,7 +20,11 @@ const normalizeSlug = (slug: string) =>
   slug
     .split("/")
     .map((part) => part.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+
+const encodeSlugPath = (slug: string) =>
+  normalizeSlug(slug)
+    .map((part) => encodeURIComponent(part))
     .join("/");
 
 export default async function VersionRoute(props: VersionRouteProps) {
@@ -40,8 +44,8 @@ export default async function VersionRoute(props: VersionRouteProps) {
     notFound();
   }
 
-  const defaultSlug = normalizeSlug(docVersion.defaultPageSlug ?? "");
-  if (!defaultSlug) {
+  const defaultSlug = encodeSlugPath(docVersion.defaultPageSlug ?? "");
+  if (!defaultSlug.length) {
     notFound();
   }
 

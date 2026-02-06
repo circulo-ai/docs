@@ -11,7 +11,11 @@ const normalizeSlug = (slug: string) =>
   slug
     .split("/")
     .map((part) => part.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+
+const encodeSlugPath = (slug: string) =>
+  normalizeSlug(slug)
+    .map((part) => encodeURIComponent(part))
     .join("/");
 
 export default async function ServiceRoute(props: ServiceRouteProps) {
@@ -24,8 +28,8 @@ export default async function ServiceRoute(props: ServiceRouteProps) {
     notFound();
   }
 
-  const defaultSlug = normalizeSlug(latest.defaultPageSlug ?? "");
-  if (!defaultSlug) {
+  const defaultSlug = encodeSlugPath(latest.defaultPageSlug ?? "");
+  if (!defaultSlug.length) {
     notFound();
   }
 
