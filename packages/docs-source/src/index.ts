@@ -35,10 +35,21 @@ export type DocVersion = {
   status?: "draft" | "published";
 };
 
+export type DocPageGroup = {
+  id: number | string;
+  service: number | string | Service;
+  version: number | string | DocVersion;
+  name: string;
+  slug?: string;
+  order?: number;
+  description?: string;
+};
+
 export type DocPage = {
   id: number | string;
   service: number | string | Service;
   version: number | string | DocVersion;
+  group?: number | string | DocPageGroup | null;
   slug: string;
   title: string;
   content: unknown;
@@ -52,6 +63,7 @@ export type DocsSettings = {
 };
 
 export type NavNode = {
+  kind?: "page" | "group";
   title: string;
   slug: string;
   children?: NavNode[];
@@ -430,16 +442,26 @@ export const getPage = async (
   return response.docs[0] ?? null;
 };
 
-const buildNavTree = (pages: DocPage[]): NavNode[] => {
+const isPopulatedDocPageGroup = (
+  value: DocPage["group"],
+): value is DocPageGroup =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  "name" in value;
+
+const buildSlugTree = (pages: DocPage[]): NavNode[] => {
   type MutableNode = {
     title: string;
     slug: string;
+    kind: "page";
     children: Map<string, MutableNode>;
   };
 
   const root: MutableNode = {
     title: "",
     slug: "",
+    kind: "page",
     children: new Map(),
   };
 
@@ -457,6 +479,7 @@ const buildNavTree = (pages: DocPage[]): NavNode[] => {
         const created: MutableNode = {
           title: toTitle(segment),
           slug: currentSlug,
+          kind: "page",
           children: new Map(),
         };
         node.children.set(segment, created);
@@ -475,13 +498,69 @@ const buildNavTree = (pages: DocPage[]): NavNode[] => {
       .map(toNavNode)
       .sort((a, b) => a.slug.localeCompare(b.slug));
     return children.length
-      ? { title: node.title, slug: node.slug, children }
-      : { title: node.title, slug: node.slug };
+      ? { kind: node.kind, title: node.title, slug: node.slug, children }
+      : { kind: node.kind, title: node.title, slug: node.slug };
   };
 
   return Array.from(root.children.values())
     .map(toNavNode)
     .sort((a, b) => a.slug.localeCompare(b.slug));
+};
+
+const buildNavTree = (pages: DocPage[]): NavNode[] => {
+  const grouped = new Map<
+    string,
+    { title: string; order: number; slug: string; pages: DocPage[] }
+  >();
+  const ungrouped: DocPage[] = [];
+
+  pages.forEach((page) => {
+    if (!isPopulatedDocPageGroup(page.group)) {
+      ungrouped.push(page);
+      return;
+    }
+
+    const groupTitle = page.group.name.trim();
+    if (!groupTitle.length) {
+      ungrouped.push(page);
+      return;
+    }
+
+    const groupKey = String(page.group.id);
+    const existing = grouped.get(groupKey);
+    if (existing) {
+      existing.pages.push(page);
+      return;
+    }
+
+    const groupSlug =
+      typeof page.group.slug === "string" && page.group.slug.length > 0
+        ? page.group.slug
+        : groupKey;
+    grouped.set(groupKey, {
+      title: groupTitle,
+      order: typeof page.group.order === "number" ? page.group.order : 0,
+      slug: `__group__/${groupSlug}`,
+      pages: [page],
+    });
+  });
+
+  const nav: NavNode[] = buildSlugTree(ungrouped);
+
+  const groupNodes = Array.from(grouped.values())
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+    .map(
+      (group): NavNode => ({
+        kind: "group",
+        title: group.title,
+        slug: group.slug,
+        children: buildSlugTree(group.pages),
+      }),
+    )
+    .filter((group) => (group.children?.length ?? 0) > 0);
+
+  nav.push(...groupNodes);
+  return nav;
 };
 
 export const getNav = async (
@@ -495,7 +574,7 @@ export const getNav = async (
   const versionId = await getVersionId(config, serviceId, params.version);
 
   const pages = await fetchAll<DocPage>(config, "/api/docPages", {
-    depth: "0",
+    depth: "1",
     limit: "100",
     sort: "slug",
     "where[service][equals]": String(serviceId),

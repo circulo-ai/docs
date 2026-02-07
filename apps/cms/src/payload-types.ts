@@ -71,6 +71,7 @@ export interface Config {
     media: Media
     services: Service
     docVersions: DocVersion
+    docPageGroups: DocPageGroup
     docPages: DocPage
     redirects: Redirect
     'payload-kv': PayloadKv
@@ -84,6 +85,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>
     services: ServicesSelect<false> | ServicesSelect<true>
     docVersions: DocVersionsSelect<false> | DocVersionsSelect<true>
+    docPageGroups: DocPageGroupsSelect<false> | DocPageGroupsSelect<true>
     docPages: DocPagesSelect<false> | DocPagesSelect<true>
     redirects: RedirectsSelect<false> | RedirectsSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
@@ -241,6 +243,30 @@ export interface DocVersion {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docPageGroups".
+ */
+export interface DocPageGroup {
+  id: number
+  service: number | Service
+  version: number | DocVersion
+  /**
+   * Label used in the docs sidebar (e.g. "Getting Started").
+   */
+  name: string
+  /**
+   * Auto-generated from the group name.
+   */
+  slug?: string | null
+  description?: string | null
+  /**
+   * Lower values are shown first in the sidebar.
+   */
+  order?: number | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docPages".
  */
 export interface DocPage {
@@ -251,6 +277,10 @@ export interface DocPage {
    * Path segments for the page (use "/" for nested paths).
    */
   slug: string
+  /**
+   * Optional sidebar group for this page.
+   */
+  group?: (number | null) | DocPageGroup
   title: string
   content: {
     root: {
@@ -330,6 +360,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'docVersions'
         value: number | DocVersion
+      } | null)
+    | ({
+        relationTo: 'docPageGroups'
+        value: number | DocPageGroup
       } | null)
     | ({
         relationTo: 'docPages'
@@ -464,12 +498,27 @@ export interface DocVersionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docPageGroups_select".
+ */
+export interface DocPageGroupsSelect<T extends boolean = true> {
+  service?: T
+  version?: T
+  name?: T
+  slug?: T
+  description?: T
+  order?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "docPages_select".
  */
 export interface DocPagesSelect<T extends boolean = true> {
   service?: T
   version?: T
   slug?: T
+  group?: T
   title?: T
   content?: T
   status?: T

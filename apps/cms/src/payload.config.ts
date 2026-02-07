@@ -9,6 +9,7 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Services } from './collections/Services'
 import { DocVersions } from './collections/DocVersions'
+import { DocPageGroups } from './collections/DocPageGroups'
 import { DocPages } from './collections/DocPages'
 import { Redirects } from './collections/Redirects'
 import { DocsSettings } from './globals/DocsSettings'
@@ -23,7 +24,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Services, DocVersions, DocPages, Redirects],
+  collections: [Users, Media, Services, DocVersions, DocPageGroups, DocPages, Redirects],
   globals: [DocsSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

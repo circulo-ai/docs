@@ -8,7 +8,13 @@ import {
   type DocPage,
   type NavNode,
 } from "@repo/docs-source";
-import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
+import type {
+  Folder,
+  Item,
+  Node,
+  Root,
+  Separator,
+} from "fumadocs-core/page-tree";
 import type { MetaData, PageData } from "fumadocs-core/source";
 import { source as createSource, loader } from "fumadocs-core/source";
 import type { TOCItemType } from "fumadocs-core/toc";
@@ -75,7 +81,7 @@ const collectNavSlugs = (nav: NavNode[]): string[] => {
   const seen = new Set<string>();
 
   const walk = (node: NavNode) => {
-    if (!seen.has(node.slug)) {
+    if (node.kind !== "group" && !seen.has(node.slug)) {
       ordered.push(node.slug);
       seen.add(node.slug);
     }
@@ -108,6 +114,24 @@ const buildNavNodes = (
       const children = node.children ? walk(node.children) : [];
       const label =
         node.title || toTitle(normalizeSlug(node.slug).slice(-1)[0] ?? "Docs");
+
+      if (node.kind === "group") {
+        if (children.length === 0) return [];
+
+        const badge = createElement(
+          "span",
+          {
+            className:
+              "inline-flex items-center rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
+          },
+          label,
+        );
+        const separator: Separator = {
+          type: "separator",
+          name: badge,
+        };
+        return [separator, ...children];
+      }
 
       if (node.children && node.children.length > 0) {
         const folder: Folder = {
