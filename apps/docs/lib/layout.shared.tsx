@@ -10,7 +10,7 @@ export function baseOptions(
 ): BaseLayoutProps {
   return {
     nav: {
-      title: "My App",
+      title: "Circulo AI Docs",
     },
     links: [{ type: "custom", children: overrides.navChildren }],
   };
