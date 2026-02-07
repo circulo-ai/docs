@@ -12,6 +12,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 
+import { resolveServiceIcon } from "@/lib/service-icons";
 import type {
   ServiceVersionOptions,
   VersionOption,
@@ -71,6 +72,12 @@ export function ServiceVersionSwitcher({
     services.some((service) => service.slug === currentService)
       ? currentService
       : "";
+  const selectedService = services.find(
+    (service) => service.slug === serviceValue,
+  );
+  const serviceLabel = selectedService?.name ?? "";
+  const selectedServiceDescription = selectedService?.description?.trim();
+  const SelectedServiceIcon = resolveServiceIcon(selectedService?.icon);
   const versions = serviceValue ? (versionsByService[serviceValue] ?? []) : [];
   const versionValue = resolveVersionValue(versions, currentVersion);
 
@@ -86,19 +93,37 @@ export function ServiceVersionSwitcher({
         }}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Service" />
+          <SelectValue placeholder="Service">
+            {serviceValue ? (
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <SelectedServiceIcon className="h-3.5 w-3.5" />
+                </span>
+                <span className="min-w-0 truncate">{serviceLabel}</span>
+              </span>
+            ) : null}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectLabel>Services</SelectLabel>
             {services.map((service) => (
               <SelectItem key={service.slug} value={service.slug}>
-                {service.name}
+                <ServiceOptionContent
+                  description={service.description}
+                  icon={service.icon}
+                  name={service.name}
+                />
               </SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>
       </Select>
+      {selectedServiceDescription ? (
+        <p className="-mt-1 line-clamp-2 text-xs text-muted-foreground">
+          {selectedServiceDescription}
+        </p>
+      ) : null}
       <Select
         value={versionValue === "" ? "Version" : `v${versionValue}`}
         disabled={!serviceValue || versions.length === 0}
@@ -122,5 +147,36 @@ export function ServiceVersionSwitcher({
         </SelectContent>
       </Select>
     </div>
+  );
+}
+
+type ServiceOptionContentProps = {
+  description?: string;
+  icon?: string;
+  name: string;
+};
+
+function ServiceOptionContent({
+  description,
+  icon,
+  name,
+}: ServiceOptionContentProps) {
+  const Icon = resolveServiceIcon(icon);
+  const trimmedDescription = description?.trim();
+
+  return (
+    <span className="flex items-start gap-2 py-0.5">
+      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" />
+      </span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate font-medium text-foreground">{name}</span>
+        {trimmedDescription ? (
+          <span className="line-clamp-2 text-xs text-muted-foreground">
+            {trimmedDescription}
+          </span>
+        ) : null}
+      </span>
+    </span>
   );
 }
