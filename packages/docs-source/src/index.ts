@@ -11,6 +11,8 @@ export type Service = {
   id: number | string;
   name: string;
   slug: string;
+  description?: string;
+  icon?: string;
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;

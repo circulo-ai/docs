@@ -185,6 +185,34 @@ export interface Service {
    * URL prefix for this service (e.g. "api", "cli").
    */
   slug: string
+  /**
+   * Short summary shown in the docs service selector. Keep this concise (1-2 lines).
+   */
+  description: string
+  /**
+   * Lucide icon used in the docs service selector. You can search by icon name.
+   */
+  icon:
+    | 'BookOpen'
+    | 'FileText'
+    | 'Code2'
+    | 'TerminalSquare'
+    | 'Server'
+    | 'Database'
+    | 'Cloud'
+    | 'Globe'
+    | 'Shield'
+    | 'Workflow'
+    | 'Blocks'
+    | 'Settings'
+    | 'Rocket'
+    | 'Cpu'
+    | 'Component'
+    | 'Layers'
+    | 'Package'
+    | 'LifeBuoy'
+    | 'Wrench'
+    | 'Bot'
   theme?: {
     /**
      * CSS color token for primary UI elements.
@@ -429,6 +457,8 @@ export interface MediaSelect<T extends boolean = true> {
 export interface ServicesSelect<T extends boolean = true> {
   name?: T
   slug?: T
+  description?: T
+  icon?: T
   theme?:
     | T
     | {

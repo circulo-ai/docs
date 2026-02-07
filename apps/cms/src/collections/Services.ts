@@ -1,10 +1,11 @@
 import type { CollectionConfig } from 'payload'
+import { DEFAULT_SERVICE_ICON, serviceIconOptions } from '../utils/serviceIcons'
 
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'slug', 'icon', 'updatedAt'],
   },
   access: {
     read: () => true,
@@ -23,6 +24,25 @@ export const Services: CollectionConfig = {
       index: true,
       admin: {
         description: 'URL prefix for this service (e.g. "api", "cli").',
+      },
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      required: true,
+      admin: {
+        description:
+          'Short summary shown in the docs service selector. Keep this concise (1-2 lines).',
+      },
+    },
+    {
+      name: 'icon',
+      type: 'select',
+      required: true,
+      defaultValue: DEFAULT_SERVICE_ICON,
+      options: serviceIconOptions,
+      admin: {
+        description: 'Lucide icon used in the docs service selector. You can search by icon name.',
       },
     },
     {

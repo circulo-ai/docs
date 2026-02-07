@@ -13,12 +13,16 @@ import type {
 const toServiceOption = (service: {
   slug: string;
   name: string;
+  description?: string;
+  icon?: string;
   theme?: {
     primaryColor?: string;
   };
 }): ServiceOption => ({
   slug: service.slug,
   name: service.name,
+  description: service.description,
+  icon: service.icon,
   primaryColor: service.theme?.primaryColor,
 });
 
