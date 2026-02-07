@@ -7,12 +7,26 @@ export type DocsSourceConfig = {
   };
 };
 
+export type Media = {
+  id: number | string;
+  url?: string;
+  filename?: string;
+  mimeType?: string;
+  alt?: string;
+};
+
+export type ServiceIcon = {
+  source?: "lucide" | "custom";
+  lucide?: string;
+  customSvg?: Media | number | string | null;
+};
+
 export type Service = {
   id: number | string;
   name: string;
   slug: string;
   description?: string;
-  icon?: string;
+  icon?: ServiceIcon | string;
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;

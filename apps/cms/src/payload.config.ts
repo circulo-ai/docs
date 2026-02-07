@@ -1,5 +1,6 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { s3Storage } from '@payloadcms/storage-s3'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -16,6 +17,19 @@ import { DocsSettings } from './globals/DocsSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const s3Bucket = process.env.S3_BUCKET
+const s3Region = process.env.S3_REGION
+const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID
+const s3SecretAccessKey = process.env.S3_SECRET_ACCESS_KEY
+
+if (!s3Bucket || !s3Region || !s3AccessKeyId || !s3SecretAccessKey) {
+  throw new Error(
+    'Missing S3 configuration. Set S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY.',
+  )
+}
+
+const s3Endpoint = process.env.S3_ENDPOINT
+const s3ForcePathStyle = process.env.S3_FORCE_PATH_STYLE === 'true'
 
 export default buildConfig({
   admin: {
@@ -37,5 +51,21 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    s3Storage({
+      collections: {
+        media: true,
+      },
+      bucket: s3Bucket,
+      config: {
+        credentials: {
+          accessKeyId: s3AccessKeyId,
+          secretAccessKey: s3SecretAccessKey,
+        },
+        region: s3Region,
+        ...(s3Endpoint ? { endpoint: s3Endpoint } : {}),
+        ...(s3ForcePathStyle ? { forcePathStyle: true } : {}),
+      },
+    }),
+  ],
 })

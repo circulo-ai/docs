@@ -14,6 +14,7 @@ import { useMemo } from "react";
 
 import { ServiceIcon } from "@/lib/service-icons";
 import type {
+  ServiceOption,
   ServiceVersionOptions,
   VersionOption,
 } from "@/lib/service-version-types";
@@ -97,7 +98,7 @@ export function ServiceVersionSwitcher({
               <span className="flex min-w-0 items-center gap-2">
                 <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-input/30 text-muted-foreground">
                   <ServiceIcon
-                    iconName={selectedService?.icon}
+                    icon={selectedService?.icon}
                     className="h-3.5 w-3.5"
                   />
                 </span>
@@ -154,7 +155,7 @@ export function ServiceVersionSwitcher({
 
 type ServiceOptionContentProps = {
   description?: string;
-  icon?: string;
+  icon?: ServiceOption["icon"];
   name: string;
 };
 
@@ -168,7 +169,7 @@ function ServiceOptionContent({
   return (
     <span className="flex w-full items-start gap-2 py-0.5">
       <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        <ServiceIcon iconName={icon} className="h-3.5 w-3.5" />
+        <ServiceIcon icon={icon} className="h-3.5 w-3.5" />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-medium text-foreground">{name}</span>

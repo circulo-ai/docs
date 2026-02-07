@@ -10,6 +10,39 @@ export const Services: CollectionConfig = {
   access: {
     read: () => true,
   },
+  hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (!data || typeof data !== 'object') return data
+        const iconValue = (data as { icon?: unknown }).icon
+        if (typeof iconValue === 'string') {
+          return {
+            ...data,
+            icon: {
+              source: 'lucide',
+              lucide: iconValue,
+            },
+          }
+        }
+        return data
+      },
+    ],
+    afterRead: [
+      ({ doc }) => {
+        const iconValue = (doc as { icon?: unknown }).icon
+        if (typeof iconValue === 'string') {
+          return {
+            ...doc,
+            icon: {
+              source: 'lucide',
+              lucide: iconValue,
+            },
+          }
+        }
+        return doc
+      },
+    ],
+  },
   fields: [
     {
       name: 'name',
@@ -37,13 +70,60 @@ export const Services: CollectionConfig = {
     },
     {
       name: 'icon',
-      type: 'select',
-      required: true,
-      defaultValue: DEFAULT_SERVICE_ICON,
-      options: serviceIconOptions,
+      type: 'group',
       admin: {
-        description: 'Lucide icon used in the docs service selector. You can search by icon name.',
+        description: 'Icon used in the docs service selector.',
+        components: {
+          Cell: './components/IconCell',
+        },
       },
+      fields: [
+        {
+          name: 'source',
+          type: 'radio',
+          defaultValue: 'lucide',
+          options: [
+            { label: 'Lucide', value: 'lucide' },
+            { label: 'Custom SVG', value: 'custom' },
+          ],
+          admin: {
+            layout: 'horizontal',
+          },
+        },
+        {
+          name: 'lucide',
+          type: 'select',
+          defaultValue: DEFAULT_SERVICE_ICON,
+          options: serviceIconOptions,
+          admin: {
+            description: 'Search the Lucide icon library by name.',
+            condition: (_, siblingData) => siblingData?.source !== 'custom',
+            components: {
+              Field: './components/IconSelectField',
+            },
+          },
+          validate: (value: unknown, { siblingData }: { siblingData?: { source?: string } }) => {
+            if (siblingData?.source === 'custom') return true
+            return value ? true : 'Select a Lucide icon.'
+          },
+        },
+        {
+          name: 'customSvg',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Upload an SVG icon.',
+            condition: (_, siblingData) => siblingData?.source === 'custom',
+          },
+          filterOptions: {
+            mimeType: { equals: 'image/svg+xml' },
+          },
+          validate: (value: unknown, { siblingData }: { siblingData?: { source?: string } }) => {
+            if (siblingData?.source !== 'custom') return true
+            return value ? true : 'Upload an SVG icon.'
+          },
+        },
+      ],
     },
     {
       name: 'theme',

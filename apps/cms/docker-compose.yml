@@ -1,8 +1,7 @@
-version: '3'
-
 services:
   payload:
     image: node:18-alpine
+    restart: unless-stopped
     ports:
       - '3000:3000'
     volumes:
@@ -11,22 +10,68 @@ services:
     working_dir: /home/node/app/
     command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
     depends_on:
-      - mongo
-      # - postgres
+      mongo:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+      # postgres:
+      #   condition: service_healthy
     env_file:
       - .env
+    environment:
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
 
   # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
   mongo:
     image: mongo:latest
+    restart: unless-stopped
     ports:
       - '27017:27017'
     command:
       - --storageEngine=wiredTiger
     volumes:
       - data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand({ ping: 1 })']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     logging:
       driver: none
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001" --address ":9000"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY is required}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-http://localhost:3000}
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    restart: 'no'
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required} ${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY is required}; do
+        echo 'Waiting for MinIO to be ready...';
+        sleep 2;
+      done;
+      mc mb --ignore-existing local/${S3_BUCKET:?S3_BUCKET is required};
+      mc anonymous set private local/${S3_BUCKET:?S3_BUCKET is required};
+      "
 
   # Uncomment the following to use postgres
   # postgres:
@@ -39,5 +84,6 @@ services:
 
 volumes:
   data:
+  minio_data:
   # pgdata:
   node_modules:
