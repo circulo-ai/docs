@@ -165,14 +165,14 @@ function ServiceOptionContent({
   const trimmedDescription = description?.trim();
 
   return (
-    <span className="flex items-start gap-2 py-0.5">
+    <span className="flex w-full items-start gap-2 py-0.5">
       <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <Icon className="h-3.5 w-3.5" />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-medium text-foreground">{name}</span>
         {trimmedDescription ? (
-          <span className="line-clamp-2 text-xs text-muted-foreground">
+          <span className="truncate text-xs text-muted-foreground">
             {trimmedDescription}
           </span>
         ) : null}
