@@ -1,4 +1,5 @@
-import { icons, type LucideIcon } from "lucide-react";
+import { icons, type LucideIcon, type LucideProps } from "lucide-react";
+import { createElement } from "react";
 
 const FALLBACK_SERVICE_ICON = "BookOpen" as const;
 
@@ -14,3 +15,11 @@ export const resolveServiceIcon = (iconName?: string): LucideIcon => {
 
   return icons[FALLBACK_SERVICE_ICON];
 };
+
+type ServiceIconProps = LucideProps & {
+  iconName?: string;
+};
+
+export function ServiceIcon({ iconName, ...props }: ServiceIconProps) {
+  return createElement(resolveServiceIcon(iconName), props);
+}

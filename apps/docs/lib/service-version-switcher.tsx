@@ -12,7 +12,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 
-import { resolveServiceIcon } from "@/lib/service-icons";
+import { ServiceIcon } from "@/lib/service-icons";
 import type {
   ServiceVersionOptions,
   VersionOption,
@@ -77,7 +77,6 @@ export function ServiceVersionSwitcher({
   );
   const serviceLabel = selectedService?.name ?? "";
   const selectedServiceDescription = selectedService?.description?.trim();
-  const SelectedServiceIcon = resolveServiceIcon(selectedService?.icon);
   const versions = serviceValue ? (versionsByService[serviceValue] ?? []) : [];
   const versionValue = resolveVersionValue(versions, currentVersion);
 
@@ -96,8 +95,11 @@ export function ServiceVersionSwitcher({
           <SelectValue placeholder="Service">
             {serviceValue ? (
               <span className="flex min-w-0 items-center gap-2">
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                  <SelectedServiceIcon className="h-3.5 w-3.5" />
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-input/30 text-muted-foreground">
+                  <ServiceIcon
+                    iconName={selectedService?.icon}
+                    className="h-3.5 w-3.5"
+                  />
                 </span>
                 <span className="min-w-0 truncate">{serviceLabel}</span>
               </span>
@@ -161,13 +163,12 @@ function ServiceOptionContent({
   icon,
   name,
 }: ServiceOptionContentProps) {
-  const Icon = resolveServiceIcon(icon);
   const trimmedDescription = description?.trim();
 
   return (
     <span className="flex w-full items-start gap-2 py-0.5">
       <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
+        <ServiceIcon iconName={icon} className="h-3.5 w-3.5" />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-medium text-foreground">{name}</span>
