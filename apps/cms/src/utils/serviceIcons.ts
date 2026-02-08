@@ -11,9 +11,9 @@ const toTitle = (value: string) =>
     .replace(/[-_]/g, ' ')
     .trim()
 
-const SERVICE_ICON_NAMES = Object.keys(icons).filter(
-  (iconName) => typeof icons[iconName as keyof typeof icons] === 'function',
-)
+// Lucide icons are React.forwardRef components, which are objects at runtime.
+// Filtering by `typeof === 'function'` incorrectly strips all icon names.
+const SERVICE_ICON_NAMES = Object.keys(icons)
 
 export const DEFAULT_SERVICE_ICON = SERVICE_ICON_NAMES.includes('BookOpen')
   ? 'BookOpen'
