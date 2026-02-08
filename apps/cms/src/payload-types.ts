@@ -192,29 +192,19 @@ export interface Service {
    */
   description: string
   /**
-   * Lucide icon used in the docs service selector. You can search by icon name.
+   * Icon used in the docs service selector.
    */
-  icon:
-    | 'BookOpen'
-    | 'FileText'
-    | 'Code2'
-    | 'TerminalSquare'
-    | 'Server'
-    | 'Database'
-    | 'Cloud'
-    | 'Globe'
-    | 'Shield'
-    | 'Workflow'
-    | 'Blocks'
-    | 'Settings'
-    | 'Rocket'
-    | 'Cpu'
-    | 'Component'
-    | 'Layers'
-    | 'Package'
-    | 'LifeBuoy'
-    | 'Wrench'
-    | 'Bot'
+  icon?: {
+    source?: ('lucide' | 'custom') | null
+    /**
+     * Search the Lucide icon library by name.
+     */
+    lucide?: string | null
+    /**
+     * Upload an SVG icon.
+     */
+    customSvg?: (number | null) | Media
+  }
   theme?: {
     /**
      * CSS color token for primary UI elements.
@@ -492,7 +482,13 @@ export interface ServicesSelect<T extends boolean = true> {
   name?: T
   slug?: T
   description?: T
-  icon?: T
+  icon?:
+    | T
+    | {
+        source?: T
+        lucide?: T
+        customSvg?: T
+      }
   theme?:
     | T
     | {
