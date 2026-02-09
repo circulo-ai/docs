@@ -1,4 +1,4 @@
-import type { Access } from 'payload'
+import type { Access, FieldAccess } from 'payload'
 
 export type UserRole = 'admin' | 'editor' | 'writer'
 
@@ -22,7 +22,13 @@ export const allowRoles =
   ({ req }) =>
     hasRole(req.user, roles)
 
+export const allowRolesField =
+  (roles: UserRole[] | UserRole): FieldAccess =>
+  ({ req }) =>
+    hasRole(req.user, roles)
+
 export const isAdmin = allowRoles('admin')
+export const isAdminField = allowRolesField('admin')
 export const isEditor = allowRoles(editorRoles)
 export const isWriter = allowRoles(writerRoles)
 

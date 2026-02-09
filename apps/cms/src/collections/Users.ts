@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../access/roles'
+import { isAdminField } from '../access/roles'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -23,7 +23,7 @@ export const Users: CollectionConfig = {
       required: true,
       saveToJWT: true,
       access: {
-        update: isAdmin,
+        update: isAdminField,
       },
     },
   ],
