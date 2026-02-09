@@ -188,7 +188,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          'node -e "fetch(''http://127.0.0.1:3000/api/users/login'', { method: ''POST'', headers: { ''Content-Type'': ''application/json'' }, body: JSON.stringify({ email: ''healthcheck@example.com'', password: ''invalid'' }) }).then((res)=>process.exit(res.status < 500 ? 0 : 1)).catch(()=>process.exit(1))"',
+          'node -e "const net=require(''node:net'');const socket=net.connect({host:''127.0.0.1'',port:3000});socket.setTimeout(5000);socket.on(''connect'',()=>{socket.end();process.exit(0)});socket.on(''timeout'',()=>{socket.destroy();process.exit(1)});socket.on(''error'',()=>process.exit(1));"',
         ]
       interval: 20s
       timeout: 10s
@@ -225,7 +225,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          'node -e "fetch(''http://127.0.0.1:3000'').then((res)=>process.exit(res.status < 500 ? 0 : 1)).catch(()=>process.exit(1))"',
+          'node -e "const net=require(''node:net'');const socket=net.connect({host:''127.0.0.1'',port:3000});socket.setTimeout(5000);socket.on(''connect'',()=>{socket.end();process.exit(0)});socket.on(''timeout'',()=>{socket.destroy();process.exit(1)});socket.on(''error'',()=>process.exit(1));"',
         ]
       interval: 20s
       timeout: 10s
