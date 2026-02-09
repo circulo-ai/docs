@@ -24,6 +24,7 @@ COPY --from=deps /repo/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=deps /repo/package.json ./package.json
 COPY --from=deps /repo/turbo.json ./turbo.json
 COPY . .
+RUN mkdir -p apps/docs/public
 ARG DOCS_CMS_URL=http://cms:3000
 ARG DOCS_ALLOW_LOCAL_IP=true
 ENV DOCS_CMS_URL=$DOCS_CMS_URL
