@@ -22,6 +22,7 @@ COPY --from=deps /repo/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=deps /repo/package.json ./package.json
 COPY --from=deps /repo/turbo.json ./turbo.json
 COPY . .
+RUN mkdir -p apps/cms/public
 ARG S3_BUCKET
 ARG S3_REGION
 ARG S3_ACCESS_KEY_ID
