@@ -40,5 +40,5 @@ COPY --from=builder --chown=nextjs:nodejs /repo/apps/docs/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /repo/apps/docs/.next/static ./apps/docs/.next/static
 COPY --from=builder --chown=nextjs:nodejs /repo/apps/docs/public ./apps/docs/public
 USER nextjs
-EXPOSE 3000
+EXPOSE 3001
 CMD ["node", "apps/docs/server.js"]
