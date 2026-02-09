@@ -22,6 +22,18 @@ COPY --from=deps /repo/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=deps /repo/package.json ./package.json
 COPY --from=deps /repo/turbo.json ./turbo.json
 COPY . .
+ARG S3_BUCKET
+ARG S3_REGION
+ARG S3_ACCESS_KEY_ID
+ARG S3_SECRET_ACCESS_KEY
+ARG S3_ENDPOINT
+ARG S3_FORCE_PATH_STYLE
+ENV S3_BUCKET=$S3_BUCKET
+ENV S3_REGION=$S3_REGION
+ENV S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID
+ENV S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY
+ENV S3_ENDPOINT=$S3_ENDPOINT
+ENV S3_FORCE_PATH_STYLE=$S3_FORCE_PATH_STYLE
 RUN pnpm --filter ./apps/cms build
 
 FROM node:22-alpine AS runner

@@ -9,7 +9,8 @@
         "DOCS_CMS_URL",
         "DOCS_INCLUDE_DRAFTS",
         "DOCS_EMAIL",
-        "DOCS_PASSWORD"
+        "DOCS_PASSWORD",
+        "DOCS_ALLOW_LOCAL_IP"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]

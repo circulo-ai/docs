@@ -1,4 +1,9 @@
+import { loadEnvConfig } from "@next/env";
+import path from "node:path";
 import process from "node:process";
+
+const projectRoot = path.resolve(process.cwd(), "../..");
+loadEnvConfig(projectRoot);
 
 const localhostOrigin = new URL("http://localhost:3000");
 const cmsOrigin = (() => {
