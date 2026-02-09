@@ -1,0 +1,109 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-docs_cms}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-2648}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-docs_cms}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - backend
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001" --address ":9000"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-minioadmin123}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-http://localhost:3000}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_local_data:/data
+    healthcheck:
+      disable: true
+    networks:
+      - backend
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-minioadmin} ${S3_SECRET_ACCESS_KEY:-minioadmin123}; do
+        echo 'Waiting for MinIO to be ready...';
+        sleep 2;
+      done;
+      mc mb --ignore-existing local/${S3_BUCKET:-payload-media};
+      mc anonymous set private local/${S3_BUCKET:-payload-media};
+      "
+    networks:
+      - backend
+
+  cms-migrate:
+    build:
+      context: .
+      dockerfile: docker/cms.Dockerfile
+      target: builder
+      args:
+        S3_BUCKET: ${S3_BUCKET:-payload-media}
+        S3_REGION: ${S3_REGION:-us-east-1}
+        S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-minioadmin}
+        S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-minioadmin123}
+        S3_ENDPOINT: http://minio:9000
+        S3_FORCE_PATH_STYLE: "true"
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-2648}@postgres:5432/${POSTGRES_DB:-docs_cms}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-dev-payload-secret}
+      DOCS_EMAIL: ${DOCS_EMAIL:-}
+      DOCS_PASSWORD: ${DOCS_PASSWORD:-}
+      S3_BUCKET: ${S3_BUCKET:-payload-media}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-minioadmin}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-minioadmin123}
+      S3_ENDPOINT: http://minio:9000
+      S3_FORCE_PATH_STYLE: "true"
+    command: /bin/sh -c "pnpm --filter ./apps/cms payload migrate && pnpm --filter ./apps/cms payload run scripts/bootstrap-docs-user.ts"
+    networks:
+      - backend
+
+networks:
+  edge:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_local_data:
+  minio_local_data:
