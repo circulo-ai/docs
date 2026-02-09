@@ -18,6 +18,7 @@ RUN pnpm install --frozen-lockfile --filter ./apps/docs...
 
 FROM base AS builder
 COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/apps/docs/node_modules ./apps/docs/node_modules
 COPY --from=deps /repo/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=deps /repo/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=deps /repo/package.json ./package.json
