@@ -128,11 +128,40 @@
 }
 
 @layer components {
+  .payload-richtext {
+    @apply text-foreground;
+  }
+
   .payload-richtext .code-block {
-    @apply my-4 overflow-x-auto rounded-lg bg-muted px-5 py-4 text-sm leading-6;
+    @apply my-4 block w-full overflow-x-auto rounded-lg border border-border bg-muted px-5 py-4 text-sm leading-6;
   }
 
   .payload-richtext .code-block code {
-    @apply bg-transparent p-0;
+    @apply block bg-transparent p-0 font-mono text-[0.9em] leading-6 text-foreground;
+  }
+
+  .payload-richtext .code-block code::before,
+  .payload-richtext .code-block code::after {
+    content: none;
+  }
+
+  .payload-richtext :not(pre) > code {
+    @apply rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.9em];
+  }
+
+  .payload-richtext .callout {
+    @apply my-4 rounded-lg border border-border bg-card px-4 py-3;
+  }
+
+  .payload-richtext .callout[data-variant="warning"] {
+    @apply border-yellow-500/40 bg-yellow-500/10;
+  }
+
+  .payload-richtext .callout[data-variant="success"] {
+    @apply border-green-500/40 bg-green-500/10;
+  }
+
+  .payload-richtext .callout[data-variant="error"] {
+    @apply border-destructive/40 bg-destructive/10;
   }
 }

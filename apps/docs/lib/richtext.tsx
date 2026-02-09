@@ -119,7 +119,10 @@ const buildConverters = (options: {
   const { baseUrl, components, slugger } = options;
   const linkComponent = components?.a ?? "a";
   const calloutComponent = components?.Callout ?? "div";
-  const codeBlockComponent = components?.CodeBlock ?? components?.pre ?? "pre";
+  // Keep rich-text code blocks on a stable <pre> contract unless an explicit
+  // CodeBlock component is provided. Reusing MDX `pre` adapters can change
+  // markup/styling expectations and regress rendering.
+  const codeBlockComponent = components?.CodeBlock ?? "pre";
 
   const renderCodeBlockFromFields = (fields?: Record<string, unknown>) => {
     if (!fields) return null;
