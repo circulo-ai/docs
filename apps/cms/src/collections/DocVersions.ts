@@ -6,7 +6,7 @@ import type {
 } from 'payload'
 
 import { isWriter, readPublishedOrRoles, writerRoles, isEditor } from '../access/roles'
-import { enforcePublishPermissions } from '../access/publish'
+import { enforcePublishPermissions, enforceVersionStateIntegrity } from '../access/publish'
 import { extractServiceId, syncLatestVersionForServices } from '../utils/latestVersion'
 import { buildVersionKey, parseSemver } from '../utils/semver'
 
@@ -69,7 +69,7 @@ export const DocVersions: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [syncSemverFields, normalizeDefaultPageSlugHook],
-    beforeChange: [enforcePublishPermissions('Doc version')],
+    beforeChange: [enforcePublishPermissions('Doc version'), enforceVersionStateIntegrity],
     afterChange: [updateLatestVersion],
     afterDelete: [updateLatestVersionOnDelete],
   },

@@ -2,7 +2,13 @@ import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
 import { ValidationError } from 'payload'
 
 import { isEditor, isWriter, readPublishedOrRoles, writerRoles } from '../access/roles'
-import { enforcePublishPermissions, enforceVersionPublished } from '../access/publish'
+import {
+  enforcePageDeleteIntegrity,
+  enforcePageServiceMatchesVersion,
+  enforcePublishPermissions,
+  enforcePublishedPageState,
+  enforceVersionPublished,
+} from '../access/publish'
 import { docsLexicalEditor } from '../utils/docsEditor'
 
 type RelationValue = number | string | { id?: number | string } | null | undefined
@@ -104,9 +110,12 @@ export const DocPages: CollectionConfig = {
   hooks: {
     beforeChange: [
       enforcePublishPermissions('Doc page'),
+      enforcePageServiceMatchesVersion,
       enforceVersionPublished,
+      enforcePublishedPageState,
       enforceGroupMatchesServiceAndVersion,
     ],
+    beforeDelete: [enforcePageDeleteIntegrity],
   },
   indexes: [
     {
