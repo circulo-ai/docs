@@ -1973,6 +1973,10 @@ export interface DocPage {
    * Optional sidebar group for this page.
    */
   group?: (number | null) | DocPageGroup
+  /**
+   * Lower values are shown first in docs navigation.
+   */
+  order?: number | null
   title: string
   content: {
     root: {
@@ -2220,6 +2224,7 @@ export interface DocPagesSelect<T extends boolean = true> {
   version?: T
   slug?: T
   group?: T
+  order?: T
   title?: T
   content?: T
   status?: T
