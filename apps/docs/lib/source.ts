@@ -225,12 +225,13 @@ const buildSource = async () => {
           ? slugsWithService
           : [serviceSlug, versionSlug, "index"];
 
+        const toc = extractTocFromRichText(page.content);
         const body = (props: { components?: RichTextComponentMap }) =>
           createElement(CmsContent, {
             content: page.content,
             components: props.components,
+            tocItems: toc,
           });
-        const toc = extractTocFromRichText(page.content);
 
         pages.push({
           type: "page",
