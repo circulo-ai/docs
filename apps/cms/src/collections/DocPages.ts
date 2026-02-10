@@ -1,4 +1,8 @@
-import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+import type {
+  CollectionBeforeChangeHook,
+  CollectionBeforeValidateHook,
+  CollectionConfig,
+} from 'payload'
 import { ValidationError } from 'payload'
 
 import { isEditor, isWriter, readPublishedOrRoles, writerRoles } from '../access/roles'
@@ -16,6 +20,61 @@ const getRelationId = (value: RelationValue) => {
 
 const sameId = (a: number | string | null, b: number | string | null) =>
   a !== null && b !== null && String(a) === String(b)
+
+const enforceVersionBelongsToService: CollectionBeforeValidateHook = async ({
+  collection,
+  data,
+  originalDoc,
+  req,
+}) => {
+  const serviceId = getRelationId(
+    (data?.service as RelationValue) ?? (originalDoc?.service as RelationValue),
+  )
+  const versionId = getRelationId(
+    (data?.version as RelationValue) ?? (originalDoc?.version as RelationValue),
+  )
+
+  if (!serviceId || !versionId) return data
+
+  let versionDoc
+  try {
+    versionDoc = await req.payload.findByID({
+      collection: 'docVersions',
+      id: versionId,
+      req,
+      overrideAccess: false,
+      depth: 0,
+    })
+  } catch {
+    throw new ValidationError({
+      collection: collection?.slug,
+      errors: [
+        {
+          path: 'version',
+          message: 'Selected doc version could not be found.',
+        },
+      ],
+      req,
+    })
+  }
+
+  const versionServiceId = getRelationId(versionDoc?.service as RelationValue)
+
+  if (!sameId(versionServiceId, serviceId)) {
+    throw new ValidationError({
+      collection: collection?.slug,
+      errors: [
+        {
+          path: 'version',
+          message: 'Selected doc version must belong to the same service as this page.',
+        },
+      ],
+      req,
+    })
+  }
+
+  return data
+}
 
 const enforceGroupMatchesServiceAndVersion: CollectionBeforeChangeHook = async ({
   collection,
@@ -102,6 +161,7 @@ export const DocPages: CollectionConfig = {
     delete: isEditor,
   },
   hooks: {
+    beforeValidate: [enforceVersionBelongsToService],
     beforeChange: [
       enforcePublishPermissions('Doc page'),
       enforceVersionPublished,
@@ -128,6 +188,21 @@ export const DocPages: CollectionConfig = {
       relationTo: 'docVersions',
       required: true,
       index: true,
+      admin: {
+        description: 'Select a service first. Only versions for that service are available.',
+      },
+      filterOptions: ({ siblingData, data }) => {
+        const values = (siblingData ?? data) as { service?: RelationValue } | undefined
+        const serviceId = getRelationId(values?.service ?? null)
+
+        if (!serviceId) return false
+
+        return {
+          service: {
+            equals: serviceId,
+          },
+        }
+      },
     },
     {
       name: 'slug',

@@ -1916,6 +1916,7 @@ export interface DocVersion {
    * Semver string without a leading "v" (e.g. "1.2.3").
    */
   version: string
+  adminLabel?: string | null
   /**
    * Doc page slug to use as the default landing page for this version.
    */
@@ -1960,6 +1961,9 @@ export interface DocPageGroup {
 export interface DocPage {
   id: number
   service: number | Service
+  /**
+   * Select a service first. Only versions for that service are available.
+   */
   version: number | DocVersion
   /**
    * Path segments for the page (use "/" for nested paths).
@@ -2185,6 +2189,7 @@ export interface ServicesSelect<T extends boolean = true> {
 export interface DocVersionsSelect<T extends boolean = true> {
   service?: T
   version?: T
+  adminLabel?: T
   defaultPageSlug?: T
   versionKey?: T
   isPrerelease?: T

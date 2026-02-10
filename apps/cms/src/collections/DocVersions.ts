@@ -1,14 +1,57 @@
 import type {
   CollectionAfterChangeHook,
+  CollectionAfterReadHook,
   CollectionAfterDeleteHook,
   CollectionBeforeValidateHook,
   CollectionConfig,
+  PayloadRequest,
 } from 'payload'
 
 import { isWriter, readPublishedOrRoles, writerRoles, isEditor } from '../access/roles'
 import { enforcePublishPermissions } from '../access/publish'
 import { extractServiceId, syncLatestVersionForServices } from '../utils/latestVersion'
 import { buildVersionKey, parseSemver } from '../utils/semver'
+
+type RelationValue = number | string | { id?: number | string; name?: unknown } | null | undefined
+
+const getRelationId = (value: RelationValue) => {
+  if (!value) return null
+  if (typeof value === 'string' || typeof value === 'number') return value
+  if (typeof value === 'object' && value.id !== undefined) return value.id
+  return null
+}
+
+const getRelationName = (value: RelationValue) => {
+  if (!value || typeof value !== 'object') return null
+  if (typeof value.name !== 'string') return null
+  const trimmed = value.name.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+const formatAdminLabel = (version: string, serviceName: string | null) =>
+  serviceName ? `${version} (${serviceName})` : version
+
+const resolveServiceName = async (req: PayloadRequest, service: RelationValue) => {
+  const existingName = getRelationName(service)
+  if (existingName) return existingName
+
+  const serviceId = getRelationId(service)
+  if (!serviceId) return null
+
+  try {
+    const serviceDoc = await req.payload.findByID({
+      collection: 'services',
+      id: serviceId,
+      req,
+      overrideAccess: false,
+      depth: 0,
+    })
+
+    return getRelationName(serviceDoc as RelationValue)
+  } catch {
+    return null
+  }
+}
 
 const syncSemverFields: CollectionBeforeValidateHook = ({ data, originalDoc }) => {
   const version = data?.version ?? originalDoc?.version
@@ -55,10 +98,36 @@ const updateLatestVersionOnDelete: CollectionAfterDeleteHook = async ({ doc, req
   await syncLatestVersionForServices(req, serviceId, null)
 }
 
+const syncAdminLabel: CollectionBeforeValidateHook = async ({ data, originalDoc, req }) => {
+  const version =
+    typeof data?.version === 'string' ? data.version.trim() : originalDoc?.version?.trim()
+  if (!version) return data
+
+  const service = (data?.service as RelationValue) ?? (originalDoc?.service as RelationValue)
+  const serviceName = await resolveServiceName(req, service)
+
+  return {
+    ...(data ?? {}),
+    adminLabel: formatAdminLabel(version, serviceName),
+  }
+}
+
+const attachAdminLabel: CollectionAfterReadHook = async ({ doc, req }) => {
+  const version = typeof doc?.version === 'string' ? doc.version.trim() : ''
+  if (!version) return doc
+
+  const serviceName = await resolveServiceName(req, doc?.service as RelationValue)
+
+  return {
+    ...doc,
+    adminLabel: formatAdminLabel(version, serviceName),
+  }
+}
+
 export const DocVersions: CollectionConfig = {
   slug: 'docVersions',
   admin: {
-    useAsTitle: 'version',
+    useAsTitle: 'adminLabel',
     defaultColumns: ['version', 'service', 'status', 'isPrerelease', 'updatedAt'],
   },
   access: {
@@ -68,10 +137,11 @@ export const DocVersions: CollectionConfig = {
     delete: isEditor,
   },
   hooks: {
-    beforeValidate: [syncSemverFields, normalizeDefaultPageSlugHook],
+    beforeValidate: [syncSemverFields, normalizeDefaultPageSlugHook, syncAdminLabel],
     beforeChange: [enforcePublishPermissions('Doc version')],
     afterChange: [updateLatestVersion],
     afterDelete: [updateLatestVersionOnDelete],
+    afterRead: [attachAdminLabel],
   },
   fields: [
     {
@@ -87,6 +157,14 @@ export const DocVersions: CollectionConfig = {
       required: true,
       admin: {
         description: 'Semver string without a leading "v" (e.g. "1.2.3").',
+      },
+    },
+    {
+      name: 'adminLabel',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
       },
     },
     {
