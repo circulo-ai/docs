@@ -88,7 +88,7 @@ export function ServiceVersionSwitcher({
       <Select
         value={serviceValue}
         onValueChange={(nextService) => {
-          if (!nextService) return;
+          if (!nextService || nextService === serviceValue) return;
           router.push(`/${nextService}`);
         }}
       >
@@ -131,7 +131,13 @@ export function ServiceVersionSwitcher({
         value={versionValue === "" ? "Version" : `v${versionValue}`}
         disabled={!serviceValue || versions.length === 0}
         onValueChange={(nextVersion) => {
-          if (!nextVersion || !serviceValue) return;
+          if (
+            !nextVersion ||
+            !serviceValue ||
+            nextVersion === versionValue
+          ) {
+            return;
+          }
           router.push(`/${serviceValue}/v${nextVersion}`);
         }}
       >
