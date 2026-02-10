@@ -26,6 +26,8 @@ import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
+import { resolveUploadRenderDimensions } from "@/lib/upload-dimensions";
+
 export type RichTextComponentMap = Record<string, ElementType | undefined>;
 
 type JsonRecord = Record<string, unknown>;
@@ -615,8 +617,12 @@ const renderImageZoomFromFields = (
 
   const src = prefixAssetUrl(options.baseUrl, rawUrl);
   const alt = asString(fields.alt) ?? asString(image.alt) ?? "";
-  const width = asNumber(image.width);
-  const height = asNumber(image.height);
+  const { width, height } = resolveUploadRenderDimensions({
+    fieldHeight: fields.height,
+    fieldWidth: fields.width,
+    mediaHeight: image.height,
+    mediaWidth: image.width,
+  });
   const caption = asString(fields.caption);
 
   const imageNode = createElement(ImageZoom, {
@@ -690,7 +696,11 @@ const buildConverters = (options: {
     ...defaultJSXConverters,
     upload: ({ node }) => {
       const uploadNode = node as {
-        fields?: { alt?: string };
+        fields?: {
+          alt?: string;
+          height?: unknown;
+          width?: unknown;
+        };
         value?: Record<string, unknown>;
       };
       if (!uploadNode.value || typeof uploadNode.value !== "object") {
@@ -728,14 +738,12 @@ const buildConverters = (options: {
           : null;
 
       if (!sizes || Object.keys(sizes).length === 0) {
-        const width =
-          typeof uploadDoc.width === "number"
-            ? (uploadDoc.width as number)
-            : undefined;
-        const height =
-          typeof uploadDoc.height === "number"
-            ? (uploadDoc.height as number)
-            : undefined;
+        const { width, height } = resolveUploadRenderDimensions({
+          fieldHeight: uploadNode.fields?.height,
+          fieldWidth: uploadNode.fields?.width,
+          mediaHeight: uploadDoc.height,
+          mediaWidth: uploadDoc.width,
+        });
         const ImageComponent = components?.img ?? "img";
         return createElement(ImageComponent, { alt, height, src: url, width });
       }
@@ -765,14 +773,13 @@ const buildConverters = (options: {
         );
       }
 
-      const fallbackWidth =
-        typeof uploadDoc.width === "number"
-          ? (uploadDoc.width as number)
-          : undefined;
-      const fallbackHeight =
-        typeof uploadDoc.height === "number"
-          ? (uploadDoc.height as number)
-          : undefined;
+      const { width: fallbackWidth, height: fallbackHeight } =
+        resolveUploadRenderDimensions({
+          fieldHeight: uploadNode.fields?.height,
+          fieldWidth: uploadNode.fields?.width,
+          mediaHeight: uploadDoc.height,
+          mediaWidth: uploadDoc.width,
+        });
       const ImageComponent = components?.img ?? "img";
       pictureNodes.push(
         createElement(ImageComponent, {

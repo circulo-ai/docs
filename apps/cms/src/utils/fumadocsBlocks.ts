@@ -381,6 +381,22 @@ export const fumadocsBlocks: Block[] = [
         required: true,
       },
       {
+        name: 'width',
+        type: 'number',
+        min: 1,
+        admin: {
+          description: 'Optional render width in pixels.',
+        },
+      },
+      {
+        name: 'height',
+        type: 'number',
+        min: 1,
+        admin: {
+          description: 'Optional render height in pixels.',
+        },
+      },
+      {
         name: 'alt',
         type: 'text',
       },
