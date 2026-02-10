@@ -8,7 +8,7 @@ import type {
 } from 'payload'
 
 import { isWriter, readPublishedOrRoles, writerRoles, isEditor } from '../access/roles'
-import { enforcePublishPermissions, enforceVersionStateIntegrity } from '../access/publish'
+import { enforcePublishPermissions, setVersionStatusFromPages } from '../access/publish'
 import { extractServiceId, syncLatestVersionForServices } from '../utils/latestVersion'
 import { buildVersionKey, parseSemver } from '../utils/semver'
 
@@ -138,7 +138,7 @@ export const DocVersions: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [syncSemverFields, normalizeDefaultPageSlugHook, syncAdminLabel],
-    beforeChange: [enforcePublishPermissions('Doc version'), enforceVersionStateIntegrity],
+    beforeChange: [setVersionStatusFromPages, enforcePublishPermissions('Doc version')],
     afterChange: [updateLatestVersion],
     afterDelete: [updateLatestVersionOnDelete],
     afterRead: [attachAdminLabel],
@@ -221,6 +221,10 @@ export const DocVersions: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'draft',
+      admin: {
+        readOnly: true,
+        description: 'Automatically derived from doc page statuses for this version.',
+      },
       options: [
         { label: 'Draft', value: 'draft' },
         { label: 'Published', value: 'published' },

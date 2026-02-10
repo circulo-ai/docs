@@ -5,22 +5,24 @@ import {
   enforcePageDeleteIntegrity,
   enforcePageServiceMatchesVersion,
   enforcePublishedPageState,
-  enforceVersionStateIntegrity,
+  resolveVersionStatusFromPages,
+  syncVersionStatus,
 } from '../../src/access/publish'
 
-const collectionDocVersions = { slug: 'docVersions' } as never
 const collectionDocPages = { slug: 'docPages' } as never
 const context = {} as never
 
 const createReq = () => {
   const find = vi.fn()
   const findByID = vi.fn()
+  const update = vi.fn()
 
   return {
     req: {
       payload: {
         find,
         findByID,
+        update,
       },
       user: {
         id: 1,
@@ -29,57 +31,45 @@ const createReq = () => {
     },
     find,
     findByID,
+    update,
   }
 }
 
 describe('publish state guards', () => {
-  it('blocks publishing a version with no pages', async () => {
+  it('derives draft status when a version has no published pages', async () => {
     const { req, find } = createReq()
     find.mockResolvedValueOnce({ totalDocs: 0 })
 
-    await expect(
-      enforceVersionStateIntegrity({
-        collection: collectionDocVersions,
-        context,
-        operation: 'update',
-        data: {
-          status: 'published',
-          service: 42,
-          defaultPageSlug: 'getting-started',
-        },
-        originalDoc: {
-          id: 9,
-          status: 'draft',
-          service: 42,
-          defaultPageSlug: 'getting-started',
-        },
-        req: req as never,
-      }),
-    ).rejects.toBeInstanceOf(ValidationError)
+    await expect(resolveVersionStatusFromPages(req as never, 9)).resolves.toBe('draft')
   })
 
-  it('blocks setting a version to draft when published pages still exist', async () => {
+  it('derives published status when a version has at least one published page', async () => {
     const { req, find } = createReq()
     find.mockResolvedValueOnce({ totalDocs: 1 })
 
-    await expect(
-      enforceVersionStateIntegrity({
-        collection: collectionDocVersions,
-        context,
-        operation: 'update',
+    await expect(resolveVersionStatusFromPages(req as never, 9)).resolves.toBe('published')
+  })
+
+  it('syncs version status to published when any published page exists', async () => {
+    const { req, find, findByID, update } = createReq()
+    findByID.mockResolvedValueOnce({
+      id: 9,
+      status: 'draft',
+    })
+    find.mockResolvedValueOnce({ totalDocs: 1 })
+    update.mockResolvedValueOnce({})
+
+    await syncVersionStatus(req as never, 9)
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'docVersions',
+        id: 9,
         data: {
-          status: 'draft',
-          service: 42,
-        },
-        originalDoc: {
-          id: 9,
           status: 'published',
-          service: 42,
-          defaultPageSlug: 'getting-started',
         },
-        req: req as never,
       }),
-    ).rejects.toBeInstanceOf(ValidationError)
+    )
   })
 
   it('blocks saving a page when selected service does not match version service', async () => {
@@ -107,15 +97,14 @@ describe('publish state guards', () => {
     ).rejects.toBeInstanceOf(ValidationError)
   })
 
-  it('blocks unpublishing the last published page of a published version', async () => {
-    const { req, find, findByID } = createReq()
+  it('allows unpublishing the last published page of a version', async () => {
+    const { req, findByID } = createReq()
     findByID.mockResolvedValueOnce({
       id: 22,
       service: 5,
       status: 'published',
       defaultPageSlug: 'intro',
     })
-    find.mockResolvedValueOnce({ totalDocs: 0 })
 
     await expect(
       enforcePublishedPageState({
@@ -134,7 +123,11 @@ describe('publish state guards', () => {
         },
         req: req as never,
       }),
-    ).rejects.toBeInstanceOf(ValidationError)
+    ).resolves.toEqual(
+      expect.objectContaining({
+        status: 'draft',
+      }),
+    )
   })
 
   it('blocks deleting the default page of a published version', async () => {

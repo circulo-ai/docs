@@ -11,7 +11,8 @@ import {
   enforcePageServiceMatchesVersion,
   enforcePublishPermissions,
   enforcePublishedPageState,
-  enforceVersionPublished,
+  syncVersionStatusForPageDelete,
+  syncVersionStatusesForPageChange,
 } from '../access/publish'
 import { docsLexicalEditor } from '../utils/docsEditor'
 
@@ -171,11 +172,12 @@ export const DocPages: CollectionConfig = {
     beforeChange: [
       enforcePublishPermissions('Doc page'),
       enforcePageServiceMatchesVersion,
-      enforceVersionPublished,
       enforcePublishedPageState,
       enforceGroupMatchesServiceAndVersion,
     ],
     beforeDelete: [enforcePageDeleteIntegrity],
+    afterChange: [syncVersionStatusesForPageChange],
+    afterDelete: [syncVersionStatusForPageDelete],
   },
   indexes: [
     {
