@@ -2,6 +2,7 @@ import type { GlobalConfig } from 'payload'
 
 import { isEditor } from '../access/roles'
 import { docsLexicalEditor } from '../utils/docsEditor'
+import { validateOptionalTrimmedString } from '../utils/fieldValidation'
 
 export const DocsSettings: GlobalConfig = {
   slug: 'docsSettings',
@@ -16,6 +17,7 @@ export const DocsSettings: GlobalConfig = {
       admin: {
         description: 'Optional title displayed on the landing page.',
       },
+      validate: (value: unknown) => validateOptionalTrimmedString(value, 'Home title'),
     },
     {
       name: 'homeDescription',
@@ -23,6 +25,7 @@ export const DocsSettings: GlobalConfig = {
       admin: {
         description: 'Optional description displayed on the landing page.',
       },
+      validate: (value: unknown) => validateOptionalTrimmedString(value, 'Home description'),
     },
     {
       name: 'homeContent',

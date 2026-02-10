@@ -14,6 +14,7 @@ import {
   enforceVersionPublished,
 } from '../access/publish'
 import { docsLexicalEditor } from '../utils/docsEditor'
+import { validateDocPathSlug, validateTrimmedRequired } from '../utils/fieldValidation'
 
 type RelationValue = number | string | { id?: number | string } | null | undefined
 
@@ -218,8 +219,10 @@ export const DocPages: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description: 'Path segments for the page (use "/" for nested paths).',
+        description:
+          'Path segments for the page (lowercase kebab-case, use "/" for nested paths).',
       },
+      validate: (value: unknown) => validateDocPathSlug(value, 'Doc page slug'),
     },
     {
       name: 'group',
@@ -252,6 +255,7 @@ export const DocPages: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      validate: (value: unknown) => validateTrimmedRequired(value, 'Title'),
     },
     {
       name: 'content',

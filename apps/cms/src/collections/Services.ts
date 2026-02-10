@@ -1,5 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { DEFAULT_SERVICE_ICON, serviceIconOptions } from '../utils/serviceIcons'
+import {
+  validateOptionalTrimmedString,
+  validateServiceSlug,
+  validateTrimmedRequired,
+} from '../utils/fieldValidation'
 
 export const Services: CollectionConfig = {
   slug: 'services',
@@ -48,6 +53,7 @@ export const Services: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      validate: (value: unknown) => validateTrimmedRequired(value, 'Service name'),
     },
     {
       name: 'slug',
@@ -58,6 +64,7 @@ export const Services: CollectionConfig = {
       admin: {
         description: 'URL prefix for this service (e.g. "api", "cli").',
       },
+      validate: (value: unknown) => validateServiceSlug(value),
     },
     {
       name: 'description',
@@ -67,6 +74,7 @@ export const Services: CollectionConfig = {
         description:
           'Short summary shown in the docs service selector. Keep this concise (1-2 lines).',
       },
+      validate: (value: unknown) => validateTrimmedRequired(value, 'Service description'),
     },
     {
       name: 'icon',
@@ -167,6 +175,8 @@ export const Services: CollectionConfig = {
           admin: {
             description: 'Placeholder text for the search input.',
           },
+          validate: (value: unknown) =>
+            validateOptionalTrimmedString(value, 'Search placeholder'),
         },
         {
           name: 'includeOlderVersions',

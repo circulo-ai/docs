@@ -9,6 +9,7 @@ import type {
 
 import { isWriter, readPublishedOrRoles, writerRoles, isEditor } from '../access/roles'
 import { enforcePublishPermissions, enforceVersionStateIntegrity } from '../access/publish'
+import { validateDocPathSlug } from '../utils/fieldValidation'
 import { extractServiceId, syncLatestVersionForServices } from '../utils/latestVersion'
 import { buildVersionKey, parseSemver } from '../utils/semver'
 
@@ -64,8 +65,6 @@ const syncSemverFields: CollectionBeforeValidateHook = ({ data, originalDoc }) =
     isPrerelease: parsed.prerelease !== null,
   }
 }
-
-const DEFAULT_PAGE_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/
 
 const normalizeDefaultPageSlug = (value: string) =>
   value
@@ -158,6 +157,22 @@ export const DocVersions: CollectionConfig = {
       admin: {
         description: 'Semver string without a leading "v" (e.g. "1.2.3").',
       },
+      validate: (value: unknown) => {
+        if (typeof value !== 'string' || value.trim().length === 0) {
+          return 'Version is required.'
+        }
+
+        try {
+          parseSemver(value)
+          return true
+        } catch (error) {
+          if (error instanceof Error && error.message) {
+            return error.message
+          }
+
+          return 'Version must follow semver (e.g. "1.2.3" or "1.2.3-alpha.1").'
+        }
+      },
     },
     {
       name: 'adminLabel',
@@ -174,31 +189,7 @@ export const DocVersions: CollectionConfig = {
       admin: {
         description: 'Doc page slug to use as the default landing page for this version.',
       },
-      validate: (value: unknown) => {
-        if (typeof value !== 'string' || value.trim().length === 0) {
-          return 'Default page slug is required.'
-        }
-
-        const trimmed = value.trim()
-
-        if (trimmed.startsWith('/')) {
-          return 'Default page slug must not start with "/".'
-        }
-
-        if (/\s/.test(trimmed)) {
-          return 'Default page slug must not include spaces.'
-        }
-
-        if (trimmed.includes('..')) {
-          return 'Default page slug must not include "..".'
-        }
-
-        if (!DEFAULT_PAGE_SLUG_REGEX.test(trimmed)) {
-          return 'Default page slug must be lowercase kebab-case segments separated by "/".'
-        }
-
-        return true
-      },
+      validate: (value: unknown) => validateDocPathSlug(value, 'Default page slug'),
     },
     {
       name: 'versionKey',
