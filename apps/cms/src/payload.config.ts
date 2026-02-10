@@ -1,6 +1,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
+import nextEnv from '@next/env'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -17,6 +18,11 @@ import { DocsSettings } from './globals/DocsSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const { loadEnvConfig } = nextEnv
+
+loadEnvConfig(path.resolve(process.cwd(), '../..'))
+loadEnvConfig(process.cwd())
+
 const s3Bucket = process.env.S3_BUCKET
 const s3Region = process.env.S3_REGION
 const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID
