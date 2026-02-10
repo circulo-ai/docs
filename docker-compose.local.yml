@@ -44,12 +44,14 @@ services:
 
   minio-init:
     image: minio/mc:latest
-    restart: "no"
+    restart: on-failure
+    profiles: ["setup", "bootstrap"]
     depends_on:
       minio:
         condition: service_started
     entrypoint: >
       /bin/sh -c "
+      set -eu;
       ACCESS_KEY='${S3_ACCESS_KEY_ID:-minioadmin}';
       SECRET_KEY='${S3_SECRET_ACCESS_KEY:-minioadmin123}';
       if [ $${#ACCESS_KEY} -lt 3 ] || [ $${#SECRET_KEY} -lt 8 ]; then
@@ -67,8 +69,24 @@ services:
         echo 'Waiting for MinIO to be ready...';
         sleep 2;
       done;
-      mc mb --ignore-existing local/${S3_BUCKET:-payload-media};
-      mc anonymous set private local/${S3_BUCKET:-payload-media};
+      retries=0;
+      until mc mb --ignore-existing local/${S3_BUCKET:-payload-media}; do
+        retries=$$((retries + 1));
+        if [ $$retries -ge 30 ]; then
+          echo 'Failed to create/check bucket after retries.';
+          exit 1;
+        fi;
+        sleep 2;
+      done;
+      retries=0;
+      until mc anonymous set private local/${S3_BUCKET:-payload-media}; do
+        retries=$$((retries + 1));
+        if [ $$retries -ge 30 ]; then
+          echo 'Failed to set private bucket policy after retries.';
+          exit 1;
+        fi;
+        sleep 2;
+      done;
       "
     networks:
       - backend
@@ -86,6 +104,7 @@ services:
         S3_ENDPOINT: http://minio:9000
         S3_FORCE_PATH_STYLE: "true"
     restart: "no"
+    profiles: ["bootstrap"]
     depends_on:
       postgres:
         condition: service_healthy
