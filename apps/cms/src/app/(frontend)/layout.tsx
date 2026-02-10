@@ -2,8 +2,8 @@ import React from 'react'
 import './styles.css'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description: 'Manage versioned docs content and publishing workflows from the CMS.',
+  title: 'Docs Landing CMS',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
