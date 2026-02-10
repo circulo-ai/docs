@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePathname, useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
 import { useMemo } from "react";
 
 import { ServiceIcon } from "@/lib/service-icons";
@@ -21,6 +22,8 @@ import type {
 
 const VERSION_SEGMENT_REGEX =
   /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+const CSS_COLOR_FUNCTION_REGEX =
+  /^(#|rgb\(|rgba\(|hsl\(|hsla\(|hwb\(|lab\(|lch\(|oklab\(|oklch\(|color\(|var\()/i;
 
 type ParsedPath = {
   service?: string;
@@ -56,6 +59,18 @@ const resolveVersionValue = (
   return exists ? currentVersion : latestVersion;
 };
 
+const normalizePrimaryColor = (primaryColor?: string) => {
+  const trimmed = primaryColor?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+const resolveServiceCssColor = (primaryColor?: string) => {
+  const normalized = normalizePrimaryColor(primaryColor);
+  if (!normalized) return undefined;
+  if (CSS_COLOR_FUNCTION_REGEX.test(normalized)) return normalized;
+  return `hsl(${normalized})`;
+};
+
 export function ServiceVersionSwitcher({
   services,
   versionsByService,
@@ -75,6 +90,9 @@ export function ServiceVersionSwitcher({
       : "";
   const selectedService = services.find(
     (service) => service.slug === serviceValue,
+  );
+  const selectedServiceColor = resolveServiceCssColor(
+    selectedService?.primaryColor,
   );
   const serviceLabel = selectedService?.name ?? "";
   const selectedServiceDescription = selectedService?.description?.trim();
@@ -96,7 +114,25 @@ export function ServiceVersionSwitcher({
           <SelectValue placeholder="Service">
             {serviceValue ? (
               <span className="flex min-w-0 items-center gap-2">
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-input/30 text-muted-foreground">
+                <span
+                  aria-hidden
+                  className="size-2.5 shrink-0 rounded-full border border-border/60"
+                  style={
+                    selectedServiceColor
+                      ? ({
+                          backgroundColor: selectedServiceColor,
+                        } as CSSProperties)
+                      : undefined
+                  }
+                />
+                <span
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-input/30 text-muted-foreground"
+                  style={
+                    selectedServiceColor
+                      ? ({ color: selectedServiceColor } as CSSProperties)
+                      : undefined
+                  }
+                >
                   <ServiceIcon
                     icon={selectedService?.icon}
                     className="h-3.5 w-3.5"
@@ -116,6 +152,7 @@ export function ServiceVersionSwitcher({
                   description={service.description}
                   icon={service.icon}
                   name={service.name}
+                  primaryColor={service.primaryColor}
                 />
               </SelectItem>
             ))}
@@ -157,18 +194,35 @@ type ServiceOptionContentProps = {
   description?: string;
   icon?: ServiceOption["icon"];
   name: string;
+  primaryColor?: string;
 };
 
 function ServiceOptionContent({
   description,
   icon,
   name,
+  primaryColor,
 }: ServiceOptionContentProps) {
   const trimmedDescription = description?.trim();
+  const serviceColor = resolveServiceCssColor(primaryColor);
 
   return (
     <span className="flex w-full items-start gap-2 py-0.5">
-      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <span
+        aria-hidden
+        className="mt-2 size-2.5 shrink-0 rounded-full border border-border/60"
+        style={
+          serviceColor
+            ? ({ backgroundColor: serviceColor } as CSSProperties)
+            : undefined
+        }
+      />
+      <span
+        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+        style={
+          serviceColor ? ({ color: serviceColor } as CSSProperties) : undefined
+        }
+      >
         <ServiceIcon icon={icon} className="h-3.5 w-3.5" />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
