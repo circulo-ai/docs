@@ -1916,6 +1916,7 @@ export interface DocVersion {
    * Semver string without a leading "v" (e.g. "1.2.3").
    */
   version: string
+  adminLabel?: string | null
   /**
    * Doc page slug to use as the default landing page for this version.
    */
