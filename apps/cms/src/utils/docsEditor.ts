@@ -20,6 +20,8 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { fumadocsBlocks } from './fumadocsBlocks'
+
 const DEFAULT_HEADING_LEVELS = ['h2', 'h3', 'h4'] as const
 
 export const docsLexicalEditor = lexicalEditor({
@@ -39,7 +41,7 @@ export const docsLexicalEditor = lexicalEditor({
     IndentFeature(),
     UploadFeature({ enabledCollections: ['media'] }),
     BlocksFeature({
-      blocks: [CodeBlock()],
+      blocks: [CodeBlock(), ...fumadocsBlocks],
     }),
     InlineToolbarFeature(),
     FixedToolbarFeature(),

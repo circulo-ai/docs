@@ -36,7 +36,7 @@ export default async function DocsIndex() {
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
-        <CmsContent content={content} />
+        <CmsContent content={content} tocItems={toc} />
       </DocsBody>
     </DocsPage>
   );
