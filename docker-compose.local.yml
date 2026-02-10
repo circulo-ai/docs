@@ -50,7 +50,20 @@ services:
         condition: service_started
     entrypoint: >
       /bin/sh -c "
-      until mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-minioadmin} ${S3_SECRET_ACCESS_KEY:-minioadmin123}; do
+      ACCESS_KEY='${S3_ACCESS_KEY_ID:-minioadmin}';
+      SECRET_KEY='${S3_SECRET_ACCESS_KEY:-minioadmin123}';
+      if [ $${#ACCESS_KEY} -lt 3 ] || [ $${#SECRET_KEY} -lt 8 ]; then
+        echo 'Invalid MinIO credentials in env: S3_ACCESS_KEY_ID must be >=3 chars and S3_SECRET_ACCESS_KEY must be >=8 chars.';
+        echo 'Current lengths: access='$${#ACCESS_KEY}', secret='$${#SECRET_KEY};
+        exit 1;
+      fi;
+      retries=0;
+      until mc alias set local http://minio:9000 $$ACCESS_KEY $$SECRET_KEY; do
+        retries=$$((retries + 1));
+        if [ $$retries -ge 60 ]; then
+          echo 'MinIO not ready after 120s. Check logs with: docker compose -f docker-compose.local.yml logs minio';
+          exit 1;
+        fi;
         echo 'Waiting for MinIO to be ready...';
         sleep 2;
       done;
