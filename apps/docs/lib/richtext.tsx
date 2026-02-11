@@ -286,7 +286,7 @@ const renderCardsFromFields = (fields?: JsonRecord) => {
         title,
         description: asString(card.description),
         href: asString(card.href),
-        external: asBoolean(card.external),
+        external: asBoolean(card.external)?.toString() as unknown as boolean,
       });
     })
     .filter(isDefined);
@@ -928,13 +928,7 @@ export const renderRichText = (
     slugger,
     tocItems: options?.tocItems,
   });
-  return (
-    <RichText
-      data={content}
-      converters={converters}
-      className="payload-richtext prose"
-    />
-  );
+  return <RichText data={content} converters={converters} />;
 };
 
 export const extractTocFromRichText = (content: unknown): TOCItemType[] => {

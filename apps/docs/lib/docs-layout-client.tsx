@@ -132,5 +132,15 @@ export function DocsLayoutClient({
     [baseTree, parsed],
   );
 
-  return <DocsLayout tree={filteredTree} {...props} />;
+  return (
+    <DocsLayout
+      themeSwitch={{ mode: "light-dark-system" }}
+      sidebar={{
+        className:
+          "[&_[data-radix-scroll-area-viewport]>div:first-child]:block!",
+      }}
+      tree={filteredTree}
+      {...props}
+    />
+  );
 }

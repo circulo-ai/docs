@@ -1,6 +1,6 @@
 import type { SerializedLexicalNode } from '@payloadcms/richtext-lexical/lexical'
 
-export type ElementClipboardAction = 'copy' | 'paste'
+export type ElementClipboardAction = 'copy' | 'paste' | 'duplicate'
 
 export type SerializedUnknownLexicalNode = SerializedLexicalNode & {
   children?: SerializedUnknownLexicalNode[]
@@ -77,6 +77,10 @@ export const getElementClipboardShortcut = (
 
   if (key === 'v') {
     return 'paste'
+  }
+
+  if (key === 'd') {
+    return 'duplicate'
   }
 
   return null

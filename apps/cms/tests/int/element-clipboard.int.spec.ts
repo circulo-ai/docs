@@ -84,6 +84,18 @@ describe('element clipboard helpers', () => {
     ).toBe('paste')
   })
 
+  it('detects the duplicate shortcut', () => {
+    expect(
+      getElementClipboardShortcut({
+        altKey: false,
+        ctrlKey: true,
+        key: 'D',
+        metaKey: false,
+        shiftKey: true,
+      }),
+    ).toBe('duplicate')
+  })
+
   it('ignores shortcuts without modifier + shift combo', () => {
     expect(
       getElementClipboardShortcut({

@@ -31,20 +31,49 @@ import {
 
 const COPY_SELECTED_ELEMENT_COMMAND = createCommand('COPY_SELECTED_ELEMENT_COMMAND')
 const PASTE_SELECTED_ELEMENT_COMMAND = createCommand('PASTE_SELECTED_ELEMENT_COMMAND')
+const DUPLICATE_SELECTED_ELEMENT_COMMAND = createCommand('DUPLICATE_SELECTED_ELEMENT_COMMAND')
 
 let copiedElement: SerializedUnknownLexicalNode | null = null
 
+const ELEMENT_NODE_TYPES = new Set(['block', 'inlineBlock'])
+
+const findElementNode = (node: LexicalNode | null): LexicalNode | null => {
+  let currentNode = node
+
+  while (currentNode) {
+    if (ELEMENT_NODE_TYPES.has(currentNode.getType())) {
+      return currentNode
+    }
+
+    currentNode = currentNode.getParent()
+  }
+
+  return null
+}
+
 const getSelectedNodeFromSelection = (selection: BaseSelection | null): LexicalNode | null => {
-  if (!$isNodeSelection(selection)) {
+  if (!selection) {
     return null
+  }
+
+  if ($isNodeSelection(selection)) {
+    const selectedNodes = selection.getNodes()
+    if (selectedNodes.length === 0) {
+      return null
+    }
+
+    return findElementNode(selectedNodes[0] ?? null)
   }
 
   const selectedNodes = selection.getNodes()
-  if (selectedNodes.length === 0) {
-    return null
+  for (const selectedNode of selectedNodes) {
+    const elementNode = findElementNode(selectedNode)
+    if (elementNode) {
+      return elementNode
+    }
   }
 
-  return selectedNodes[0] ?? null
+  return null
 }
 
 const getSerializedSelectedNode = (
@@ -103,6 +132,15 @@ const pasteStoredElement = (editor: LexicalEditor): boolean => {
   return true
 }
 
+const duplicateSelectedElement = (editor: LexicalEditor): boolean => {
+  const didCopy = storeSelectedElement(editor)
+  if (!didCopy) {
+    return false
+  }
+
+  return pasteStoredElement(editor)
+}
+
 const CopyElementIcon: React.FC = () => (
   <svg aria-hidden="true" className="icon" fill="none" height="20" viewBox="0 0 20 20" width="20">
     <path
@@ -126,6 +164,15 @@ const PasteElementIcon: React.FC = () => (
   </svg>
 )
 
+const DuplicateElementIcon: React.FC = () => (
+  <svg aria-hidden="true" className="icon" fill="none" height="20" viewBox="0 0 20 20" width="20">
+    <path d="M11 4H14.5C14.7761 4 15 4.22386 15 4.5V8" stroke="currentColor" strokeWidth="1.5" />
+    <rect height="8" rx="0.5" stroke="currentColor" strokeWidth="1.5" width="8" x="5" y="8" />
+    <path d="M11 13H15" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M13 11L15 13L13 15" stroke="currentColor" strokeWidth="1.5" />
+  </svg>
+)
+
 const ElementClipboardPlugin: PluginComponent = () => {
   const [editor] = useLexicalComposerContext()
 
@@ -142,6 +189,12 @@ const ElementClipboardPlugin: PluginComponent = () => {
       COMMAND_PRIORITY_LOW,
     )
 
+    const removeDuplicateCommand = editor.registerCommand(
+      DUPLICATE_SELECTED_ELEMENT_COMMAND,
+      () => duplicateSelectedElement(editor),
+      COMMAND_PRIORITY_LOW,
+    )
+
     const removeKeydownCommand = editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {
@@ -152,8 +205,23 @@ const ElementClipboardPlugin: PluginComponent = () => {
         }
 
         if (shortcutAction === 'copy') {
-          void editor.dispatchCommand(COPY_SELECTED_ELEMENT_COMMAND, undefined)
-          return false
+          const handled = editor.dispatchCommand(COPY_SELECTED_ELEMENT_COMMAND, undefined)
+          if (handled) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          return handled
+        }
+
+        if (shortcutAction === 'duplicate') {
+          const handled = editor.dispatchCommand(DUPLICATE_SELECTED_ELEMENT_COMMAND, undefined)
+          if (handled) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          return handled
         }
 
         const handled = editor.dispatchCommand(PASTE_SELECTED_ELEMENT_COMMAND, undefined)
@@ -170,6 +238,7 @@ const ElementClipboardPlugin: PluginComponent = () => {
     return () => {
       removeCopyCommand()
       removePasteCommand()
+      removeDuplicateCommand()
       removeKeydownCommand()
     }
   }, [editor])
@@ -189,6 +258,16 @@ const toolbarGroups: ToolbarGroup[] = [
           editor.dispatchCommand(COPY_SELECTED_ELEMENT_COMMAND, undefined)
         },
         order: 1,
+      },
+      {
+        ChildComponent: DuplicateElementIcon,
+        isEnabled: ({ selection }) => Boolean(getSelectedNodeFromSelection(selection)),
+        key: 'duplicateElement',
+        label: 'Duplicate element',
+        onSelect: ({ editor }) => {
+          editor.dispatchCommand(DUPLICATE_SELECTED_ELEMENT_COMMAND, undefined)
+        },
+        order: 3,
       },
       {
         ChildComponent: PasteElementIcon,
@@ -217,6 +296,15 @@ const slashMenuGroups: SlashMenuGroup[] = [
         label: 'Copy selected element',
         onSelect: ({ editor }) => {
           editor.dispatchCommand(COPY_SELECTED_ELEMENT_COMMAND, undefined)
+        },
+      },
+      {
+        Icon: DuplicateElementIcon,
+        key: 'duplicateElement',
+        keywords: ['clipboard', 'duplicate', 'element'],
+        label: 'Duplicate selected element',
+        onSelect: ({ editor }) => {
+          editor.dispatchCommand(DUPLICATE_SELECTED_ELEMENT_COMMAND, undefined)
         },
       },
       {

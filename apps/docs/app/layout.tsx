@@ -1,3 +1,4 @@
+import DefaultSearchDialog from "@/components/default-search-dialog";
 import { DocsLayoutClient } from "@/lib/docs-layout-client";
 import { baseOptions } from "@/lib/layout.shared";
 import { buildAliasTree } from "@/lib/page-tree";
@@ -56,7 +57,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col font-sans antialiased">
-        <RootProvider>
+        <RootProvider search={{ SearchDialog: DefaultSearchDialog }}>
           <ServicePrimaryColor services={serviceVersionOptions.services} />
           <DocsLayoutClient
             tree={tree}

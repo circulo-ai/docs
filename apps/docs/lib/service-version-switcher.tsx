@@ -19,6 +19,8 @@ import type {
   ServiceVersionOptions,
   VersionOption,
 } from "@/lib/service-version-types";
+import { Archive, Tag } from "lucide-react";
+import { cn } from "./utils";
 
 const VERSION_SEGMENT_REGEX =
   /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
@@ -48,11 +50,11 @@ const parseDocsPath = (pathname: string): ParsedPath => {
 
 const resolveVersionValue = (
   versions: VersionOption[],
+  latestVersion: string,
   currentVersion?: string,
 ) => {
   if (!versions.length) return "";
 
-  const latestVersion = versions[0]?.version ?? "";
   if (!currentVersion) return latestVersion;
 
   const exists = versions.some((version) => version.version === currentVersion);
@@ -95,9 +97,15 @@ export function ServiceVersionSwitcher({
     selectedService?.primaryColor,
   );
   const serviceLabel = selectedService?.name ?? "";
-  const selectedServiceDescription = selectedService?.description?.trim();
   const versions = serviceValue ? (versionsByService[serviceValue] ?? []) : [];
-  const versionValue = resolveVersionValue(versions, currentVersion);
+  const latestVersion = versions[0]?.version ?? "";
+  const versionValue = resolveVersionValue(
+    versions,
+    latestVersion,
+    currentVersion,
+  );
+
+  const SelectedVersionIcon = latestVersion === versionValue ? Tag : Archive;
 
   if (services.length === 0) return null;
 
@@ -111,43 +119,45 @@ export function ServiceVersionSwitcher({
         }}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Service">
-            {serviceValue ? (
-              <span className="flex min-w-0 items-center gap-2">
-                <span
-                  aria-hidden
-                  className="size-2.5 shrink-0 rounded-full border border-border/60"
-                  style={
-                    selectedServiceColor
-                      ? ({
-                          backgroundColor: selectedServiceColor,
-                        } as CSSProperties)
-                      : undefined
-                  }
-                />
-                <span
-                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-input/30 text-muted-foreground"
-                  style={
-                    selectedServiceColor
-                      ? ({ color: selectedServiceColor } as CSSProperties)
-                      : undefined
-                  }
-                >
-                  <ServiceIcon
-                    icon={selectedService?.icon}
-                    className="h-3.5 w-3.5"
-                  />
-                </span>
-                <span className="min-w-0 truncate">{serviceLabel}</span>
-              </span>
-            ) : null}
+          <SelectValue>
+            <ServiceIcon
+              icon={
+                selectedService?.icon ?? {
+                  type: "lucide",
+                  name: "Folder",
+                }
+              }
+              className="size-4"
+              style={
+                selectedServiceColor
+                  ? ({ color: selectedServiceColor } as CSSProperties)
+                  : undefined
+              }
+            />
+            <span className="truncate">
+              {serviceLabel || "Select a service"}
+            </span>
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent alignItemWithTrigger={false}>
           <SelectGroup>
             <SelectLabel>Services</SelectLabel>
             {services.map((service) => (
-              <SelectItem key={service.slug} value={service.slug}>
+              <SelectItem
+                key={service.slug}
+                value={service.slug}
+                style={
+                  service.primaryColor
+                    ? ({
+                        "--primary": service.primaryColor,
+                        "--accent": service.primaryColor,
+                        "--sidebar-primary": service.primaryColor,
+                        "--sidebar-accent": service.primaryColor,
+                        "--chart-2": service.primaryColor,
+                      } as CSSProperties)
+                    : undefined
+                }
+              >
                 <ServiceOptionContent
                   description={service.description}
                   icon={service.icon}
@@ -159,13 +169,8 @@ export function ServiceVersionSwitcher({
           </SelectGroup>
         </SelectContent>
       </Select>
-      {selectedServiceDescription ? (
-        <p className="-mt-1 line-clamp-2 text-xs text-muted-foreground">
-          {selectedServiceDescription}
-        </p>
-      ) : null}
       <Select
-        value={versionValue === "" ? "Version" : `v${versionValue}`}
+        value={versionValue}
         disabled={!serviceValue || versions.length === 0}
         onValueChange={(nextVersion) => {
           if (!nextVersion || !serviceValue || nextVersion === versionValue) {
@@ -175,16 +180,42 @@ export function ServiceVersionSwitcher({
         }}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Version" />
+          <SelectValue>
+            <SelectedVersionIcon className="size-4" />
+            <span className="truncate">
+              {versionValue || "Select a version"}
+            </span>
+          </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent alignItemWithTrigger={false}>
           <SelectGroup>
             <SelectLabel>Versions</SelectLabel>
-            {versions.map((version) => (
-              <SelectItem key={version.version} value={version.version}>
-                v{version.version}
-              </SelectItem>
-            ))}
+            {versions.map(({ version }) => {
+              const isLatest = version === latestVersion;
+              const Icon = isLatest ? Tag : Archive;
+              return (
+                <SelectItem
+                  key={version}
+                  value={version}
+                  className="*:items-center"
+                >
+                  <Icon
+                    className={cn(
+                      "size-4",
+                      !isLatest && "text-muted-foreground",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "truncate",
+                      !isLatest && "text-muted-foreground",
+                    )}
+                  >
+                    v{version}
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectGroup>
         </SelectContent>
       </Select>
@@ -209,32 +240,22 @@ function ServiceOptionContent({
   const serviceColor = resolveServiceCssColor(primaryColor);
 
   return (
-    <span className="flex w-full items-start gap-2 py-0.5">
-      <span
-        aria-hidden
-        className="mt-2 size-2.5 shrink-0 rounded-full border border-border/60"
-        style={
-          serviceColor
-            ? ({ backgroundColor: serviceColor } as CSSProperties)
-            : undefined
-        }
-      />
-      <span
-        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+    <>
+      <ServiceIcon
+        icon={icon}
+        className="my-auto size-4"
         style={
           serviceColor ? ({ color: serviceColor } as CSSProperties) : undefined
         }
-      >
-        <ServiceIcon icon={icon} className="h-3.5 w-3.5" />
-      </span>
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate font-medium text-foreground">{name}</span>
-        {trimmedDescription ? (
+      />
+      <span className="flex flex-col">
+        <span className="truncate font-medium">{name}</span>
+        {trimmedDescription && (
           <span className="truncate text-xs text-muted-foreground">
             {trimmedDescription}
           </span>
-        ) : null}
+        )}
       </span>
-    </span>
+    </>
   );
 }
