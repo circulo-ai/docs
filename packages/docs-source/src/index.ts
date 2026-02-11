@@ -561,7 +561,12 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
           order: node.order,
           children,
         }
-      : { kind: node.kind, title: node.title, slug: node.slug, order: node.order };
+      : {
+          kind: node.kind,
+          title: node.title,
+          slug: node.slug,
+          order: node.order,
+        };
   };
 
   return Array.from(root.children.values())

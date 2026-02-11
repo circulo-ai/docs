@@ -160,7 +160,16 @@ export const DocPages: CollectionConfig = {
   slug: 'docPages',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'service', 'version', 'group', 'order', 'slug', 'status', 'updatedAt'],
+    defaultColumns: [
+      'title',
+      'service',
+      'version',
+      'group',
+      'order',
+      'slug',
+      'status',
+      'updatedAt',
+    ],
   },
   access: {
     read: readPublishedOrRoles(writerRoles),
@@ -221,8 +230,7 @@ export const DocPages: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description:
-          'Path segments for the page (lowercase kebab-case, use "/" for nested paths).',
+        description: 'Path segments for the page (lowercase kebab-case, use "/" for nested paths).',
       },
       validate: (value: unknown) => validateDocPathSlug(value, 'Doc page slug'),
     },

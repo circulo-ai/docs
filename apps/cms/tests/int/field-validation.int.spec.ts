@@ -114,9 +114,7 @@ describe('field validation helpers', () => {
     })
 
     it('rejects spaces, path traversal, and no-op destinations', () => {
-      expect(validateRedirectTo('/guides/new page')).toBe(
-        'Redirect "to" must not include spaces.',
-      )
+      expect(validateRedirectTo('/guides/new page')).toBe('Redirect "to" must not include spaces.')
       expect(validateRedirectTo('/guides/../secret')).toBe(
         'Redirect "to" path must not include "..".',
       )

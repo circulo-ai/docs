@@ -108,10 +108,8 @@ export const Redirects: CollectionConfig = {
       admin: {
         description: 'Destination path or URL ("/..." or "https://...").',
       },
-      validate: (
-        value: unknown,
-        { siblingData }: { siblingData?: { from?: unknown } },
-      ) => validateRedirectTo(value, { from: siblingData?.from }),
+      validate: (value: unknown, { siblingData }: { siblingData?: { from?: unknown } }) =>
+        validateRedirectTo(value, { from: siblingData?.from }),
     },
     {
       name: 'service',

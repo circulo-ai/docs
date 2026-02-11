@@ -175,8 +175,7 @@ export const Services: CollectionConfig = {
           admin: {
             description: 'Placeholder text for the search input.',
           },
-          validate: (value: unknown) =>
-            validateOptionalTrimmedString(value, 'Search placeholder'),
+          validate: (value: unknown) => validateOptionalTrimmedString(value, 'Search placeholder'),
         },
         {
           name: 'includeOlderVersions',

@@ -14,7 +14,7 @@ const jsonResponse = (body: unknown) =>
     headers: { "Content-Type": "application/json" },
   });
 
-const payloadList = <T,>(docs: T[]) => ({
+const payloadList = <T>(docs: T[]) => ({
   docs,
   totalDocs: docs.length,
   limit: docs.length || 1,
@@ -38,11 +38,15 @@ const mockNavRequests = (pages: TestDocPage[]) => {
     const url = new URL(rawUrl);
 
     if (url.pathname === "/api/services") {
-      return jsonResponse(payloadList([{ id: 1, slug: "billing", name: "Billing" }]));
+      return jsonResponse(
+        payloadList([{ id: 1, slug: "billing", name: "Billing" }]),
+      );
     }
 
     if (url.pathname === "/api/docVersions") {
-      return jsonResponse(payloadList([{ id: 10, service: 1, version: "1.0.0" }]));
+      return jsonResponse(
+        payloadList([{ id: 10, service: 1, version: "1.0.0" }]),
+      );
     }
 
     if (url.pathname === "/api/docPages") {

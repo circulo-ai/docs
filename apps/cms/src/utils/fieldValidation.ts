@@ -1,7 +1,6 @@
 type ValidationResult = true | string
 
-const DOC_PATH_SLUG_REGEX =
-  /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/
+const DOC_PATH_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/
 const SERVICE_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const isNonEmptyString = (value: unknown): value is string =>
