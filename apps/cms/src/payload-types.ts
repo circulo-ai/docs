@@ -1926,6 +1926,9 @@ export interface DocVersion {
    */
   versionKey?: string | null
   isPrerelease?: boolean | null
+  /**
+   * Automatically derived from doc page statuses for this version.
+   */
   status: 'draft' | 'published'
   updatedAt: string
   createdAt: string
