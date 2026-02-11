@@ -1,4 +1,6 @@
 import type {
+  CollectionAfterChangeHook,
+  CollectionAfterDeleteHook,
   CollectionBeforeChangeHook,
   CollectionBeforeDeleteHook,
   PayloadRequest,
@@ -141,224 +143,97 @@ const findPageByID = async (req: PayloadRequest, pageId: string | number) => {
   }
 }
 
-const countPublishedPagesForVersion = async (
+type VersionStatus = 'draft' | 'published'
+
+export const resolveVersionStatusFromPages = async (
   req: PayloadRequest,
-  params: {
-    versionId: string | number
-    serviceId: string | number
-    excludePageId?: string | number | null
-  },
-) => {
-  const conditions: Record<string, unknown>[] = [
-    { version: { equals: params.versionId } },
-    { service: { equals: params.serviceId } },
-    { status: { equals: 'published' } },
-  ]
+  versionId: string | number,
+): Promise<VersionStatus> => {
+  const publishedPages = await countDocPages(req, {
+    and: [{ version: { equals: versionId } }, { status: { equals: 'published' } }],
+  })
 
-  if (params.excludePageId !== undefined && params.excludePageId !== null) {
-    conditions.push({ id: { not_equals: params.excludePageId } })
-  }
-
-  return countDocPages(req, { and: conditions })
+  return publishedPages > 0 ? 'published' : 'draft'
 }
 
-export const enforceVersionStateIntegrity: CollectionBeforeChangeHook = async ({
-  collection,
+export const setVersionStatusFromPages: CollectionBeforeChangeHook = async ({
   data,
   originalDoc,
-  req,
   operation,
-}) => {
-  const nextStatus = data?.status ?? originalDoc?.status
-  if (nextStatus !== 'published' && nextStatus !== 'draft') return data
-
-  const collectionSlug = collection?.slug
-  const versionId = getRelationId(originalDoc?.id)
-  const serviceId = getRelationId(data?.service ?? originalDoc?.service)
-  const defaultPageSlug = normalizeSlug(data?.defaultPageSlug ?? originalDoc?.defaultPageSlug)
-
-  if (nextStatus === 'published') {
-    if (operation === 'create' || !versionId) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'status',
-        'Create this version as draft first, then add and publish pages before publishing the version.',
-      )
-    }
-
-    if (!serviceId) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'service',
-        'A service is required before publishing.',
-      )
-    }
-
-    const totalPages = await countDocPages(req, {
-      version: { equals: versionId },
-    })
-
-    if (totalPages === 0) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'status',
-        'Doc version cannot be published without pages. Add at least one page first.',
-      )
-    }
-
-    const mismatchedServicePages = await countDocPages(req, {
-      and: [{ version: { equals: versionId } }, { service: { not_equals: serviceId } }],
-    })
-
-    if (mismatchedServicePages > 0) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'service',
-        'Some pages in this version belong to another service. Fix page service/version links before publishing.',
-      )
-    }
-
-    const publishedPages = await countPublishedPagesForVersion(req, {
-      versionId: versionId as string | number,
-      serviceId: serviceId as string | number,
-    })
-
-    if (publishedPages === 0) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'status',
-        'Doc version cannot be published without at least one published page.',
-      )
-    }
-
-    if (!defaultPageSlug) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'defaultPageSlug',
-        'Default page slug is required and must point to a published page before publishing this version.',
-      )
-    }
-
-    const defaultPublishedPageCount = await countDocPages(req, {
-      and: [
-        { version: { equals: versionId } },
-        { service: { equals: serviceId } },
-        { slug: { equals: defaultPageSlug } },
-        { status: { equals: 'published' } },
-      ],
-    })
-
-    if (defaultPublishedPageCount === 0) {
-      const defaultPageExists = await countDocPages(req, {
-        and: [
-          { version: { equals: versionId } },
-          { service: { equals: serviceId } },
-          { slug: { equals: defaultPageSlug } },
-        ],
-      })
-
-      if (defaultPageExists > 0) {
-        throwValidationError(
-          collectionSlug,
-          req,
-          'defaultPageSlug',
-          'Default page exists but is not published. Publish that page or choose another published default page slug.',
-        )
-      }
-
-      throwValidationError(
-        collectionSlug,
-        req,
-        'defaultPageSlug',
-        'Default page slug must match an existing published page in this version.',
-      )
-    }
-  }
-
-  if (nextStatus === 'draft' && originalDoc?.status === 'published' && versionId) {
-    const publishedPages = await countDocPages(req, {
-      and: [{ version: { equals: versionId } }, { status: { equals: 'published' } }],
-    })
-
-    if (publishedPages > 0) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'status',
-        'Doc version cannot be set to draft while it still has published pages. Unpublish those pages first.',
-      )
-    }
-  }
-
-  return data
-}
-
-export const enforceVersionPublished: CollectionBeforeChangeHook = async ({
-  collection,
-  data,
-  originalDoc,
   req,
 }) => {
-  const nextStatus = data?.status ?? originalDoc?.status
-  if (nextStatus !== 'published') return data
+  if (operation === 'create') {
+    return {
+      ...(data ?? {}),
+      status: 'draft',
+    }
+  }
 
-  const versionValue = data?.version ?? originalDoc?.version
-  const versionId = getRelationId(versionValue)
+  const versionId = getRelationId(originalDoc?.id)
   if (!versionId) {
-    throw new ValidationError({
-      collection: collection?.slug,
-      errors: [
-        {
-          path: 'version',
-          message: 'Doc page requires a published version before it can be published.',
-        },
-      ],
-      req,
-    })
+    return {
+      ...(data ?? {}),
+      status: 'draft',
+    }
   }
 
-  let versionDoc
-  try {
-    versionDoc = await req.payload.findByID({
-      collection: 'docVersions',
-      id: versionId,
-      req,
-      overrideAccess: false,
-    })
-  } catch (error) {
-    throw new ValidationError({
-      collection: collection?.slug,
-      errors: [
-        {
-          path: 'version',
-          message: 'Selected version could not be found.',
-        },
-      ],
-      req,
-    })
+  const status = await resolveVersionStatusFromPages(req, versionId)
+
+  return {
+    ...(data ?? {}),
+    status,
+  }
+}
+
+export const syncVersionStatus = async (req: PayloadRequest, versionId: string | number) => {
+  const versionDoc = await findVersionByID(req, versionId)
+  if (!versionDoc) return
+
+  const currentStatus = versionDoc.status === 'published' ? 'published' : 'draft'
+  const status = await resolveVersionStatusFromPages(req, versionId)
+  if (status === currentStatus) return
+
+  await req.payload.update({
+    collection: 'docVersions',
+    id: versionId,
+    data: {
+      status,
+    },
+    req,
+    overrideAccess: true,
+    depth: 0,
+  })
+}
+
+const toUniqueVersionIds = (...values: unknown[]) => {
+  const ids = new Map<string, string | number>()
+
+  for (const value of values) {
+    const id = getRelationId(value)
+    if (id === null) continue
+    ids.set(String(id), id)
   }
 
-  if (versionDoc?.status !== 'published') {
-    throw new ValidationError({
-      collection: collection?.slug,
-      errors: [
-        {
-          path: 'status',
-          message:
-            'Doc page cannot be published while its version is in draft. Publish the version first.',
-        },
-      ],
-      req,
-    })
-  }
+  return Array.from(ids.values())
+}
 
-  return data
+export const syncVersionStatusesForPageChange: CollectionAfterChangeHook = async ({
+  doc,
+  previousDoc,
+  req,
+}) => {
+  const versionIds = toUniqueVersionIds(doc?.version, previousDoc?.version)
+
+  for (const versionId of versionIds) {
+    await syncVersionStatus(req, versionId)
+  }
+}
+
+export const syncVersionStatusForPageDelete: CollectionAfterDeleteHook = async ({ doc, req }) => {
+  const versionId = getRelationId(doc?.version)
+  if (!versionId) return
+
+  await syncVersionStatus(req, versionId)
 }
 
 export const enforcePageServiceMatchesVersion: CollectionBeforeChangeHook = async ({
@@ -400,17 +275,15 @@ export const enforcePublishedPageState: CollectionBeforeChangeHook = async ({
   if (!originalDoc) return data
 
   const collectionSlug = collection?.slug
-  const originalPageId = getRelationId(originalDoc.id)
   const originalVersionId = getRelationId(originalDoc.version)
   const originalServiceId = getRelationId(originalDoc.service)
   const originalSlug = normalizeSlug(originalDoc.slug)
 
-  if (!originalPageId || !originalVersionId || !originalServiceId || !originalSlug) return data
+  if (!originalVersionId || !originalServiceId || !originalSlug) return data
 
   const versionDoc = await findVersionByID(req, originalVersionId)
   if (!versionDoc || versionDoc.status !== 'published') return data
 
-  const nextStatus = data?.status ?? originalDoc.status
   const nextVersionId = getRelationId(data?.version ?? originalDoc.version)
   const nextServiceId = getRelationId(data?.service ?? originalDoc.service)
   const nextSlug = normalizeSlug(data?.slug ?? originalDoc.slug)
@@ -418,15 +291,6 @@ export const enforcePublishedPageState: CollectionBeforeChangeHook = async ({
 
   const isDefaultPage = defaultPageSlug.length > 0 && defaultPageSlug === originalSlug
   if (isDefaultPage) {
-    if (nextStatus !== 'published') {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'status',
-        'This page is the default page of a published version and cannot be set to draft.',
-      )
-    }
-
     if (!sameId(nextVersionId, originalVersionId) || !sameId(nextServiceId, originalServiceId)) {
       throwValidationError(
         collectionSlug,
@@ -442,29 +306,6 @@ export const enforcePublishedPageState: CollectionBeforeChangeHook = async ({
         req,
         'slug',
         'This page is the default page of a published version. Change the version default page slug first.',
-      )
-    }
-  }
-
-  const leavesPublishedSet =
-    originalDoc.status === 'published' &&
-    (nextStatus !== 'published' ||
-      !sameId(nextVersionId, originalVersionId) ||
-      !sameId(nextServiceId, originalServiceId))
-
-  if (leavesPublishedSet) {
-    const remainingPublishedPages = await countPublishedPagesForVersion(req, {
-      versionId: originalVersionId,
-      serviceId: originalServiceId,
-      excludePageId: originalPageId,
-    })
-
-    if (remainingPublishedPages === 0) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'status',
-        'This is the last published page for a published version. Publish another page before changing this one.',
       )
     }
   }
@@ -485,10 +326,9 @@ export const enforcePageDeleteIntegrity: CollectionBeforeDeleteHook = async ({
   if (!pageDoc) return
 
   const versionId = getRelationId(pageDoc.version)
-  const serviceId = getRelationId(pageDoc.service)
   const slug = normalizeSlug(pageDoc.slug)
 
-  if (!pageId || !versionId || !serviceId || !slug) return
+  if (!pageId || !versionId || !slug) return
 
   const versionDoc = await findVersionByID(req, versionId)
   if (!versionDoc || versionDoc.status !== 'published') return
@@ -501,22 +341,5 @@ export const enforcePageDeleteIntegrity: CollectionBeforeDeleteHook = async ({
       'slug',
       'Cannot delete the default page of a published version. Change defaultPageSlug first.',
     )
-  }
-
-  if (pageDoc.status === 'published') {
-    const remainingPublishedPages = await countPublishedPagesForVersion(req, {
-      versionId,
-      serviceId,
-      excludePageId: pageId,
-    })
-
-    if (remainingPublishedPages === 0) {
-      throwValidationError(
-        collectionSlug,
-        req,
-        'id',
-        'Cannot delete the last published page of a published version.',
-      )
-    }
   }
 }
