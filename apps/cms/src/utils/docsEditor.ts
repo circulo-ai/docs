@@ -39,7 +39,31 @@ export const docsLexicalEditor = lexicalEditor({
     BlockquoteFeature(),
     HorizontalRuleFeature(),
     IndentFeature(),
-    UploadFeature({ enabledCollections: ['media'] }),
+    UploadFeature({
+      enabledCollections: ['media'],
+      collections: {
+        media: {
+          fields: [
+            {
+              name: 'width',
+              type: 'number',
+              min: 1,
+              admin: {
+                description: 'Optional render width in pixels for this insertion.',
+              },
+            },
+            {
+              name: 'height',
+              type: 'number',
+              min: 1,
+              admin: {
+                description: 'Optional render height in pixels for this insertion.',
+              },
+            },
+          ],
+        },
+      },
+    }),
     BlocksFeature({
       blocks: [CodeBlock(), ...fumadocsBlocks],
     }),
