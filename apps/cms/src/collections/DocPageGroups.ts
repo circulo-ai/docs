@@ -6,6 +6,7 @@ import type {
 import { ValidationError } from 'payload'
 
 import { isEditor, isWriter } from '../access/roles'
+import { validateOptionalTrimmedString, validateTrimmedRequired } from '../utils/fieldValidation'
 
 type RelationValue = number | string | { id?: number | string } | null | undefined
 
@@ -164,6 +165,7 @@ export const DocPageGroups: CollectionConfig = {
       admin: {
         description: 'Label used in the docs sidebar (e.g. "Getting Started").',
       },
+      validate: (value: unknown) => validateTrimmedRequired(value, 'Group name'),
     },
     {
       name: 'slug',
@@ -177,11 +179,13 @@ export const DocPageGroups: CollectionConfig = {
     {
       name: 'description',
       type: 'textarea',
+      validate: (value: unknown) => validateOptionalTrimmedString(value, 'Group description'),
     },
     {
       name: 'order',
       type: 'number',
       defaultValue: 0,
+      min: 0,
       admin: {
         description: 'Lower values are shown first in the sidebar.',
       },
