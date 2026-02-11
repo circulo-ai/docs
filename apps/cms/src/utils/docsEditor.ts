@@ -20,6 +20,7 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { ElementClipboardFeature } from '../features/elementClipboard/server'
 import { fumadocsBlocks } from './fumadocsBlocks'
 
 const DEFAULT_HEADING_LEVELS = ['h2', 'h3', 'h4'] as const
@@ -67,6 +68,7 @@ export const docsLexicalEditor = lexicalEditor({
     BlocksFeature({
       blocks: [CodeBlock(), ...fumadocsBlocks],
     }),
+    ElementClipboardFeature(),
     InlineToolbarFeature(),
     FixedToolbarFeature(),
   ],
