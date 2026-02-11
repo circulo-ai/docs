@@ -160,7 +160,7 @@ export const DocPages: CollectionConfig = {
   slug: 'docPages',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'service', 'version', 'group', 'slug', 'status', 'updatedAt'],
+    defaultColumns: ['title', 'service', 'version', 'group', 'order', 'slug', 'status', 'updatedAt'],
   },
   access: {
     read: readPublishedOrRoles(writerRoles),
@@ -251,6 +251,15 @@ export const DocPages: CollectionConfig = {
             equals: versionId,
           },
         }
+      },
+    },
+    {
+      name: 'order',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Lower values are shown first in docs navigation.',
       },
     },
     {
