@@ -1,3 +1,4 @@
+import { LargeSearchToggle } from "@/components/search-toggle";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import type { ReactNode } from "react";
 
@@ -12,6 +13,7 @@ export function baseOptions(
     nav: {
       title: "Circulo AI Docs",
     },
+    searchToggle: { components: { lg: <LargeSearchToggle /> } },
     links: [{ type: "custom", children: overrides.navChildren }],
   };
 }

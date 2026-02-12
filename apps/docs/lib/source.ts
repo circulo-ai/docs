@@ -20,6 +20,7 @@ import { source as createSource, loader } from "fumadocs-core/source";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { cache, createElement, JSX } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { getCmsConfig } from "@/lib/cms-config";
 import { CmsContent } from "@/lib/cms-content";
 import {
@@ -119,11 +120,8 @@ const buildNavNodes = (
         if (children.length === 0) return [];
 
         const badge = createElement(
-          "span",
-          {
-            className:
-              "inline-flex items-center rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
-          },
+          Badge,
+          { variant: "outline", className: "uppercase" },
           label,
         );
         const separator: Separator = {

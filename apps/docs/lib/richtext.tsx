@@ -336,7 +336,7 @@ const renderCardsFromFields = (fields?: JsonRecord) => {
       resolvedCardProps.title = title;
       assignIfDefined(resolvedCardProps, "description", description);
       assignIfDefined(resolvedCardProps, "href", href);
-      assignIfDefined(resolvedCardProps, "external", external);
+      assignIfDefined(resolvedCardProps, "external", external?.toString());
       if (iconText) {
         resolvedCardProps.icon = iconText;
       }
