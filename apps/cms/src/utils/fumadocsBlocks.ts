@@ -9,6 +9,13 @@ export const fumadocsBlocks: Block[] = [
     },
     fields: [
       {
+        name: 'id',
+        type: 'text',
+        admin: {
+          description: 'Optional Banner id used for close-state persistence and anchor targets.',
+        },
+      },
+      {
         name: 'content',
         type: 'text',
         required: true,
@@ -27,9 +34,23 @@ export const fumadocsBlocks: Block[] = [
         type: 'text',
       },
       {
+        name: 'rainbowColors',
+        type: 'textarea',
+        admin: {
+          description: 'Optional rainbow colors, one CSS color value per line.',
+        },
+      },
+      {
         name: 'changeLayout',
         type: 'checkbox',
         defaultValue: false,
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional Banner props as a JSON object.',
+        },
       },
     ],
   },
@@ -61,6 +82,20 @@ export const fumadocsBlocks: Block[] = [
         name: 'content',
         type: 'textarea',
       },
+      {
+        name: 'icon',
+        type: 'text',
+        admin: {
+          description: 'Optional icon text/emoji override.',
+        },
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional Callout container props as a JSON object.',
+        },
+      },
     ],
   },
   {
@@ -70,6 +105,13 @@ export const fumadocsBlocks: Block[] = [
       plural: 'Cards',
     },
     fields: [
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional Cards container props as a JSON object.',
+        },
+      },
       {
         name: 'cards',
         type: 'array',
@@ -86,6 +128,13 @@ export const fumadocsBlocks: Block[] = [
             type: 'textarea',
           },
           {
+            name: 'icon',
+            type: 'text',
+            admin: {
+              description: 'Optional icon text/emoji for this card.',
+            },
+          },
+          {
             name: 'href',
             type: 'text',
           },
@@ -93,6 +142,13 @@ export const fumadocsBlocks: Block[] = [
             name: 'external',
             type: 'checkbox',
             defaultValue: false,
+          },
+          {
+            name: 'props',
+            type: 'json',
+            admin: {
+              description: 'Additional Card props as a JSON object.',
+            },
           },
         ],
       },
@@ -122,6 +178,13 @@ export const fumadocsBlocks: Block[] = [
         },
       },
       {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional Accordions props as a JSON object.',
+        },
+      },
+      {
         name: 'items',
         type: 'array',
         required: true,
@@ -137,9 +200,23 @@ export const fumadocsBlocks: Block[] = [
             type: 'text',
           },
           {
+            name: 'id',
+            type: 'text',
+            admin: {
+              description: 'Optional heading id for anchor copy links.',
+            },
+          },
+          {
             name: 'content',
             type: 'textarea',
             required: true,
+          },
+          {
+            name: 'props',
+            type: 'json',
+            admin: {
+              description: 'Additional Accordion item props as a JSON object.',
+            },
           },
         ],
       },
@@ -163,6 +240,13 @@ export const fumadocsBlocks: Block[] = [
         defaultValue: 0,
       },
       {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional Tabs props as a JSON object.',
+        },
+      },
+      {
         name: 'tabs',
         type: 'array',
         required: true,
@@ -181,6 +265,13 @@ export const fumadocsBlocks: Block[] = [
             name: 'content',
             type: 'textarea',
             required: true,
+          },
+          {
+            name: 'props',
+            type: 'json',
+            admin: {
+              description: 'Additional Tab props as a JSON object.',
+            },
           },
         ],
       },
@@ -220,6 +311,13 @@ export const fumadocsBlocks: Block[] = [
     },
     fields: [
       {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional Files container props as a JSON object.',
+        },
+      },
+      {
         name: 'entries',
         type: 'array',
         required: true,
@@ -240,6 +338,22 @@ export const fumadocsBlocks: Block[] = [
             required: true,
           },
           {
+            name: 'disabled',
+            type: 'checkbox',
+            defaultValue: false,
+            admin: {
+              condition: (_, siblingData) => siblingData.kind === 'folder',
+            },
+          },
+          {
+            name: 'icon',
+            type: 'text',
+            admin: {
+              condition: (_, siblingData) => siblingData.kind === 'file',
+              description: 'Optional icon text/emoji for file entries.',
+            },
+          },
+          {
             name: 'defaultOpen',
             type: 'checkbox',
             defaultValue: false,
@@ -255,6 +369,43 @@ export const fumadocsBlocks: Block[] = [
               description: 'Child file names for this folder, one per line.',
             },
           },
+          {
+            name: 'childrenEntries',
+            type: 'array',
+            admin: {
+              condition: (_, siblingData) => siblingData.kind === 'folder',
+              description: 'Optional structured child entries. Used instead of plain text children when set.',
+            },
+            fields: [
+              {
+                name: 'name',
+                type: 'text',
+                required: true,
+              },
+              {
+                name: 'icon',
+                type: 'text',
+                admin: {
+                  description: 'Optional icon text/emoji for this child file.',
+                },
+              },
+              {
+                name: 'props',
+                type: 'json',
+                admin: {
+                  description: 'Additional File props as a JSON object.',
+                },
+              },
+            ],
+          },
+          {
+            name: 'props',
+            type: 'json',
+            admin: {
+              description:
+                'Additional File/Folder props as a JSON object for this entry (based on entry kind).',
+            },
+          },
         ],
       },
     ],
@@ -267,6 +418,27 @@ export const fumadocsBlocks: Block[] = [
     },
     fields: [
       {
+        name: 'defaultValue',
+        type: 'text',
+        admin: {
+          description: 'Optional default tab value. Falls back to the first tab value.',
+        },
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional CodeBlockTabs props as a JSON object.',
+        },
+      },
+      {
+        name: 'tabsListProps',
+        type: 'json',
+        admin: {
+          description: 'Additional CodeBlockTabsList props as a JSON object.',
+        },
+      },
+      {
         name: 'tabs',
         type: 'array',
         required: true,
@@ -278,6 +450,10 @@ export const fumadocsBlocks: Block[] = [
             required: true,
           },
           {
+            name: 'value',
+            type: 'text',
+          },
+          {
             name: 'language',
             type: 'text',
             required: true,
@@ -286,6 +462,39 @@ export const fumadocsBlocks: Block[] = [
             name: 'code',
             type: 'code',
             required: true,
+          },
+          {
+            name: 'triggerProps',
+            type: 'json',
+            admin: {
+              description: 'Additional CodeBlockTabsTrigger props as a JSON object.',
+            },
+          },
+          {
+            name: 'tabProps',
+            type: 'json',
+            admin: {
+              description: 'Additional CodeBlockTab props as a JSON object.',
+            },
+          },
+          {
+            name: 'codeblock',
+            type: 'json',
+            admin: {
+              description: 'DynamicCodeBlock codeblock props as a JSON object.',
+            },
+          },
+          {
+            name: 'options',
+            type: 'json',
+            admin: {
+              description: 'DynamicCodeBlock shiki options as a JSON object.',
+            },
+          },
+          {
+            name: 'wrapInSuspense',
+            type: 'checkbox',
+            defaultValue: true,
           },
         ],
       },
@@ -319,6 +528,14 @@ export const fumadocsBlocks: Block[] = [
             type: 'textarea',
           },
           {
+            name: 'typeDescription',
+            type: 'textarea',
+          },
+          {
+            name: 'typeDescriptionLink',
+            type: 'text',
+          },
+          {
             name: 'default',
             type: 'text',
           },
@@ -332,6 +549,25 @@ export const fumadocsBlocks: Block[] = [
             type: 'checkbox',
             defaultValue: false,
           },
+          {
+            name: 'parameters',
+            type: 'array',
+            fields: [
+              {
+                name: 'name',
+                type: 'text',
+                required: true,
+              },
+              {
+                name: 'description',
+                type: 'textarea',
+              },
+            ],
+          },
+          {
+            name: 'returns',
+            type: 'textarea',
+          },
         ],
       },
     ],
@@ -342,7 +578,22 @@ export const fumadocsBlocks: Block[] = [
       singular: 'Inline TOC',
       plural: 'Inline TOCs',
     },
-    fields: [],
+    fields: [
+      {
+        name: 'label',
+        type: 'text',
+        admin: {
+          description: 'Optional label content rendered inside the TOC trigger.',
+        },
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional InlineTOC props as a JSON object.',
+        },
+      },
+    ],
   },
   {
     slug: 'fumaGithubInfo',
@@ -364,6 +615,27 @@ export const fumadocsBlocks: Block[] = [
       {
         name: 'label',
         type: 'text',
+      },
+      {
+        name: 'token',
+        type: 'text',
+        admin: {
+          description: 'Optional GitHub API token for private/limited API usage.',
+        },
+      },
+      {
+        name: 'baseUrl',
+        type: 'text',
+        admin: {
+          description: 'Optional GitHub API base URL override.',
+        },
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional GithubInfo anchor props as a JSON object.',
+        },
       },
     ],
   },
@@ -399,6 +671,39 @@ export const fumadocsBlocks: Block[] = [
       {
         name: 'alt',
         type: 'text',
+      },
+      {
+        name: 'sizes',
+        type: 'text',
+        admin: {
+          description: 'Optional responsive image sizes attribute.',
+        },
+      },
+      {
+        name: 'priority',
+        type: 'checkbox',
+        defaultValue: false,
+      },
+      {
+        name: 'zoomInProps',
+        type: 'json',
+        admin: {
+          description: 'ImageZoom zoomInProps as a JSON object.',
+        },
+      },
+      {
+        name: 'rmiz',
+        type: 'json',
+        admin: {
+          description: 'ImageZoom rmiz props as a JSON object.',
+        },
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description: 'Additional ImageZoom image props as a JSON object.',
+        },
       },
       {
         name: 'caption',
