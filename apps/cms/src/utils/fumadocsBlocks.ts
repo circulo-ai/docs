@@ -1,4 +1,81 @@
 import type { Block } from 'payload'
+import { DEFAULT_SERVICE_ICON, serviceIconOptions } from './serviceIcons'
+
+type IconFieldOptions = {
+  description: string
+  condition?: (data: unknown, siblingData: unknown) => boolean
+}
+
+const readIconSource = (siblingData: unknown): string | undefined => {
+  if (!siblingData || typeof siblingData !== 'object') return undefined
+  const source = (siblingData as { source?: unknown }).source
+  return typeof source === 'string' ? source : undefined
+}
+
+const readEntryKind = (siblingData: unknown): string | undefined => {
+  if (!siblingData || typeof siblingData !== 'object') return undefined
+  const kind = (siblingData as { kind?: unknown }).kind
+  return typeof kind === 'string' ? kind : undefined
+}
+
+const iconField = ({
+  description,
+  condition,
+}: IconFieldOptions): NonNullable<Block['fields']>[number] => ({
+  name: 'icon',
+  type: 'group',
+  admin: {
+    description,
+    condition,
+  },
+  fields: [
+    {
+      name: 'source',
+      type: 'radio',
+      defaultValue: 'lucide',
+      options: [
+        { label: 'Lucide', value: 'lucide' },
+        { label: 'Custom SVG', value: 'custom' },
+      ],
+      admin: {
+        layout: 'horizontal',
+      },
+    },
+    {
+      name: 'lucide',
+      type: 'select',
+      defaultValue: DEFAULT_SERVICE_ICON,
+      options: serviceIconOptions,
+      admin: {
+        description: 'Search the Lucide icon library by name.',
+        condition: (_, siblingData) => readIconSource(siblingData) !== 'custom',
+        components: {
+          Field: './components/IconSelectField',
+        },
+      },
+      validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+        if (readIconSource(siblingData) === 'custom') return true
+        return value ? true : 'Select a Lucide icon.'
+      },
+    },
+    {
+      name: 'customSvg',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Upload an SVG icon.',
+        condition: (_, siblingData) => readIconSource(siblingData) === 'custom',
+      },
+      filterOptions: {
+        mimeType: { equals: 'image/svg+xml' },
+      },
+      validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+        if (readIconSource(siblingData) !== 'custom') return true
+        return value ? true : 'Upload an SVG icon.'
+      },
+    },
+  ],
+})
 
 export const fumadocsBlocks: Block[] = [
   {
@@ -82,13 +159,7 @@ export const fumadocsBlocks: Block[] = [
         name: 'content',
         type: 'textarea',
       },
-      {
-        name: 'icon',
-        type: 'text',
-        admin: {
-          description: 'Optional icon text/emoji override.',
-        },
-      },
+      iconField({ description: 'Optional icon override.' }),
       {
         name: 'props',
         type: 'json',
@@ -127,13 +198,7 @@ export const fumadocsBlocks: Block[] = [
             name: 'description',
             type: 'textarea',
           },
-          {
-            name: 'icon',
-            type: 'text',
-            admin: {
-              description: 'Optional icon text/emoji for this card.',
-            },
-          },
+          iconField({ description: 'Optional icon for this card.' }),
           {
             name: 'href',
             type: 'text',
@@ -345,14 +410,10 @@ export const fumadocsBlocks: Block[] = [
               condition: (_, siblingData) => siblingData.kind === 'folder',
             },
           },
-          {
-            name: 'icon',
-            type: 'text',
-            admin: {
-              condition: (_, siblingData) => siblingData.kind === 'file',
-              description: 'Optional icon text/emoji for file entries.',
-            },
-          },
+          iconField({
+            description: 'Optional icon for file entries.',
+            condition: (_, siblingData) => readEntryKind(siblingData) === 'file',
+          }),
           {
             name: 'defaultOpen',
             type: 'checkbox',
@@ -383,13 +444,7 @@ export const fumadocsBlocks: Block[] = [
                 type: 'text',
                 required: true,
               },
-              {
-                name: 'icon',
-                type: 'text',
-                admin: {
-                  description: 'Optional icon text/emoji for this child file.',
-                },
-              },
+              iconField({ description: 'Optional icon for this child file.' }),
               {
                 name: 'props',
                 type: 'json',

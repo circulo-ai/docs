@@ -6,6 +6,12 @@ import {
   validateTrimmedRequired,
 } from '../utils/fieldValidation'
 
+const readIconSource = (siblingData: unknown): string | undefined => {
+  if (!siblingData || typeof siblingData !== 'object') return undefined
+  const source = (siblingData as { source?: unknown }).source
+  return typeof source === 'string' ? source : undefined
+}
+
 export const Services: CollectionConfig = {
   slug: 'services',
   admin: {
@@ -105,13 +111,13 @@ export const Services: CollectionConfig = {
           options: serviceIconOptions,
           admin: {
             description: 'Search the Lucide icon library by name.',
-            condition: (_, siblingData) => siblingData?.source !== 'custom',
+            condition: (_, siblingData) => readIconSource(siblingData) !== 'custom',
             components: {
               Field: './components/IconSelectField',
             },
           },
-          validate: (value: unknown, { siblingData }: { siblingData?: { source?: string } }) => {
-            if (siblingData?.source === 'custom') return true
+          validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+            if (readIconSource(siblingData) === 'custom') return true
             return value ? true : 'Select a Lucide icon.'
           },
         },
@@ -121,13 +127,13 @@ export const Services: CollectionConfig = {
           relationTo: 'media',
           admin: {
             description: 'Upload an SVG icon.',
-            condition: (_, siblingData) => siblingData?.source === 'custom',
+            condition: (_, siblingData) => readIconSource(siblingData) === 'custom',
           },
           filterOptions: {
             mimeType: { equals: 'image/svg+xml' },
           },
-          validate: (value: unknown, { siblingData }: { siblingData?: { source?: string } }) => {
-            if (siblingData?.source !== 'custom') return true
+          validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+            if (readIconSource(siblingData) !== 'custom') return true
             return value ? true : 'Upload an SVG icon.'
           },
         },

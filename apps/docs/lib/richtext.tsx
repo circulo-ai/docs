@@ -26,6 +26,7 @@ import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
+import { ServiceIcon } from "@/lib/service-icons";
 import { resolveUploadRenderDimensions } from "@/lib/upload-dimensions";
 
 export type RichTextComponentMap = Record<string, ElementType | undefined>;
@@ -173,6 +174,55 @@ const relationValueToObject = (value: unknown): JsonRecord | null => {
   const nested = asRecord(record.value);
   return nested ?? record;
 };
+const resolveIconNode = (
+  value: unknown,
+  baseUrl?: string,
+): ReactNode | undefined => {
+  const textIcon = asString(value);
+  if (textIcon) return textIcon;
+
+  const iconRecord = asRecord(value);
+  if (!iconRecord) return undefined;
+
+  const source = asString(iconRecord.source);
+  const lucide = asString(iconRecord.lucide);
+
+  if (source !== "custom" && lucide) {
+    return createElement(ServiceIcon, {
+      icon: { type: "lucide", name: lucide },
+      size: 16,
+    });
+  }
+
+  const customSvg =
+    relationValueToObject(iconRecord.customSvg) ??
+    asRecord(iconRecord.customSvg);
+  const customUrl = asString(customSvg?.url);
+  if (customUrl) {
+    const icon: { type: "custom"; url: string; alt?: string } = {
+      type: "custom",
+      url: prefixAssetUrl(baseUrl, customUrl),
+    };
+    const alt = asString(customSvg?.alt);
+    if (alt) {
+      icon.alt = alt;
+    }
+
+    return createElement(ServiceIcon, {
+      icon,
+      size: 16,
+    });
+  }
+
+  if (lucide) {
+    return createElement(ServiceIcon, {
+      icon: { type: "lucide", name: lucide },
+      size: 16,
+    });
+  }
+
+  return undefined;
+};
 
 const resolveInternalLinkHref = (fields: JsonRecord) => {
   const docField = asRecord(fields.doc);
@@ -281,13 +331,16 @@ const renderCodeBlockFromFields = (fields?: JsonRecord) => {
   );
 };
 
-const renderCalloutFromFields = (fields?: JsonRecord) => {
+const renderCalloutFromFields = (
+  fields?: JsonRecord,
+  options?: BlockRenderOptions,
+) => {
   if (!fields) return null;
   const calloutProps = asJsonRecord(fields.props) ?? {};
   const title = asString(fields.title) ?? asString(calloutProps.title);
   const type = asString(fields.type) ?? asString(calloutProps.type);
   const content = asString(fields.content) ?? asString(fields.body);
-  const iconText = asString(fields.icon);
+  const icon = resolveIconNode(fields.icon, options?.baseUrl);
 
   if (!title && !content) return null;
 
@@ -303,8 +356,8 @@ const renderCalloutFromFields = (fields?: JsonRecord) => {
   const props: JsonRecord = { ...calloutProps };
   assignIfDefined(props, "title", title);
   props.type = resolvedType;
-  if (iconText) {
-    props.icon = iconText;
+  if (icon) {
+    props.icon = icon;
   }
 
   return createElement(
@@ -314,7 +367,10 @@ const renderCalloutFromFields = (fields?: JsonRecord) => {
   );
 };
 
-const renderCardsFromFields = (fields?: JsonRecord) => {
+const renderCardsFromFields = (
+  fields?: JsonRecord,
+  options?: BlockRenderOptions,
+) => {
   if (!fields) return null;
   const cardsProps = asJsonRecord(fields.props) ?? {};
   const cards = asArray(fields.cards)
@@ -329,7 +385,7 @@ const renderCardsFromFields = (fields?: JsonRecord) => {
       const href = asString(card.href) ?? asString(cardProps.href);
       const external =
         asBoolean(card.external) ?? asBoolean(cardProps.external);
-      const iconText = asString(card.icon);
+      const icon = resolveIconNode(card.icon, options?.baseUrl);
 
       const resolvedCardProps: JsonRecord = { ...cardProps };
       resolvedCardProps.key = `${title}-${index}`;
@@ -337,8 +393,8 @@ const renderCardsFromFields = (fields?: JsonRecord) => {
       assignIfDefined(resolvedCardProps, "description", description);
       assignIfDefined(resolvedCardProps, "href", href);
       assignIfDefined(resolvedCardProps, "external", external);
-      if (iconText) {
-        resolvedCardProps.icon = iconText;
+      if (icon) {
+        resolvedCardProps.icon = icon;
       }
 
       return createElement(
@@ -499,7 +555,10 @@ const renderStepsFromFields = (fields?: JsonRecord) => {
   );
 };
 
-const renderFilesFromFields = (fields?: JsonRecord) => {
+const renderFilesFromFields = (
+  fields?: JsonRecord,
+  options?: BlockRenderOptions,
+) => {
   if (!fields) return null;
   const filesProps = asJsonRecord(fields.props) ?? {};
 
@@ -520,12 +579,12 @@ const renderFilesFromFields = (fields?: JsonRecord) => {
             const childName = asString(child.name);
             if (!childName) return null;
             const childProps = asJsonRecord(child.props) ?? {};
-            const childIconText = asString(child.icon);
+            const childIcon = resolveIconNode(child.icon, options?.baseUrl);
             const resolvedChildProps: JsonRecord = { ...childProps };
             resolvedChildProps.key = `${childName}-${childIndex}`;
             resolvedChildProps.name = childName;
-            if (childIconText) {
-              resolvedChildProps.icon = childIconText;
+            if (childIcon) {
+              resolvedChildProps.icon = childIcon;
             }
             return createElement(
               File,
@@ -560,12 +619,12 @@ const renderFilesFromFields = (fields?: JsonRecord) => {
         );
       }
 
-      const iconText = asString(entry.icon);
+      const icon = resolveIconNode(entry.icon, options?.baseUrl);
       const resolvedFileProps: JsonRecord = { ...entryProps };
       resolvedFileProps.key = `${name}-${index}`;
       resolvedFileProps.name = name;
-      if (iconText) {
-        resolvedFileProps.icon = iconText;
+      if (icon) {
+        resolvedFileProps.icon = icon;
       }
 
       return createElement(
@@ -888,14 +947,14 @@ const renderBlockByType = (
     normalized === "callout" ||
     normalized === "alert"
   ) {
-    return renderCalloutFromFields(fields);
+    return renderCalloutFromFields(fields, options);
   }
-  if (normalized === "fumacards") return renderCardsFromFields(fields);
+  if (normalized === "fumacards") return renderCardsFromFields(fields, options);
   if (normalized === "fumaaccordions")
     return renderAccordionsFromFields(fields);
   if (normalized === "fumatabs") return renderTabsFromFields(fields);
   if (normalized === "fumasteps") return renderStepsFromFields(fields);
-  if (normalized === "fumafiles") return renderFilesFromFields(fields);
+  if (normalized === "fumafiles") return renderFilesFromFields(fields, options);
   if (normalized === "fumacodetabs") return renderCodeTabsFromFields(fields);
   if (normalized === "fumatypetable") return renderTypeTableFromFields(fields);
   if (normalized === "fumainlinetoc")
@@ -1129,7 +1188,10 @@ const buildConverters = (options: {
         const code = renderCodeBlockFromFields(fields ?? undefined);
         if (code) return code;
 
-        const callout = renderCalloutFromFields(fields ?? undefined);
+        const callout = renderCalloutFromFields(
+          fields ?? undefined,
+          blockOptions,
+        );
         if (callout) return callout;
       }
 
