@@ -132,12 +132,10 @@
   }
 }
 
-@layer components {
-  .list-bullet {
-    padding-inline-start: 1.625em;
-  }
+.list-bullet {
+  padding-inline-start: 1.625em;
+}
 
-  .list-bullet > li {
-    padding-inline-start: 0.375em;
-  }
+.list-bullet > li {
+  padding-inline-start: 0.375em;
 }
