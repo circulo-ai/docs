@@ -60,11 +60,7 @@ const asBoolean = (value: unknown): boolean | undefined =>
 const asJsonRecord = (value: unknown): JsonRecord | undefined =>
   asRecord(value) ?? undefined;
 
-const assignIfDefined = (
-  target: JsonRecord,
-  key: string,
-  value: unknown,
-) => {
+const assignIfDefined = (target: JsonRecord, key: string, value: unknown) => {
   if (value !== undefined) {
     target[key] = value;
   }
@@ -273,8 +269,9 @@ const renderCodeBlockFromFields = (fields?: JsonRecord) => {
     code,
   };
   if (Object.keys(codeblockProps).length > 0) {
-    dynamicCodeProps.codeblock =
-      codeblockProps as ComponentProps<typeof DynamicCodeBlock>["codeblock"];
+    dynamicCodeProps.codeblock = codeblockProps as ComponentProps<
+      typeof DynamicCodeBlock
+    >["codeblock"];
   }
   assignIfDefined(dynamicCodeProps, "options", options);
   assignIfDefined(dynamicCodeProps, "wrapInSuspense", wrapInSuspense);
@@ -681,33 +678,30 @@ const renderCodeTabsFromFields = (fields?: JsonRecord) => {
         ),
       ),
       ...tabs.map((tab) => {
-          const dynamicCodeProps: JsonRecord = {
-            lang: tab.language,
-            code: tab.code,
-            codeblock:
-              tab.codeblock as ComponentProps<typeof DynamicCodeBlock>["codeblock"],
-          };
-          assignIfDefined(dynamicCodeProps, "options", tab.options);
-          assignIfDefined(
-            dynamicCodeProps,
-            "wrapInSuspense",
-            tab.wrapInSuspense,
-          );
-          const resolvedTabProps: JsonRecord = { ...tab.tabProps };
-          resolvedTabProps.key = `tab-${tab.value}`;
-          resolvedTabProps.value = tab.value;
+        const dynamicCodeProps: JsonRecord = {
+          lang: tab.language,
+          code: tab.code,
+          codeblock: tab.codeblock as ComponentProps<
+            typeof DynamicCodeBlock
+          >["codeblock"],
+        };
+        assignIfDefined(dynamicCodeProps, "options", tab.options);
+        assignIfDefined(dynamicCodeProps, "wrapInSuspense", tab.wrapInSuspense);
+        const resolvedTabProps: JsonRecord = { ...tab.tabProps };
+        resolvedTabProps.key = `tab-${tab.value}`;
+        resolvedTabProps.value = tab.value;
 
-          return createElement(
-            CodeBlockTab,
-            resolvedTabProps as unknown as ComponentProps<typeof CodeBlockTab>,
-            createElement(
-              DynamicCodeBlock,
-              dynamicCodeProps as unknown as ComponentProps<
-                typeof DynamicCodeBlock
-              >,
-            ),
-          );
-        }),
+        return createElement(
+          CodeBlockTab,
+          resolvedTabProps as unknown as ComponentProps<typeof CodeBlockTab>,
+          createElement(
+            DynamicCodeBlock,
+            dynamicCodeProps as unknown as ComponentProps<
+              typeof DynamicCodeBlock
+            >,
+          ),
+        );
+      }),
     ],
   );
 };
@@ -859,7 +853,11 @@ const renderImageZoomFromFields = (
   if (!rawUrl) return null;
 
   const src = prefixAssetUrl(options.baseUrl, rawUrl);
-  const alt = asString(fields.alt) ?? asString(imageZoomProps.alt) ?? asString(image?.alt) ?? "";
+  const alt =
+    asString(fields.alt) ??
+    asString(imageZoomProps.alt) ??
+    asString(image?.alt) ??
+    "";
   const resolvedDimensions = resolveUploadRenderDimensions({
     fieldHeight: fields.height,
     fieldWidth: fields.width,
@@ -869,7 +867,8 @@ const renderImageZoomFromFields = (
   const width = asNumber(imageZoomProps.width) ?? resolvedDimensions.width;
   const height = asNumber(imageZoomProps.height) ?? resolvedDimensions.height;
   const sizes = asString(fields.sizes) ?? asString(imageZoomProps.sizes);
-  const priority = asBoolean(fields.priority) ?? asBoolean(imageZoomProps.priority);
+  const priority =
+    asBoolean(fields.priority) ?? asBoolean(imageZoomProps.priority);
   const zoomInProps = asJsonRecord(fields.zoomInProps);
   const rmiz = asJsonRecord(fields.rmiz);
   const caption = asString(fields.caption);

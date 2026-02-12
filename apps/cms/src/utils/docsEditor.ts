@@ -33,9 +33,7 @@ const getFieldName = (field: Field): string | undefined => {
   return undefined
 }
 
-const withExtraCodeBlockFields = (
-  fields: NonNullable<ReturnType<typeof CodeBlock>['fields']>,
-) => {
+const withExtraCodeBlockFields = (fields: NonNullable<ReturnType<typeof CodeBlock>['fields']>) => {
   const names = new Set(fields.map(getFieldName).filter((name): name is string => Boolean(name)))
   const nextFields = [...fields]
   const pushIfMissing = (field: (typeof nextFields)[number]) => {

@@ -374,7 +374,8 @@ export const fumadocsBlocks: Block[] = [
             type: 'array',
             admin: {
               condition: (_, siblingData) => siblingData.kind === 'folder',
-              description: 'Optional structured child entries. Used instead of plain text children when set.',
+              description:
+                'Optional structured child entries. Used instead of plain text children when set.',
             },
             fields: [
               {
