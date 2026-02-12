@@ -6,7 +6,6 @@ Set-StrictMode -Version Latest
 
 $root = Get-Location
 $targets = @(
-  ".next",
   ".turbo",
   "node_modules",
   "dist",
@@ -16,6 +15,8 @@ $targets = @(
   ".cache",
   ".swc"
 )
+
+& (Join-Path $PSScriptRoot "clean-next.ps1") -WhatIf:$WhatIf
 
 foreach ($name in $targets) {
   Get-ChildItem -Path $root -Force -Directory -Recurse -Filter $name -ErrorAction SilentlyContinue |

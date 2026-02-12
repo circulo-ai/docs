@@ -634,14 +634,16 @@ const renderImageZoomFromFields = (
 
   if (!caption) return imageNode;
 
-  return createElement("figure", { className: "space-y-2" }, [
+  return createElement(
+    "figure",
+    { className: "space-y-2" },
     imageNode,
     createElement(
       "figcaption",
-      { key: "caption", className: "text-sm text-muted-foreground" },
+      { className: "text-sm text-muted-foreground" },
       caption,
     ),
-  ]);
+  );
 };
 
 const getBlockFields = (node: SerializedLexicalNode): JsonRecord | undefined =>

@@ -41,7 +41,6 @@ export function ServicePrimaryColor({ services }: ServicePrimaryColorProps) {
       root.style.removeProperty("--accent");
       root.style.removeProperty("--sidebar-primary");
       root.style.removeProperty("--sidebar-accent");
-      root.style.removeProperty("--chart-2");
       return;
     }
 
@@ -51,7 +50,6 @@ export function ServicePrimaryColor({ services }: ServicePrimaryColorProps) {
       root.style.setProperty("--accent", primaryColor);
       root.style.setProperty("--sidebar-primary", primaryColor);
       root.style.setProperty("--sidebar-accent", primaryColor);
-      root.style.setProperty("--chart-2", primaryColor);
       return;
     }
 
@@ -59,7 +57,6 @@ export function ServicePrimaryColor({ services }: ServicePrimaryColorProps) {
     root.style.removeProperty("--accent");
     root.style.removeProperty("--sidebar-primary");
     root.style.removeProperty("--sidebar-accent");
-    root.style.removeProperty("--chart-2");
   }, [servicePrimaryColors, serviceSlug]);
 
   return null;

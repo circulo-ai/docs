@@ -36,7 +36,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         "--accent": servicePrimaryColor,
         "--sidebar-primary": servicePrimaryColor,
         "--sidebar-accent": servicePrimaryColor,
-        "--chart-2": servicePrimaryColor,
       } as CSSProperties)
     : undefined;
 

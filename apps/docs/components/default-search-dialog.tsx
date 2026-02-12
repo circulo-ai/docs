@@ -111,7 +111,7 @@ export default function DefaultSearchDialog({
         </SearchDialogHeader>
         <SearchDialogList
           items={query.data !== "empty" ? query.data : defaultItems}
-          className="[&_button[aria-selected='true']_span[class='text-fd-primary_underline']]:text-fd-popover"
+          className="[&_button[aria-selected='true']_span[class='text-fd-primary_underline']]:text-fd-accent-foreground"
         />
       </SearchDialogContent>
       <SearchDialogFooter>

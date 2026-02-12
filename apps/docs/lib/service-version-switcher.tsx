@@ -153,7 +153,6 @@ export function ServiceVersionSwitcher({
                         "--accent": service.primaryColor,
                         "--sidebar-primary": service.primaryColor,
                         "--sidebar-accent": service.primaryColor,
-                        "--chart-2": service.primaryColor,
                       } as CSSProperties)
                     : undefined
                 }

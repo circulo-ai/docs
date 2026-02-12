@@ -6,6 +6,7 @@
     "build": "turbo run build",
     "check-types": "turbo run check-types",
     "clean:all": "pwsh scripts/clean-all.ps1",
+    "clean:next": "pwsh scripts/clean-next.ps1",
     "dev": "turbo run dev",
     "dev:reset": "pwsh scripts/dev-reset.ps1",
     "format": "prettier . --write",
