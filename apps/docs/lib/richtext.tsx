@@ -246,8 +246,7 @@ const resolveLinkNewTab = (node: SerializedLexicalNode) => {
 
 const renderTextBlock = (value: unknown) => {
   const text = asString(value);
-  if (!text) return null;
-  return createElement("div", { className: "whitespace-pre-wrap" }, text);
+  return text ?? null;
 };
 
 const renderCodeBlockFromFields = (fields?: JsonRecord) => {
@@ -305,7 +304,7 @@ const renderCalloutFromFields = (fields?: JsonRecord) => {
   assignIfDefined(props, "title", title);
   props.type = resolvedType;
   if (iconText) {
-    props.icon = createElement("span", { "aria-hidden": true }, iconText);
+    props.icon = iconText;
   }
 
   return createElement(
@@ -339,11 +338,7 @@ const renderCardsFromFields = (fields?: JsonRecord) => {
       assignIfDefined(resolvedCardProps, "href", href);
       assignIfDefined(resolvedCardProps, "external", external);
       if (iconText) {
-        resolvedCardProps.icon = createElement(
-          "span",
-          { "aria-hidden": true },
-          iconText,
-        );
+        resolvedCardProps.icon = iconText;
       }
 
       return createElement(
@@ -497,10 +492,7 @@ const renderStepsFromFields = (fields?: JsonRecord) => {
     <Steps>
       {steps.map((step) => (
         <Step key={step.key}>
-          <div className="space-y-2">
-            {step.title ? <p className="font-medium">{step.title}</p> : null}
-            {renderTextBlock(step.content)}
-          </div>
+          {step.title ? `${step.title}\n${step.content}` : step.content}
         </Step>
       ))}
     </Steps>
@@ -533,11 +525,7 @@ const renderFilesFromFields = (fields?: JsonRecord) => {
             resolvedChildProps.key = `${childName}-${childIndex}`;
             resolvedChildProps.name = childName;
             if (childIconText) {
-              resolvedChildProps.icon = createElement(
-                "span",
-                { "aria-hidden": true },
-                childIconText,
-              );
+              resolvedChildProps.icon = childIconText;
             }
             return createElement(
               File,
@@ -577,11 +565,7 @@ const renderFilesFromFields = (fields?: JsonRecord) => {
       resolvedFileProps.key = `${name}-${index}`;
       resolvedFileProps.name = name;
       if (iconText) {
-        resolvedFileProps.icon = createElement(
-          "span",
-          { "aria-hidden": true },
-          iconText,
-        );
+        resolvedFileProps.icon = iconText;
       }
 
       return createElement(
@@ -871,7 +855,6 @@ const renderImageZoomFromFields = (
     asBoolean(fields.priority) ?? asBoolean(imageZoomProps.priority);
   const zoomInProps = asJsonRecord(fields.zoomInProps);
   const rmiz = asJsonRecord(fields.rmiz);
-  const caption = asString(fields.caption);
   const resolvedImageZoomProps: JsonRecord = { ...imageZoomProps };
   resolvedImageZoomProps.src = src;
   resolvedImageZoomProps.alt = alt;
@@ -885,19 +868,7 @@ const renderImageZoomFromFields = (
   const imageNode = createElement(ImageZoom, {
     ...(resolvedImageZoomProps as unknown as ComponentProps<typeof ImageZoom>),
   });
-
-  if (!caption) return imageNode;
-
-  return createElement(
-    "figure",
-    { className: "space-y-2" },
-    imageNode,
-    createElement(
-      "figcaption",
-      { className: "text-sm text-muted-foreground" },
-      caption,
-    ),
-  );
+  return imageNode;
 };
 
 const getBlockFields = (node: SerializedLexicalNode): JsonRecord | undefined =>
@@ -1163,7 +1134,7 @@ const buildConverters = (options: {
       }
 
       if ("children" in node && Array.isArray(node.children)) {
-        return createElement("span", {}, nodesToJSX({ nodes: node.children }));
+        return nodesToJSX({ nodes: node.children });
       }
 
       return null;
