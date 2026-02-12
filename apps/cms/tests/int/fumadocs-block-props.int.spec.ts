@@ -1,8 +1,8 @@
 import type { Block, Field } from 'payload'
 import { describe, expect, it } from 'vitest'
 
-import { fumadocsBlocks } from '../../src/utils/fumadocsBlocks'
 import { docsCodeBlock } from '../../src/utils/docsEditor'
+import { fumadocsBlocks } from '../../src/utils/fumadocsBlocks'
 
 const bySlug = (slug: string): Block => {
   const block = fumadocsBlocks.find((value) => value.slug === slug)
@@ -31,6 +31,30 @@ const arrayFields = (field: Field): Field[] => {
   return field.fields
 }
 
+const groupFields = (field: Field): Field[] => {
+  if (!('type' in field) || field.type !== 'group') {
+    throw new Error('Expected group field')
+  }
+  return field.fields
+}
+
+const expectIconSelectorGroup = (field: Field) => {
+  expectFieldType(field, 'group')
+
+  const fields = groupFields(field)
+  expectFieldType(byName(fields, 'source'), 'radio')
+
+  const lucide = byName(fields, 'lucide')
+  expectFieldType(lucide, 'select')
+  expect((lucide as { admin?: { components?: { Field?: string } } }).admin?.components?.Field).toBe(
+    './components/IconSelectField',
+  )
+
+  const customSvg = byName(fields, 'customSvg')
+  expectFieldType(customSvg, 'upload')
+  expect((customSvg as { relationTo?: unknown }).relationTo).toBe('media')
+}
+
 describe('fumadocs block prop exposure', () => {
   it('exposes banner, callout, cards, accordion, and tabs props', () => {
     const banner = bySlug('fumaBanner')
@@ -39,13 +63,13 @@ describe('fumadocs block prop exposure', () => {
     expectFieldType(byName(banner.fields, 'props'), 'json')
 
     const callout = bySlug('fumaCallout')
-    expectFieldType(byName(callout.fields, 'icon'), 'text')
+    expectIconSelectorGroup(byName(callout.fields, 'icon'))
     expectFieldType(byName(callout.fields, 'props'), 'json')
 
     const cards = bySlug('fumaCards')
     expectFieldType(byName(cards.fields, 'props'), 'json')
     const cardsArray = arrayFields(byName(cards.fields, 'cards'))
-    expectFieldType(byName(cardsArray, 'icon'), 'text')
+    expectIconSelectorGroup(byName(cardsArray, 'icon'))
     expectFieldType(byName(cardsArray, 'props'), 'json')
 
     const accordions = bySlug('fumaAccordions')
@@ -64,10 +88,11 @@ describe('fumadocs block prop exposure', () => {
     expectFieldType(byName(files.fields, 'props'), 'json')
     const entries = arrayFields(byName(files.fields, 'entries'))
     expectFieldType(byName(entries, 'disabled'), 'checkbox')
-    expectFieldType(byName(entries, 'icon'), 'text')
+    expectIconSelectorGroup(byName(entries, 'icon'))
     expectFieldType(byName(entries, 'props'), 'json')
+
     const children = arrayFields(byName(entries, 'childrenEntries'))
-    expectFieldType(byName(children, 'icon'), 'text')
+    expectIconSelectorGroup(byName(children, 'icon'))
     expectFieldType(byName(children, 'props'), 'json')
 
     const codeTabs = bySlug('fumaCodeTabs')

@@ -41,6 +41,8 @@ storybook-static
 **/*.gen.*
 **/*.generated.*
 **/*-generated.*
+importMap.js
+payload-types.ts
 
 
 # ===============================
