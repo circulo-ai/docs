@@ -789,7 +789,7 @@ const renderBannerFromFields = (fields?: JsonRecord) => {
   );
   const resolvedBannerProps: JsonRecord = { ...bannerProps };
   resolvedBannerProps.variant = variant;
-  assignIfDefined(resolvedBannerProps, "height", height);
+  assignIfDefined(resolvedBannerProps, "height", height + "px");
   assignIfDefined(resolvedBannerProps, "changeLayout", changeLayout);
   assignIfDefined(resolvedBannerProps, "id", id);
   if (rainbowColors.length > 0) {
