@@ -57,6 +57,19 @@ const asNumber = (value: unknown): number | undefined =>
 const asBoolean = (value: unknown): boolean | undefined =>
   typeof value === "boolean" ? value : undefined;
 
+const asJsonRecord = (value: unknown): JsonRecord | undefined =>
+  asRecord(value) ?? undefined;
+
+const assignIfDefined = (
+  target: JsonRecord,
+  key: string,
+  value: unknown,
+) => {
+  if (value !== undefined) {
+    target[key] = value;
+  }
+};
+
 const ensureString = (value: unknown, fallback = "") =>
   typeof value === "string" ? value : fallback;
 
@@ -71,6 +84,13 @@ const parseCsv = (value: unknown): string[] =>
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+
+const parseStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => asString(item)).filter(isDefined);
+  }
+  return parseLines(value);
+};
 
 const normalizeSlugSegments = (value: string) =>
   value
@@ -238,65 +258,115 @@ const renderCodeBlockFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
   const code = asString(fields.code);
   if (!code) return null;
-  const language = asString(fields.language) ?? "text";
+  const language = asString(fields.language) ?? asString(fields.lang) ?? "text";
   const title = asString(fields.title);
+  const codeblockProps = asJsonRecord(fields.codeblock) ?? {};
+  const options = asJsonRecord(fields.options);
+  const wrapInSuspense = asBoolean(fields.wrapInSuspense);
 
-  return createElement(DynamicCodeBlock, {
+  if (title && asString(codeblockProps.title) === undefined) {
+    codeblockProps.title = title;
+  }
+
+  const dynamicCodeProps: JsonRecord = {
     lang: language,
     code,
-    codeblock: title ? { title } : undefined,
-  });
+  };
+  if (Object.keys(codeblockProps).length > 0) {
+    dynamicCodeProps.codeblock =
+      codeblockProps as ComponentProps<typeof DynamicCodeBlock>["codeblock"];
+  }
+  assignIfDefined(dynamicCodeProps, "options", options);
+  assignIfDefined(dynamicCodeProps, "wrapInSuspense", wrapInSuspense);
+
+  return createElement(
+    DynamicCodeBlock,
+    dynamicCodeProps as unknown as ComponentProps<typeof DynamicCodeBlock>,
+  );
 };
 
 const renderCalloutFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
-  const title = asString(fields.title);
-  const type = asString(fields.type);
+  const calloutProps = asJsonRecord(fields.props) ?? {};
+  const title = asString(fields.title) ?? asString(calloutProps.title);
+  const type = asString(fields.type) ?? asString(calloutProps.type);
   const content = asString(fields.content) ?? asString(fields.body);
+  const iconText = asString(fields.icon);
 
   if (!title && !content) return null;
 
+  const resolvedType =
+    type === "warn" ||
+    type === "warning" ||
+    type === "error" ||
+    type === "success" ||
+    type === "idea"
+      ? type
+      : "info";
+
+  const props: JsonRecord = { ...calloutProps };
+  assignIfDefined(props, "title", title);
+  props.type = resolvedType;
+  if (iconText) {
+    props.icon = createElement("span", { "aria-hidden": true }, iconText);
+  }
+
   return createElement(
     Callout,
-    {
-      title,
-      type:
-        type === "warn" ||
-        type === "warning" ||
-        type === "error" ||
-        type === "success" ||
-        type === "idea"
-          ? type
-          : "info",
-    },
+    props as unknown as ComponentProps<typeof Callout>,
     renderTextBlock(content),
   );
 };
 
 const renderCardsFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
+  const cardsProps = asJsonRecord(fields.props) ?? {};
   const cards = asArray(fields.cards)
     .map((value) => asRecord(value))
     .filter((value): value is JsonRecord => Boolean(value))
     .map((card, index) => {
-      const title = asString(card.title);
+      const cardProps = asJsonRecord(card.props) ?? {};
+      const title = asString(card.title) ?? asString(cardProps.title);
       if (!title) return null;
-      return createElement(Card, {
-        key: `${title}-${index}`,
-        title,
-        description: asString(card.description),
-        href: asString(card.href),
-        external: asBoolean(card.external)?.toString() as unknown as boolean,
-      });
+      const description =
+        asString(card.description) ?? asString(cardProps.description);
+      const href = asString(card.href) ?? asString(cardProps.href);
+      const external =
+        asBoolean(card.external) ?? asBoolean(cardProps.external);
+      const iconText = asString(card.icon);
+
+      const resolvedCardProps: JsonRecord = { ...cardProps };
+      resolvedCardProps.key = `${title}-${index}`;
+      resolvedCardProps.title = title;
+      assignIfDefined(resolvedCardProps, "description", description);
+      assignIfDefined(resolvedCardProps, "href", href);
+      assignIfDefined(resolvedCardProps, "external", external);
+      if (iconText) {
+        resolvedCardProps.icon = createElement(
+          "span",
+          { "aria-hidden": true },
+          iconText,
+        );
+      }
+
+      return createElement(
+        Card,
+        resolvedCardProps as unknown as ComponentProps<typeof Card>,
+      );
     })
     .filter(isDefined);
 
   if (cards.length === 0) return null;
-  return createElement(Cards, {}, cards);
+  return createElement(
+    Cards,
+    cardsProps as unknown as ComponentProps<typeof Cards>,
+    cards,
+  );
 };
 
 const renderTabsFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
+  const tabsProps = asJsonRecord(fields.props) ?? {};
 
   const tabs = asArray(fields.tabs)
     .map((value) => asRecord(value))
@@ -304,35 +374,49 @@ const renderTabsFromFields = (fields?: JsonRecord) => {
     .map((tab, index) => {
       const content = asString(tab.content);
       if (!content) return null;
+      const tabProps = asJsonRecord(tab.props) ?? {};
 
       return {
         key: `tab-${index + 1}`,
         title: asString(tab.title) ?? `Tab ${index + 1}`,
+        value: asString(tab.value),
         content,
+        props: tabProps,
       };
     })
     .filter(isDefined);
 
   if (tabs.length === 0) return null;
 
-  const defaultIndex = Math.max(0, asNumber(fields.defaultIndex) ?? 0);
-  const label = asString(fields.label);
+  const defaultIndex = Math.max(
+    0,
+    asNumber(fields.defaultIndex) ?? asNumber(tabsProps.defaultIndex) ?? 0,
+  );
+  const label = asString(fields.label) ?? asString(tabsProps.label);
+  const resolvedTabsProps: JsonRecord = { ...tabsProps };
+  resolvedTabsProps.items = tabs.map((tab) => tab.title);
+  resolvedTabsProps.defaultIndex = defaultIndex;
+  assignIfDefined(resolvedTabsProps, "label", label);
 
   return createElement(
     Tabs,
-    {
-      items: tabs.map((tab) => tab.title),
-      defaultIndex,
-      label,
-    },
-    tabs.map((tab) =>
-      createElement(Tab, { key: tab.key }, renderTextBlock(tab.content)),
-    ),
+    resolvedTabsProps as unknown as ComponentProps<typeof Tabs>,
+    tabs.map((tab) => {
+      const resolvedTabProps: JsonRecord = { ...tab.props };
+      resolvedTabProps.key = tab.key;
+      assignIfDefined(resolvedTabProps, "value", tab.value);
+      return createElement(
+        Tab,
+        resolvedTabProps as unknown as ComponentProps<typeof Tab>,
+        renderTextBlock(tab.content),
+      );
+    }),
   );
 };
 
 const renderAccordionsFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
+  const accordionsProps = asJsonRecord(fields.props) ?? {};
 
   const items = asArray(fields.items)
     .map((value) => asRecord(value))
@@ -345,7 +429,9 @@ const renderAccordionsFromFields = (fields?: JsonRecord) => {
       return {
         title,
         value,
+        id: asString(item.id),
         content,
+        props: asJsonRecord(item.props) ?? {},
       };
     })
     .filter(isDefined);
@@ -353,34 +439,40 @@ const renderAccordionsFromFields = (fields?: JsonRecord) => {
   if (items.length === 0) return null;
 
   const accordionType =
-    asString(fields.type) === "multiple" ? "multiple" : "single";
+    (asString(fields.type) ?? asString(accordionsProps.type)) === "multiple"
+      ? "multiple"
+      : "single";
   const defaultValues = parseCsv(fields.defaultOpenValues);
-  const accordionProps =
-    accordionType === "multiple"
-      ? {
-          type: "multiple" as const,
-          defaultValue: defaultValues.length > 0 ? defaultValues : undefined,
-        }
-      : {
-          type: "single" as const,
-          collapsible: true,
-          defaultValue: defaultValues[0],
-        };
+  const resolvedAccordionsProps: JsonRecord = { ...accordionsProps };
+
+  if (accordionType === "multiple") {
+    resolvedAccordionsProps.type = "multiple";
+    if (defaultValues.length > 0) {
+      resolvedAccordionsProps.defaultValue = defaultValues;
+    }
+  } else {
+    resolvedAccordionsProps.type = "single";
+    if (resolvedAccordionsProps.collapsible === undefined) {
+      resolvedAccordionsProps.collapsible = true;
+    }
+    assignIfDefined(resolvedAccordionsProps, "defaultValue", defaultValues[0]);
+  }
 
   return createElement(
     Accordions,
-    accordionProps,
-    items.map((item, index) =>
-      createElement(
+    resolvedAccordionsProps as unknown as ComponentProps<typeof Accordions>,
+    items.map((item, index) => {
+      const resolvedAccordionProps: JsonRecord = { ...item.props };
+      resolvedAccordionProps.key = `${item.value}-${index}`;
+      resolvedAccordionProps.title = item.title;
+      resolvedAccordionProps.value = item.value;
+      assignIfDefined(resolvedAccordionProps, "id", item.id);
+      return createElement(
         Accordion,
-        {
-          key: `${item.value}-${index}`,
-          title: item.title,
-          value: item.value,
-        },
+        resolvedAccordionProps as unknown as ComponentProps<typeof Accordion>,
         renderTextBlock(item.content),
-      ),
-    ),
+      );
+    }),
   );
 };
 
@@ -420,6 +512,7 @@ const renderStepsFromFields = (fields?: JsonRecord) => {
 
 const renderFilesFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
+  const filesProps = asJsonRecord(fields.props) ?? {};
 
   const entries = asArray(fields.entries)
     .map((value) => asRecord(value))
@@ -428,29 +521,86 @@ const renderFilesFromFields = (fields?: JsonRecord) => {
       const kind = asString(entry.kind) ?? "file";
       const name = asString(entry.name);
       if (!name) return null;
+      const entryProps = asJsonRecord(entry.props) ?? {};
 
       if (kind === "folder") {
-        const children = parseLines(entry.children);
+        const childEntries = asArray(entry.childrenEntries)
+          .map((value) => asRecord(value))
+          .filter((value): value is JsonRecord => Boolean(value))
+          .map((child, childIndex) => {
+            const childName = asString(child.name);
+            if (!childName) return null;
+            const childProps = asJsonRecord(child.props) ?? {};
+            const childIconText = asString(child.icon);
+            const resolvedChildProps: JsonRecord = { ...childProps };
+            resolvedChildProps.key = `${childName}-${childIndex}`;
+            resolvedChildProps.name = childName;
+            if (childIconText) {
+              resolvedChildProps.icon = createElement(
+                "span",
+                { "aria-hidden": true },
+                childIconText,
+              );
+            }
+            return createElement(
+              File,
+              resolvedChildProps as unknown as ComponentProps<typeof File>,
+            );
+          })
+          .filter(isDefined);
+        const fallbackChildren = parseLines(entry.children).map(
+          (child, childIndex) =>
+            createElement(File, { key: `${child}-${childIndex}`, name: child }),
+        );
+        const childrenNodes =
+          childEntries.length > 0 ? childEntries : fallbackChildren;
+        const resolvedFolderProps: JsonRecord = { ...entryProps };
+        resolvedFolderProps.key = `${name}-${index}`;
+        resolvedFolderProps.name = name;
+        assignIfDefined(
+          resolvedFolderProps,
+          "defaultOpen",
+          asBoolean(entry.defaultOpen),
+        );
+        assignIfDefined(
+          resolvedFolderProps,
+          "disabled",
+          asBoolean(entry.disabled),
+        );
+
         return createElement(
           Folder,
-          {
-            key: `${name}-${index}`,
-            name,
-            defaultOpen: asBoolean(entry.defaultOpen),
-          },
-          children.map((child, childIndex) =>
-            createElement(File, { key: `${child}-${childIndex}`, name: child }),
-          ),
+          resolvedFolderProps as unknown as ComponentProps<typeof Folder>,
+          childrenNodes,
         );
       }
 
-      return createElement(File, { key: `${name}-${index}`, name });
+      const iconText = asString(entry.icon);
+      const resolvedFileProps: JsonRecord = { ...entryProps };
+      resolvedFileProps.key = `${name}-${index}`;
+      resolvedFileProps.name = name;
+      if (iconText) {
+        resolvedFileProps.icon = createElement(
+          "span",
+          { "aria-hidden": true },
+          iconText,
+        );
+      }
+
+      return createElement(
+        File,
+        resolvedFileProps as unknown as ComponentProps<typeof File>,
+      );
     })
     .filter(isDefined);
 
   if (entries.length === 0) return null;
 
-  return createElement(Files, {}, entries);
+  return createElement(
+    Files,
+    filesProps as unknown as ComponentProps<typeof Files>,
+    entries,
+  );
 };
 
 const toCodeTabValue = (title: string, index: number) => {
@@ -465,6 +615,8 @@ const toCodeTabValue = (title: string, index: number) => {
 
 const renderCodeTabsFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
+  const codeTabsProps = asJsonRecord(fields.props) ?? {};
+  const codeTabsListProps = asJsonRecord(fields.tabsListProps) ?? {};
 
   const tabs = asArray(fields.tabs)
     .map((value) => asRecord(value))
@@ -474,51 +626,88 @@ const renderCodeTabsFromFields = (fields?: JsonRecord) => {
       const language = asString(tab.language) ?? "text";
       const code = asString(tab.code);
       if (!code) return null;
-      const value = toCodeTabValue(title, index);
+      const value = asString(tab.value) ?? toCodeTabValue(title, index);
+      const codeblock = asJsonRecord(tab.codeblock) ?? {};
+      if (asString(codeblock.title) === undefined) {
+        codeblock.title = title;
+      }
       return {
         code,
+        codeblock,
         language,
+        options: asJsonRecord(tab.options),
         title,
+        tabProps: asJsonRecord(tab.tabProps) ?? {},
+        triggerProps: asJsonRecord(tab.triggerProps) ?? {},
         value,
+        wrapInSuspense: asBoolean(tab.wrapInSuspense),
       };
     })
     .filter(isDefined);
 
   if (tabs.length === 0) return null;
 
+  const defaultValue =
+    asString(fields.defaultValue) ??
+    asString(codeTabsProps.defaultValue) ??
+    tabs[0]?.value;
+  const resolvedCodeTabsProps: JsonRecord = { ...codeTabsProps };
+  assignIfDefined(resolvedCodeTabsProps, "defaultValue", defaultValue);
+
   return createElement(
     CodeBlockTabs,
-    {
-      defaultValue: tabs[0]?.value,
-    },
+    resolvedCodeTabsProps as unknown as ComponentProps<typeof CodeBlockTabs>,
     [
       createElement(
         CodeBlockTabsList,
-        { key: "list" },
+        {
+          key: "list",
+          ...(codeTabsListProps as unknown as ComponentProps<
+            typeof CodeBlockTabsList
+          >),
+        },
         tabs.map((tab) =>
           createElement(
             CodeBlockTabsTrigger,
             {
-              key: tab.value,
+              key: `trigger-${tab.value}`,
+              ...(tab.triggerProps as unknown as ComponentProps<
+                typeof CodeBlockTabsTrigger
+              >),
               value: tab.value,
             },
             tab.title,
           ),
         ),
       ),
-      ...tabs.map((tab) =>
-        createElement(
-          CodeBlockTab,
-          {
-            key: tab.value,
-            value: tab.value,
-          },
-          createElement(DynamicCodeBlock, {
+      ...tabs.map((tab) => {
+          const dynamicCodeProps: JsonRecord = {
             lang: tab.language,
             code: tab.code,
-          }),
-        ),
-      ),
+            codeblock:
+              tab.codeblock as ComponentProps<typeof DynamicCodeBlock>["codeblock"],
+          };
+          assignIfDefined(dynamicCodeProps, "options", tab.options);
+          assignIfDefined(
+            dynamicCodeProps,
+            "wrapInSuspense",
+            tab.wrapInSuspense,
+          );
+          const resolvedTabProps: JsonRecord = { ...tab.tabProps };
+          resolvedTabProps.key = `tab-${tab.value}`;
+          resolvedTabProps.value = tab.value;
+
+          return createElement(
+            CodeBlockTab,
+            resolvedTabProps as unknown as ComponentProps<typeof CodeBlockTab>,
+            createElement(
+              DynamicCodeBlock,
+              dynamicCodeProps as unknown as ComponentProps<
+                typeof DynamicCodeBlock
+              >,
+            ),
+          );
+        }),
     ],
   );
 };
@@ -538,8 +727,15 @@ const renderTypeTableFromFields = (fields?: JsonRecord) => {
       default?: ReactNode;
       deprecated?: boolean;
       description?: ReactNode;
+      parameters?: Array<{
+        description: ReactNode;
+        name: string;
+      }>;
       required?: boolean;
+      returns?: ReactNode;
       type: ReactNode;
+      typeDescription?: ReactNode;
+      typeDescriptionLink?: string;
     }
   > = {};
 
@@ -549,12 +745,26 @@ const renderTypeTableFromFields = (fields?: JsonRecord) => {
     if (!type) return;
 
     const dedupedKey = table[key] ? `${key}-${index + 1}` : key;
+    const parameters = asArray(row.parameters)
+      .map((value) => asRecord(value))
+      .filter((value): value is JsonRecord => Boolean(value))
+      .map((parameter) => {
+        const name = asString(parameter.name);
+        const description = asString(parameter.description);
+        if (!name || !description) return null;
+        return { name, description };
+      })
+      .filter(isDefined);
     table[dedupedKey] = {
       type,
       description: asString(row.description),
+      typeDescription: asString(row.typeDescription),
+      typeDescriptionLink: asString(row.typeDescriptionLink),
       default: asString(row.default),
       required: asBoolean(row.required),
       deprecated: asBoolean(row.deprecated),
+      parameters: parameters.length > 0 ? parameters : undefined,
+      returns: asString(row.returns),
     };
   });
 
@@ -563,10 +773,22 @@ const renderTypeTableFromFields = (fields?: JsonRecord) => {
   return createElement(TypeTable, { type: table });
 };
 
-const renderInlineTocFromOptions = (options: BlockRenderOptions) => {
+const renderInlineTocFromFields = (
+  fields: JsonRecord | undefined,
+  options: BlockRenderOptions,
+) => {
   const items = options.tocItems ?? [];
   if (items.length === 0) return null;
-  return createElement(InlineTOC, { items });
+  const tocProps = asJsonRecord(fields?.props) ?? {};
+  const label = asString(fields?.label);
+  return createElement(
+    InlineTOC,
+    {
+      ...(tocProps as unknown as ComponentProps<typeof InlineTOC>),
+      items,
+    },
+    label,
+  );
 };
 
 const renderBannerFromFields = (fields?: JsonRecord) => {
@@ -575,16 +797,30 @@ const renderBannerFromFields = (fields?: JsonRecord) => {
   const content = asString(fields.content);
   if (!content) return null;
 
-  const variant = asString(fields.variant) === "rainbow" ? "rainbow" : "normal";
-  const height = asString(fields.height);
+  const bannerProps = asJsonRecord(fields.props) ?? {};
+  const variant =
+    (asString(fields.variant) ?? asString(bannerProps.variant)) === "rainbow"
+      ? "rainbow"
+      : "normal";
+  const height = asString(fields.height) ?? asString(bannerProps.height);
+  const changeLayout =
+    asBoolean(fields.changeLayout) ?? asBoolean(bannerProps.changeLayout);
+  const id = asString(fields.id) ?? asString(bannerProps.id);
+  const rainbowColors = parseStringArray(
+    fields.rainbowColors ?? bannerProps.rainbowColors,
+  );
+  const resolvedBannerProps: JsonRecord = { ...bannerProps };
+  resolvedBannerProps.variant = variant;
+  assignIfDefined(resolvedBannerProps, "height", height);
+  assignIfDefined(resolvedBannerProps, "changeLayout", changeLayout);
+  assignIfDefined(resolvedBannerProps, "id", id);
+  if (rainbowColors.length > 0) {
+    resolvedBannerProps.rainbowColors = rainbowColors;
+  }
 
   return createElement(
     Banner,
-    {
-      variant,
-      height,
-      changeLayout: asBoolean(fields.changeLayout),
-    },
+    resolvedBannerProps as unknown as ComponentProps<typeof Banner>,
     content,
   );
 };
@@ -592,14 +828,20 @@ const renderBannerFromFields = (fields?: JsonRecord) => {
 const renderGithubInfoFromFields = (fields?: JsonRecord) => {
   if (!fields) return null;
 
-  const owner = asString(fields.owner);
-  const repo = asString(fields.repo);
+  const githubProps = asJsonRecord(fields.props) ?? {};
+  const owner = asString(fields.owner) ?? asString(githubProps.owner);
+  const repo = asString(fields.repo) ?? asString(githubProps.repo);
   if (!owner || !repo) return null;
 
   const label = asString(fields.label) ?? `${owner}/${repo}`;
+  const token = asString(fields.token) ?? asString(githubProps.token);
+  const baseUrl = asString(fields.baseUrl) ?? asString(githubProps.baseUrl);
+  const resolvedGithubProps: JsonRecord = { ...githubProps, owner, repo };
+  assignIfDefined(resolvedGithubProps, "token", token);
+  assignIfDefined(resolvedGithubProps, "baseUrl", baseUrl);
   const GithubInfoComponent = GithubInfo as unknown as ElementType;
 
-  return createElement(GithubInfoComponent, { owner, repo }, label);
+  return createElement(GithubInfoComponent, resolvedGithubProps, label);
 };
 
 const renderImageZoomFromFields = (
@@ -607,29 +849,42 @@ const renderImageZoomFromFields = (
   options: BlockRenderOptions,
 ) => {
   if (!fields) return null;
+  const imageZoomProps = asJsonRecord(fields.props) ?? {};
 
   const rawImage = asRecord(fields.image);
   const image = relationValueToObject(rawImage) ?? rawImage;
-  if (!image) return null;
+  if (!image && asString(imageZoomProps.src) === undefined) return null;
 
-  const rawUrl = asString(image.url);
+  const rawUrl = asString(image?.url) ?? asString(imageZoomProps.src);
   if (!rawUrl) return null;
 
   const src = prefixAssetUrl(options.baseUrl, rawUrl);
-  const alt = asString(fields.alt) ?? asString(image.alt) ?? "";
-  const { width, height } = resolveUploadRenderDimensions({
+  const alt = asString(fields.alt) ?? asString(imageZoomProps.alt) ?? asString(image?.alt) ?? "";
+  const resolvedDimensions = resolveUploadRenderDimensions({
     fieldHeight: fields.height,
     fieldWidth: fields.width,
-    mediaHeight: image.height,
-    mediaWidth: image.width,
+    mediaHeight: image?.height,
+    mediaWidth: image?.width,
   });
+  const width = asNumber(imageZoomProps.width) ?? resolvedDimensions.width;
+  const height = asNumber(imageZoomProps.height) ?? resolvedDimensions.height;
+  const sizes = asString(fields.sizes) ?? asString(imageZoomProps.sizes);
+  const priority = asBoolean(fields.priority) ?? asBoolean(imageZoomProps.priority);
+  const zoomInProps = asJsonRecord(fields.zoomInProps);
+  const rmiz = asJsonRecord(fields.rmiz);
   const caption = asString(fields.caption);
+  const resolvedImageZoomProps: JsonRecord = { ...imageZoomProps };
+  resolvedImageZoomProps.src = src;
+  resolvedImageZoomProps.alt = alt;
+  assignIfDefined(resolvedImageZoomProps, "width", width);
+  assignIfDefined(resolvedImageZoomProps, "height", height);
+  assignIfDefined(resolvedImageZoomProps, "sizes", sizes);
+  assignIfDefined(resolvedImageZoomProps, "priority", priority);
+  assignIfDefined(resolvedImageZoomProps, "zoomInProps", zoomInProps);
+  assignIfDefined(resolvedImageZoomProps, "rmiz", rmiz);
 
   const imageNode = createElement(ImageZoom, {
-    src,
-    alt,
-    width,
-    height,
+    ...(resolvedImageZoomProps as unknown as ComponentProps<typeof ImageZoom>),
   });
 
   if (!caption) return imageNode;
@@ -674,7 +929,7 @@ const renderBlockByType = (
   if (normalized === "fumacodetabs") return renderCodeTabsFromFields(fields);
   if (normalized === "fumatypetable") return renderTypeTableFromFields(fields);
   if (normalized === "fumainlinetoc")
-    return renderInlineTocFromOptions(options);
+    return renderInlineTocFromFields(fields, options);
   if (normalized === "fumagithubinfo")
     return renderGithubInfoFromFields(fields);
   if (normalized === "fumaimagezoom")
