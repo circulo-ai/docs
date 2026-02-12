@@ -57,7 +57,9 @@ export type DocPageGroup = {
   version: number | string | DocVersion;
   name: string;
   slug?: string;
+  orderMode?: "manual" | "auto";
   order?: number;
+  createdAt?: string;
   description?: string;
 };
 
@@ -66,11 +68,13 @@ export type DocPage = {
   service: number | string | Service;
   version: number | string | DocVersion;
   group?: number | string | DocPageGroup | null;
+  orderMode?: "manual" | "auto";
   order?: number;
   slug: string;
   title: string;
   content: unknown;
   status?: "draft" | "published";
+  createdAt?: string;
 };
 
 export type DocsSettings = {
@@ -468,34 +472,133 @@ const isPopulatedDocPageGroup = (
   "name" in value;
 
 type OrderedNavNode = NavNode & {
-  order: number;
+  position: number;
   children?: OrderedNavNode[];
 };
 
-const resolveOrder = (value: number | null | undefined) =>
-  typeof value === "number" && Number.isFinite(value) ? value : 0;
+type OrderMode = "manual" | "auto";
+
+type Orderable = {
+  id: number | string;
+  orderMode?: "manual" | "auto";
+  order?: number;
+  createdAt?: string;
+  slug?: string;
+  title?: string;
+};
+
+const resolveOrderMode = (value: unknown): OrderMode =>
+  value === "auto" ? "auto" : "manual";
+
+const resolveManualPosition = (value: number | null | undefined) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 1;
+  const normalized = Math.floor(value);
+  return normalized < 1 ? 1 : normalized;
+};
+
+const resolveCreatedAtOrder = (value: string | null | undefined) => {
+  const parsed = Date.parse(value ?? "");
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+};
+
+const compareOrderableFallback = (
+  a: Pick<Orderable, "id" | "slug" | "title">,
+  b: Pick<Orderable, "id" | "slug" | "title">,
+) =>
+  (a.slug ?? "").localeCompare(b.slug ?? "") ||
+  (a.title ?? "").localeCompare(b.title ?? "") ||
+  String(a.id).localeCompare(String(b.id));
+
+const arrangeOrderables = <T extends Orderable>(items: T[]): T[] => {
+  const manual = items
+    .filter((item) => resolveOrderMode(item.orderMode) === "manual")
+    .sort(
+      (a, b) =>
+        resolveManualPosition(a.order) - resolveManualPosition(b.order) ||
+        compareOrderableFallback(a, b),
+    );
+
+  const auto = items
+    .filter((item) => resolveOrderMode(item.orderMode) === "auto")
+    .sort(
+      (a, b) =>
+        resolveCreatedAtOrder(a.createdAt) - resolveCreatedAtOrder(b.createdAt) ||
+        compareOrderableFallback(a, b),
+    );
+
+  const manualSlots = new Map<number, T>();
+  const overflowManual: Array<{ slot: number; item: T }> = [];
+
+  for (const item of manual) {
+    let slot = resolveManualPosition(item.order);
+    while (manualSlots.has(slot)) {
+      slot += 1;
+    }
+
+    if (slot <= items.length) {
+      manualSlots.set(slot, item);
+      continue;
+    }
+
+    overflowManual.push({ slot, item });
+  }
+
+  const arranged: T[] = [];
+  let autoIndex = 0;
+  for (let slot = 1; slot <= items.length; slot += 1) {
+    const manualAtSlot = manualSlots.get(slot);
+    if (manualAtSlot) {
+      arranged.push(manualAtSlot);
+      continue;
+    }
+
+    const autoAtSlot = auto[autoIndex];
+    if (autoAtSlot) {
+      arranged.push(autoAtSlot);
+      autoIndex += 1;
+    }
+  }
+
+  overflowManual
+    .sort((a, b) => a.slot - b.slot || compareOrderableFallback(a.item, b.item))
+    .forEach(({ item }) => arranged.push(item));
+
+  while (autoIndex < auto.length) {
+    const remainingAuto = auto[autoIndex];
+    if (!remainingAuto) break;
+    arranged.push(remainingAuto);
+    autoIndex += 1;
+  }
+
+  return arranged;
+};
 
 const compareOrderedNodes = (
-  a: Pick<OrderedNavNode, "order" | "slug" | "title">,
-  b: Pick<OrderedNavNode, "order" | "slug" | "title">,
+  a: Pick<OrderedNavNode, "position" | "slug" | "title">,
+  b: Pick<OrderedNavNode, "position" | "slug" | "title">,
 ) =>
-  a.order - b.order ||
+  a.position - b.position ||
   a.slug.localeCompare(b.slug) ||
   a.title.localeCompare(b.title);
 
 const stripOrder = (nodes: OrderedNavNode[]): NavNode[] =>
-  nodes.map(({ order: _, children, ...node }) =>
+  nodes.map(({ position: _, children, ...node }) =>
     children && children.length > 0
       ? { ...node, children: stripOrder(children) }
       : node,
   );
 
-const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
+const buildSlugTree = (
+  pages: DocPage[],
+  options?: {
+    pagePositions?: Map<string, number>;
+  },
+): OrderedNavNode[] => {
   type MutableNode = {
     title: string;
     slug: string;
     kind: "page";
-    order: number;
+    position: number;
     children: Map<string, MutableNode>;
   };
 
@@ -503,19 +606,22 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
     title: "",
     slug: "",
     kind: "page",
-    order: 0,
+    position: Number.MAX_SAFE_INTEGER,
     children: new Map(),
   };
 
-  const orderedPages = [...pages].sort(
-    (a, b) =>
-      resolveOrder(a.order) - resolveOrder(b.order) ||
-      a.slug.localeCompare(b.slug),
-  );
+  const orderedPages = options?.pagePositions
+    ? [...pages].sort(
+        (a, b) =>
+          (options.pagePositions?.get(String(a.id)) ?? Number.MAX_SAFE_INTEGER) -
+            (options.pagePositions?.get(String(b.id)) ?? Number.MAX_SAFE_INTEGER) ||
+          a.slug.localeCompare(b.slug),
+      )
+    : arrangeOrderables([...pages]);
 
-  orderedPages.forEach((page) => {
+  orderedPages.forEach((page, index) => {
     const segments = page.slug.split("/").filter(Boolean);
-    const pageOrder = resolveOrder(page.order);
+    const pagePosition = options?.pagePositions?.get(String(page.id)) ?? index;
     let node = root;
     let currentSlug = "";
 
@@ -523,8 +629,8 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
       currentSlug = currentSlug ? `${currentSlug}/${segment}` : segment;
       const existing = node.children.get(segment);
       if (existing) {
-        if (pageOrder < existing.order) {
-          existing.order = pageOrder;
+        if (pagePosition < existing.position) {
+          existing.position = pagePosition;
         }
         node = existing;
       } else {
@@ -532,7 +638,7 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
           title: toTitle(segment),
           slug: currentSlug,
           kind: "page",
-          order: pageOrder,
+          position: pagePosition,
           children: new Map(),
         };
         node.children.set(segment, created);
@@ -542,8 +648,8 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
       if (index === segments.length - 1) {
         node.title = page.title;
         node.slug = page.slug;
-        if (pageOrder < node.order) {
-          node.order = pageOrder;
+        if (pagePosition < node.position) {
+          node.position = pagePosition;
         }
       }
     });
@@ -558,14 +664,14 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
           kind: node.kind,
           title: node.title,
           slug: node.slug,
-          order: node.order,
+          position: node.position,
           children,
         }
       : {
           kind: node.kind,
           title: node.title,
           slug: node.slug,
-          order: node.order,
+          position: node.position,
         };
   };
 
@@ -577,7 +683,15 @@ const buildSlugTree = (pages: DocPage[]): OrderedNavNode[] => {
 const buildNavTree = (pages: DocPage[]): NavNode[] => {
   const grouped = new Map<
     string,
-    { title: string; order: number; slug: string; pages: DocPage[] }
+    {
+      id: string;
+      title: string;
+      slug: string;
+      pages: DocPage[];
+      orderMode?: "manual" | "auto";
+      order?: number;
+      createdAt?: string;
+    }
   >();
   const ungrouped: DocPage[] = [];
 
@@ -605,14 +719,58 @@ const buildNavTree = (pages: DocPage[]): NavNode[] => {
         ? page.group.slug
         : groupKey;
     grouped.set(groupKey, {
+      id: groupKey,
       title: groupTitle,
-      order: resolveOrder(page.group.order),
       slug: `__group__/${groupSlug}`,
       pages: [page],
+      orderMode: page.group.orderMode,
+      order: page.group.order,
+      createdAt: page.group.createdAt,
     });
   });
 
-  const nav: OrderedNavNode[] = buildSlugTree(ungrouped);
+  const rootOrderables: Array<
+    | (Orderable & { kind: "page"; pageId: string })
+    | (Orderable & { kind: "group"; groupId: string })
+  > = [
+    ...ungrouped.map((page) => ({
+      kind: "page" as const,
+      id: `page:${String(page.id)}`,
+      pageId: String(page.id),
+      slug: page.slug,
+      title: page.title,
+      orderMode: page.orderMode,
+      order: page.order,
+      createdAt: page.createdAt,
+    })),
+    ...Array.from(grouped.values()).map((group) => ({
+      kind: "group" as const,
+      id: `group:${group.id}`,
+      groupId: group.id,
+      slug: group.slug,
+      title: group.title,
+      orderMode: group.orderMode,
+      order: group.order,
+      createdAt: group.createdAt,
+    })),
+  ];
+
+  const orderedRoot = arrangeOrderables(rootOrderables);
+  const ungroupedPositions = new Map<string, number>();
+  const groupPositions = new Map<string, number>();
+
+  orderedRoot.forEach((item, index) => {
+    if (item.kind === "page") {
+      ungroupedPositions.set(item.pageId, index);
+      return;
+    }
+
+    groupPositions.set(item.groupId, index);
+  });
+
+  const nav: OrderedNavNode[] = buildSlugTree(ungrouped, {
+    pagePositions: ungroupedPositions,
+  });
 
   const groupNodes = Array.from(grouped.values())
     .map(
@@ -620,7 +778,7 @@ const buildNavTree = (pages: DocPage[]): NavNode[] => {
         kind: "group",
         title: group.title,
         slug: group.slug,
-        order: resolveOrder(group.order),
+        position: groupPositions.get(group.id) ?? Number.MAX_SAFE_INTEGER,
         children: buildSlugTree(group.pages),
       }),
     )

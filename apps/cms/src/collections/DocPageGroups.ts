@@ -20,6 +20,15 @@ const getRelationId = (value: RelationValue) => {
 const sameId = (a: number | string | null, b: number | string | null) =>
   a !== null && b !== null && String(a) === String(b)
 
+const resolveOrderMode = (value: unknown): 'manual' | 'auto' =>
+  value === 'auto' ? 'auto' : 'manual'
+
+const resolveManualOrder = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  const normalized = Math.floor(value)
+  return normalized < 1 ? 1 : normalized
+}
+
 const slugify = (value: string) =>
   value
     .trim()
@@ -93,6 +102,87 @@ const enforceVersionBelongsToService: CollectionBeforeValidateHook = async ({
   return data
 }
 
+export const enforceUniqueManualDocPageGroupOrder: CollectionBeforeValidateHook = async ({
+  collection,
+  data,
+  originalDoc,
+  req,
+}) => {
+  const nextOrderMode = resolveOrderMode(data?.orderMode ?? originalDoc?.orderMode)
+  if (nextOrderMode !== 'manual') return data
+
+  const serviceId = getRelationId(
+    (data?.service as RelationValue) ?? (originalDoc?.service as RelationValue),
+  )
+  const versionId = getRelationId(
+    (data?.version as RelationValue) ?? (originalDoc?.version as RelationValue),
+  )
+  const nextOrder = resolveManualOrder(data?.order ?? originalDoc?.order ?? 1)
+
+  if (!serviceId || !versionId || nextOrder === null) return data
+
+  const originalOrderMode = resolveOrderMode(originalDoc?.orderMode)
+  const originalOrder = resolveManualOrder(originalDoc?.order ?? 1)
+  const originalServiceId = getRelationId(originalDoc?.service as RelationValue)
+  const originalVersionId = getRelationId(originalDoc?.version as RelationValue)
+
+  const orderScopeChanged =
+    originalOrderMode !== nextOrderMode ||
+    originalOrder !== nextOrder ||
+    !sameId(serviceId, originalServiceId) ||
+    !sameId(versionId, originalVersionId)
+
+  if (originalDoc?.id && !orderScopeChanged) return data
+
+  const duplicateResult = await req.payload.find({
+    collection: 'docPageGroups',
+    where: {
+      and: [
+        {
+          service: {
+            equals: serviceId,
+          },
+        },
+        {
+          version: {
+            equals: versionId,
+          },
+        },
+        {
+          orderMode: {
+            equals: 'manual',
+          },
+        },
+        {
+          order: {
+            equals: nextOrder,
+          },
+        },
+      ],
+    },
+    limit: 1,
+    depth: 0,
+    req,
+    overrideAccess: false,
+  })
+
+  const duplicate = duplicateResult.docs[0]
+  if (!duplicate || (originalDoc?.id && String(duplicate.id) === String(originalDoc.id))) {
+    return data
+  }
+
+  throw new ValidationError({
+    collection: collection?.slug,
+    errors: [
+      {
+        path: 'order',
+        message: 'Manual order must be unique for groups in this service version.',
+      },
+    ],
+    req,
+  })
+}
+
 const clearDeletedGroupFromPages: CollectionAfterDeleteHook = async ({ doc, req }) => {
   await req.payload.update({
     collection: 'docPages',
@@ -114,7 +204,7 @@ export const DocPageGroups: CollectionConfig = {
   slug: 'docPageGroups',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'service', 'version', 'order', 'updatedAt'],
+    defaultColumns: ['name', 'service', 'version', 'orderMode', 'order', 'updatedAt'],
   },
   access: {
     read: () => true,
@@ -123,7 +213,7 @@ export const DocPageGroups: CollectionConfig = {
     delete: isEditor,
   },
   hooks: {
-    beforeValidate: [syncSlug, enforceVersionBelongsToService],
+    beforeValidate: [syncSlug, enforceVersionBelongsToService, enforceUniqueManualDocPageGroupOrder],
     afterDelete: [clearDeletedGroupFromPages],
   },
   indexes: [
@@ -182,12 +272,50 @@ export const DocPageGroups: CollectionConfig = {
       validate: (value: unknown) => validateOptionalTrimmedString(value, 'Group description'),
     },
     {
+      name: 'orderMode',
+      type: 'select',
+      required: true,
+      defaultValue: 'manual',
+      options: [
+        {
+          label: 'Manual',
+          value: 'manual',
+        },
+        {
+          label: 'Auto (Created At)',
+          value: 'auto',
+        },
+      ],
+      admin: {
+        description:
+          'Manual uses the Order field. Auto uses Created At (oldest first, newest last).',
+      },
+    },
+    {
       name: 'order',
       type: 'number',
-      defaultValue: 0,
-      min: 0,
+      defaultValue: 1,
+      min: 1,
       admin: {
-        description: 'Lower values are shown first in the sidebar.',
+        description: '1-based manual position. Example: 3 places this group as the third item.',
+        condition: (_, siblingData) =>
+          ((siblingData as { orderMode?: string } | undefined)?.orderMode ?? 'manual') !== 'auto',
+      },
+      validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+        const orderMode = resolveOrderMode(
+          (siblingData as { orderMode?: unknown } | undefined)?.orderMode,
+        )
+        if (orderMode !== 'manual') return true
+
+        if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value)) {
+          return 'Order must be an integer.'
+        }
+
+        if (value < 1) {
+          return 'Order must be at least 1.'
+        }
+
+        return true
       },
     },
   ],

@@ -1949,7 +1949,11 @@ export interface DocPageGroup {
   slug?: string | null;
   description?: string | null;
   /**
-   * Lower values are shown first in the sidebar.
+   * Manual uses the Order field. Auto uses Created At (oldest first, newest last).
+   */
+  orderMode: 'manual' | 'auto';
+  /**
+   * 1-based manual position. Example: 3 places this group as the third item.
    */
   order?: number | null;
   updatedAt: string;
@@ -1975,7 +1979,11 @@ export interface DocPage {
    */
   group?: (number | null) | DocPageGroup;
   /**
-   * Lower values are shown first in docs navigation.
+   * Manual uses the Order field. Auto uses Created At (oldest first, newest last).
+   */
+  orderMode: 'manual' | 'auto';
+  /**
+   * 1-based manual position. Example: 3 places this page as the third item.
    */
   order?: number | null;
   title: string;
@@ -2218,6 +2226,7 @@ export interface DocPageGroupsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   description?: T;
+  orderMode?: T;
   order?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2231,6 +2240,7 @@ export interface DocPagesSelect<T extends boolean = true> {
   version?: T;
   slug?: T;
   group?: T;
+  orderMode?: T;
   order?: T;
   title?: T;
   content?: T;
