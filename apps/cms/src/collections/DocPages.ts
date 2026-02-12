@@ -111,7 +111,9 @@ export const enforceUniqueManualDocPageOrder: CollectionBeforeValidateHook = asy
   const versionId = getRelationId(
     (data?.version as RelationValue) ?? (originalDoc?.version as RelationValue),
   )
-  const groupId = getRelationId((data?.group as RelationValue) ?? (originalDoc?.group as RelationValue))
+  const groupId = getRelationId(
+    (data?.group as RelationValue) ?? (originalDoc?.group as RelationValue),
+  )
   const nextOrder = resolveManualOrder(data?.order ?? originalDoc?.order ?? 1)
 
   if (!serviceId || !versionId || nextOrder === null) return data

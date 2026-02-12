@@ -213,7 +213,11 @@ export const DocPageGroups: CollectionConfig = {
     delete: isEditor,
   },
   hooks: {
-    beforeValidate: [syncSlug, enforceVersionBelongsToService, enforceUniqueManualDocPageGroupOrder],
+    beforeValidate: [
+      syncSlug,
+      enforceVersionBelongsToService,
+      enforceUniqueManualDocPageGroupOrder,
+    ],
     afterDelete: [clearDeletedGroupFromPages],
   },
   indexes: [

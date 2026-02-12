@@ -522,8 +522,8 @@ const arrangeOrderables = <T extends Orderable>(items: T[]): T[] => {
     .filter((item) => resolveOrderMode(item.orderMode) === "auto")
     .sort(
       (a, b) =>
-        resolveCreatedAtOrder(a.createdAt) - resolveCreatedAtOrder(b.createdAt) ||
-        compareOrderableFallback(a, b),
+        resolveCreatedAtOrder(a.createdAt) -
+          resolveCreatedAtOrder(b.createdAt) || compareOrderableFallback(a, b),
     );
 
   const manualSlots = new Map<number, T>();
@@ -613,9 +613,10 @@ const buildSlugTree = (
   const orderedPages = options?.pagePositions
     ? [...pages].sort(
         (a, b) =>
-          (options.pagePositions?.get(String(a.id)) ?? Number.MAX_SAFE_INTEGER) -
-            (options.pagePositions?.get(String(b.id)) ?? Number.MAX_SAFE_INTEGER) ||
-          a.slug.localeCompare(b.slug),
+          (options.pagePositions?.get(String(a.id)) ??
+            Number.MAX_SAFE_INTEGER) -
+            (options.pagePositions?.get(String(b.id)) ??
+              Number.MAX_SAFE_INTEGER) || a.slug.localeCompare(b.slug),
       )
     : arrangeOrderables([...pages]);
 

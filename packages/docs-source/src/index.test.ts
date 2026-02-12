@@ -302,7 +302,10 @@ describe("getNav ordering", () => {
       version: "1.0.0",
     });
 
-    expect(nav.map((node) => node.title)).toEqual(["Zeta Group", "Alpha Group"]);
+    expect(nav.map((node) => node.title)).toEqual([
+      "Zeta Group",
+      "Alpha Group",
+    ]);
   });
 
   it("inserts a manual page into auto pages using 1-based order position", async () => {
