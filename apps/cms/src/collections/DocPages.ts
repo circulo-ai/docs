@@ -351,7 +351,7 @@ export const DocPages: CollectionConfig = {
       relationTo: 'docPageGroups',
       admin: {
         position: 'sidebar',
-        description: 'Optional sidebar group for this page.',
+        description: 'Select a service and a version to see the related groups.',
       },
       filterOptions: ({ siblingData, data }) => {
         const siblingValues = (siblingData ?? data) as

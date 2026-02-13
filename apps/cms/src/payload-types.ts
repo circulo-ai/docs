@@ -1975,7 +1975,7 @@ export interface DocPage {
    */
   slug: string;
   /**
-   * Optional sidebar group for this page.
+   * Select a service and a version to see the related groups.
    */
   group?: (number | null) | DocPageGroup;
   /**

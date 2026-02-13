@@ -14,6 +14,7 @@ import {
   $getSelection,
   $insertNodes,
   $isNodeSelection,
+  $isRangeSelection,
   $parseSerializedNode,
   $setSelection,
   COMMAND_PRIORITY_LOW,
@@ -51,6 +52,25 @@ const findElementNode = (node: LexicalNode | null): LexicalNode | null => {
   return null
 }
 
+const findSiblingElementNode = (
+  startNode: LexicalNode | null,
+  direction: 'next' | 'previous',
+): LexicalNode | null => {
+  let currentNode = startNode
+
+  while (currentNode) {
+    const elementNode = findElementNode(currentNode)
+    if (elementNode) {
+      return elementNode
+    }
+
+    currentNode =
+      direction === 'previous' ? currentNode.getPreviousSibling() : currentNode.getNextSibling()
+  }
+
+  return null
+}
+
 const getSelectedNodeFromSelection = (selection: BaseSelection | null): LexicalNode | null => {
   if (!selection) {
     return null
@@ -76,10 +96,32 @@ const getSelectedNodeFromSelection = (selection: BaseSelection | null): LexicalN
   return null
 }
 
+const getTargetElementNodeFromSelection = (selection: BaseSelection | null): LexicalNode | null => {
+  const selectedNode = getSelectedNodeFromSelection(selection)
+  if (selectedNode) {
+    return selectedNode
+  }
+
+  if (!selection || !$isRangeSelection(selection)) {
+    return null
+  }
+
+  const anchorNode = selection.anchor.getNode()
+  const topLevelNode = anchorNode.getTopLevelElement()
+  if (!topLevelNode) {
+    return null
+  }
+
+  return (
+    findSiblingElementNode(topLevelNode.getPreviousSibling(), 'previous') ??
+    findSiblingElementNode(topLevelNode.getNextSibling(), 'next')
+  )
+}
+
 const getSerializedSelectedNode = (
   selection: BaseSelection | null,
 ): SerializedUnknownLexicalNode | null => {
-  const selectedNode = getSelectedNodeFromSelection(selection)
+  const selectedNode = getTargetElementNodeFromSelection(selection)
 
   if (!selectedNode || typeof selectedNode.exportJSON !== 'function') {
     return null
@@ -124,6 +166,30 @@ const pasteStoredElement = (editor: LexicalEditor): boolean => {
       nodeSelection.add(nextNode.getKey())
       $setSelection(nodeSelection)
       return
+    }
+
+    if ($isRangeSelection(selection)) {
+      const anchorNode = selection.anchor.getNode()
+      const topLevelNode = anchorNode.getTopLevelElement()
+      const nextNodeType = nextNode.getType()
+      const shouldInsertAsBlock = nextNodeType === 'block'
+
+      if (topLevelNode && shouldInsertAsBlock) {
+        const shouldReplaceTopLevelParagraph =
+          topLevelNode.getType() === 'paragraph' &&
+          topLevelNode.getTextContent().trim().length === 0
+
+        if (shouldReplaceTopLevelParagraph) {
+          topLevelNode.replace(nextNode)
+        } else {
+          topLevelNode.insertAfter(nextNode)
+        }
+
+        const nodeSelection = $createNodeSelection()
+        nodeSelection.add(nextNode.getKey())
+        $setSelection(nodeSelection)
+        return
+      }
     }
 
     $insertNodes([nextNode])
