@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 export default function Loading() {
   return (
-    <div className="mx-auto flex w-full max-w-[1800px] gap-4 p-4 md:p-6">
+    <div className="mx-auto flex w-full max-w-450 gap-4 p-4 md:p-6">
       <aside className="hidden w-72 shrink-0 space-y-3 lg:block">
         <Skeleton className="h-9 w-full rounded-lg" />
         <Skeleton className="h-5 w-4/5" />
@@ -18,7 +18,11 @@ export default function Loading() {
         <Card className="py-0">
           <div className="flex items-center gap-2 border-b px-4 py-3">
             <Spinner className="text-primary" />
-            <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+            <p
+              className="text-sm text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
               Loading documentation...
             </p>
           </div>
