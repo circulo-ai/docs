@@ -11,7 +11,8 @@
         "DOCS_INCLUDE_DRAFTS",
         "DOCS_EMAIL",
         "DOCS_PASSWORD",
-        "DOCS_ALLOW_LOCAL_IP"
+        "DOCS_ALLOW_LOCAL_IP",
+        "INKEEP_API_KEY"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
