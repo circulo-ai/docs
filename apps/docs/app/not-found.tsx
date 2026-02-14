@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -9,11 +9,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 import { ChevronLeftIcon, SearchIcon } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-12 md:px-6">
+    <DocsPage>
       <Empty className="border bg-card/40 py-10">
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -25,12 +26,12 @@ export default function NotFound() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="max-w-none sm:flex-row sm:justify-center">
-          <Link href="/" className={buttonVariants({ size: "lg" })}>
+          <Button size="lg" nativeButton={false} render={<Link href="d" />}>
             <ChevronLeftIcon data-icon="inline-start" />
             Return to docs home
-          </Link>
+          </Button>
         </EmptyContent>
       </Empty>
-    </div>
+    </DocsPage>
   );
 }

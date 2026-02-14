@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 
 export default function Loading() {
   return (
-    <div className="mx-auto flex w-full max-w-450 gap-4 p-4 md:p-6">
+    <DocsPage>
       <aside className="hidden w-72 shrink-0 space-y-3 lg:block">
         <Skeleton className="h-9 w-full rounded-lg" />
         <Skeleton className="h-5 w-4/5" />
@@ -47,6 +48,6 @@ export default function Loading() {
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-4 w-3/4" />
       </aside>
-    </div>
+    </DocsPage>
   );
 }
