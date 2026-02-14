@@ -77,10 +77,33 @@ export type DocPage = {
   createdAt?: string;
 };
 
+export type ExtraNavLinkVariant =
+  | "default"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "destructive"
+  | "link";
+
+export type ExtraNavLinkTarget = "_blank" | "_self" | "_parent" | "_top";
+
+export type ExtraNavLink = {
+  label: string;
+  href: string;
+  icon?: string;
+  variant?: ExtraNavLinkVariant;
+  target?: ExtraNavLinkTarget;
+};
+
 export type DocsSettings = {
   homeTitle?: string | null;
   homeDescription?: string | null;
   homeContent?: unknown | null;
+  extraNavLinks: ExtraNavLink[];
+};
+
+type DocsSettingsResponse = Omit<DocsSettings, "extraNavLinks"> & {
+  extraNavLinks?: unknown;
 };
 
 export type NavNode = {
@@ -223,6 +246,82 @@ const getStatusFilter = (config: DocsSourceConfig): Record<string, string> =>
 
 const toTitle = (segment: string) =>
   segment.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+const EXTRA_NAV_LINK_VARIANTS = new Set<ExtraNavLinkVariant>([
+  "default",
+  "outline",
+  "secondary",
+  "ghost",
+  "destructive",
+  "link",
+]);
+
+const EXTRA_NAV_LINK_TARGETS = new Set<ExtraNavLinkTarget>([
+  "_blank",
+  "_self",
+  "_parent",
+  "_top",
+]);
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const asString = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
+
+const toExtraNavLink = (value: unknown): ExtraNavLink | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const label = asString(record.label);
+  const href = asString(record.href);
+  if (!label || !href) return null;
+
+  const link: ExtraNavLink = {
+    label,
+    href,
+  };
+
+  const icon = asString(record.icon);
+  if (icon) {
+    link.icon = icon;
+  }
+
+  const rawVariant = asString(record.variant);
+  if (
+    rawVariant &&
+    EXTRA_NAV_LINK_VARIANTS.has(rawVariant as ExtraNavLinkVariant)
+  ) {
+    link.variant = rawVariant as ExtraNavLinkVariant;
+  }
+
+  const rawTarget = asString(record.target);
+  if (
+    rawTarget &&
+    EXTRA_NAV_LINK_TARGETS.has(rawTarget as ExtraNavLinkTarget)
+  ) {
+    link.target = rawTarget as ExtraNavLinkTarget;
+  }
+
+  return link;
+};
+
+const normalizeDocsSettings = (
+  settings: DocsSettingsResponse,
+): DocsSettings => {
+  const extraNavLinks = Array.isArray(settings.extraNavLinks)
+    ? settings.extraNavLinks
+        .map((link): ExtraNavLink | null => toExtraNavLink(link))
+        .filter((link): link is ExtraNavLink => Boolean(link))
+    : [];
+
+  return {
+    ...settings,
+    extraNavLinks,
+  };
+};
 
 const isPopulatedDocVersion = (
   value: Service["latestVersion"],
@@ -420,7 +519,7 @@ export const getDocsSettings = async (
   options: { depth?: number } = {},
 ): Promise<DocsSettings> => {
   const token = await resolveAuthToken(config);
-  return request<DocsSettings>(
+  const settings = await request<DocsSettingsResponse>(
     config,
     "/api/globals/docsSettings",
     {
@@ -430,6 +529,8 @@ export const getDocsSettings = async (
     },
     token,
   );
+
+  return normalizeDocsSettings(settings);
 };
 
 export const getPage = async (

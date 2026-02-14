@@ -2316,6 +2316,31 @@ export interface DocsSetting {
    */
   homeDescription?: string | null;
   /**
+   * Optional links displayed under the service/version switcher in the docs sidebar.
+   */
+  extraNavLinks?:
+    | {
+        label: string;
+        /**
+         * Supports relative paths, hash fragments, and absolute URLs.
+         */
+        href: string;
+        /**
+         * Optional Lucide icon name displayed before the label (for example: Link2).
+         */
+        icon?: string | null;
+        /**
+         * Button style variant used when rendering this link.
+         */
+        variant?: ('default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link') | null;
+        /**
+         * Where to open this link.
+         */
+        target?: ('_self' | '_blank' | '_parent' | '_top') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Landing page content shown at /.
    */
   homeContent: {
@@ -2343,6 +2368,16 @@ export interface DocsSetting {
 export interface DocsSettingsSelect<T extends boolean = true> {
   homeTitle?: T;
   homeDescription?: T;
+  extraNavLinks?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        icon?: T;
+        variant?: T;
+        target?: T;
+        id?: T;
+      };
   homeContent?: T;
   updatedAt?: T;
   createdAt?: T;

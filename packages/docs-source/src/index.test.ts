@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getNav, type DocPage } from "./index.js";
+import { getDocsSettings, getNav, type DocPage } from "./index.js";
 
 type TestDocPage = DocPage & {
   order?: number;
@@ -439,6 +439,85 @@ describe("getNav ordering", () => {
       "Manual Group",
       "Auto Group 2",
       "Auto Group 3",
+    ]);
+  });
+});
+
+describe("getDocsSettings", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("returns an empty extraNavLinks array when the global omits it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const rawUrl =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+        const url = new URL(rawUrl);
+
+        if (url.pathname === "/api/globals/docsSettings") {
+          return jsonResponse({
+            homeTitle: "Home",
+            homeDescription: "Description",
+            homeContent: { root: { type: "root", children: [] } },
+          });
+        }
+
+        throw new Error(`Unexpected request: ${url.toString()}`);
+      }),
+    );
+
+    const settings = await getDocsSettings(baseConfig, { depth: 2 });
+
+    expect(settings.extraNavLinks).toEqual([]);
+  });
+
+  it("keeps configured extraNavLinks from docsSettings", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const rawUrl =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+        const url = new URL(rawUrl);
+
+        if (url.pathname === "/api/globals/docsSettings") {
+          return jsonResponse({
+            extraNavLinks: [
+              {
+                label: "Status",
+                href: "https://status.example.com",
+                icon: "Activity",
+                variant: "outline",
+                target: "_blank",
+              },
+            ],
+          });
+        }
+
+        throw new Error(`Unexpected request: ${url.toString()}`);
+      }),
+    );
+
+    const settings = await getDocsSettings(baseConfig);
+
+    expect(settings.extraNavLinks).toEqual([
+      {
+        label: "Status",
+        href: "https://status.example.com",
+        icon: "Activity",
+        variant: "outline",
+        target: "_blank",
+      },
     ]);
   });
 });

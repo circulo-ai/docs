@@ -3,10 +3,12 @@ import { DocsLayoutClient } from "@/components/docs-layout-client";
 import { ExtraNavLinks } from "@/components/extra-nav-links";
 import { ServicePrimaryColor } from "@/components/service-primary-color";
 import { ServiceVersionSwitcher } from "@/components/service-version-switcher";
+import { getCmsConfig } from "@/lib/cms-config";
 import { baseOptions } from "@/lib/layout.shared";
 import { buildAliasTree } from "@/lib/page-tree";
 import { getServiceVersionOptions } from "@/lib/service-version-options";
 import { getSource } from "@/lib/source";
+import { getDocsSettings } from "@repo/docs-source";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
@@ -23,9 +25,11 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const requestHeaders = await headers();
-  const [source, serviceVersionOptions] = await Promise.all([
+  const cmsConfig = getCmsConfig();
+  const [source, serviceVersionOptions, docsSettings] = await Promise.all([
     getSource(),
     getServiceVersionOptions(),
+    getDocsSettings(cmsConfig),
   ]);
   const serviceSlug = requestHeaders.get("x-service-slug");
   const servicePrimaryColor = serviceVersionOptions.services
@@ -48,7 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         services={serviceVersionOptions.services}
         versionsByService={serviceVersionOptions.versionsByService}
       />
-      <ExtraNavLinks />
+      <ExtraNavLinks links={docsSettings.extraNavLinks} />
     </>
   );
 
