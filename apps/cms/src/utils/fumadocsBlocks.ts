@@ -629,6 +629,103 @@ export const fumadocsBlocks: Block[] = [
     ],
   },
   {
+    slug: 'fumaAutoTypeTable',
+    labels: {
+      singular: 'Auto Type Table',
+      plural: 'Auto Type Tables',
+    },
+    fields: [
+      {
+        name: 'path',
+        type: 'text',
+        admin: {
+          description:
+            'Optional path to a TypeScript file. Relative paths resolve from the docs app by default.',
+        },
+      },
+      {
+        name: 'name',
+        type: 'text',
+        admin: {
+          description: 'Optional exported type/interface name to generate from.',
+        },
+      },
+      {
+        name: 'type',
+        type: 'code',
+        admin: {
+          description:
+            'Optional inline type source. Use this when not referencing a separate TypeScript file.',
+        },
+      },
+      {
+        name: 'allowInternal',
+        type: 'checkbox',
+        defaultValue: false,
+        admin: {
+          description: 'Include fields annotated with @internal in the generated table.',
+        },
+      },
+      {
+        name: 'basePath',
+        type: 'text',
+        admin: {
+          description:
+            'Optional base directory used to resolve `path` (absolute or relative to docs app).',
+        },
+      },
+      {
+        name: 'options',
+        type: 'json',
+        admin: {
+          description:
+            'Advanced generate options object passed to AutoTypeTable `options` (for unsupported future flags).',
+        },
+      },
+      {
+        name: 'shiki',
+        type: 'json',
+        admin: {
+          description: 'Optional Shiki config passed to AutoTypeTable `shiki`.',
+        },
+      },
+      {
+        name: 'generatorTsconfigPath',
+        type: 'text',
+        admin: {
+          description:
+            'Optional tsconfig path for the TypeScript generator (absolute or relative to docs app).',
+        },
+      },
+      {
+        name: 'disableGeneratorCache',
+        type: 'checkbox',
+        defaultValue: false,
+        admin: {
+          description: 'Disable file-system cache for this auto type table.',
+        },
+      },
+      {
+        name: 'generatorCacheDir',
+        type: 'text',
+        admin: {
+          description:
+            'Optional cache directory for the TypeScript generator (absolute or relative to docs app).',
+          condition: (_, siblingData) =>
+            !((siblingData as { disableGeneratorCache?: boolean } | undefined)?.disableGeneratorCache),
+        },
+      },
+      {
+        name: 'props',
+        type: 'json',
+        admin: {
+          description:
+            'Additional AutoTypeTable component props as a JSON object (for id, className, etc.).',
+        },
+      },
+    ],
+  },
+  {
     slug: 'fumaInlineToc',
     labels: {
       singular: 'Inline TOC',

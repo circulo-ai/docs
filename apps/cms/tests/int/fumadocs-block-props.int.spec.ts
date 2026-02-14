@@ -83,7 +83,7 @@ describe('fumadocs block prop exposure', () => {
     expectFieldType(byName(tabItems, 'props'), 'json')
   })
 
-  it('exposes files, code tabs, type table, inline toc, github info, and image zoom props', () => {
+  it('exposes files, code tabs, type table, auto type table, inline toc, github info, and image zoom props', () => {
     const files = bySlug('fumaFiles')
     expectFieldType(byName(files.fields, 'props'), 'json')
     const entries = arrayFields(byName(files.fields, 'entries'))
@@ -112,6 +112,19 @@ describe('fumadocs block prop exposure', () => {
     expectFieldType(byName(rows, 'typeDescriptionLink'), 'text')
     expectFieldType(byName(rows, 'parameters'), 'array')
     expectFieldType(byName(rows, 'returns'), 'textarea')
+
+    const autoTypeTable = bySlug('fumaAutoTypeTable')
+    expectFieldType(byName(autoTypeTable.fields, 'path'), 'text')
+    expectFieldType(byName(autoTypeTable.fields, 'name'), 'text')
+    expectFieldType(byName(autoTypeTable.fields, 'type'), 'code')
+    expectFieldType(byName(autoTypeTable.fields, 'allowInternal'), 'checkbox')
+    expectFieldType(byName(autoTypeTable.fields, 'basePath'), 'text')
+    expectFieldType(byName(autoTypeTable.fields, 'options'), 'json')
+    expectFieldType(byName(autoTypeTable.fields, 'shiki'), 'json')
+    expectFieldType(byName(autoTypeTable.fields, 'generatorTsconfigPath'), 'text')
+    expectFieldType(byName(autoTypeTable.fields, 'disableGeneratorCache'), 'checkbox')
+    expectFieldType(byName(autoTypeTable.fields, 'generatorCacheDir'), 'text')
+    expectFieldType(byName(autoTypeTable.fields, 'props'), 'json')
 
     const toc = bySlug('fumaInlineToc')
     expectFieldType(byName(toc.fields, 'label'), 'text')
