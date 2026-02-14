@@ -2,8 +2,8 @@ import "server-only";
 
 import { Feed } from "feed";
 
-import { getSource } from "@/lib/source";
 import { resolveSiteUrl } from "@/lib/site-url";
+import { getSource } from "@/lib/source";
 
 const FEED_TITLE = "Documentation";
 const FEED_DESCRIPTION = "Latest published documentation pages.";

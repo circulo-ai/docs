@@ -26,4 +26,3 @@ export const resolveSiteUrl = (fallback = DEFAULT_DOCS_SITE_URL) =>
   toOrigin(process.env.DOCS_SITE_URL) ??
   toOrigin(fallback) ??
   DEFAULT_DOCS_SITE_URL;
-
