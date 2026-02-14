@@ -13,14 +13,14 @@ import { usePathname, useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { useMemo } from "react";
 
-import { ServiceIcon } from "@/lib/service-icons";
+import { ServiceIcon } from "@/components/service-icons";
 import type {
   ServiceOption,
   ServiceVersionOptions,
   VersionOption,
-} from "@/lib/service-version-types";
+} from "@/types/service-version";
 import { Archive, Tag } from "lucide-react";
-import { cn } from "./utils";
+import { cn } from "../lib/utils";
 
 const VERSION_SEGMENT_REGEX =
   /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;

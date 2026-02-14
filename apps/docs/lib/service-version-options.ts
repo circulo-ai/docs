@@ -9,7 +9,7 @@ import type {
   ServiceOption,
   ServiceVersionOptions,
   VersionOption,
-} from "@/lib/service-version-types";
+} from "@/types/service-version";
 
 const normalizeBaseUrl = (baseUrl: string) => baseUrl.replace(/\/+$/, "");
 

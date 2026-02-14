@@ -8,8 +8,8 @@ import {
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { CmsContent } from "@/components/cms-content";
 import { getCmsConfig } from "@/lib/cms-config";
-import { CmsContent } from "@/lib/cms-content";
 import { extractTocFromRichText } from "@/lib/richtext";
 
 const resolveDocsSettings = async () => {

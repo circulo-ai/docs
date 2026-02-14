@@ -1,7 +1,7 @@
 import { icons, type LucideIcon, type LucideProps } from "lucide-react";
 import { createElement } from "react";
 
-import type { ServiceIconValue } from "@/lib/service-version-types";
+import type { ServiceIconValue } from "@/types/service-version";
 
 const FALLBACK_SERVICE_ICON = "BookOpen" as const;
 

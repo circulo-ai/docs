@@ -20,9 +20,9 @@ import { source as createSource, loader } from "fumadocs-core/source";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { cache, createElement, JSX } from "react";
 
+import { CmsContent } from "@/components/cms-content";
 import { Badge } from "@/components/ui/badge";
 import { getCmsConfig } from "@/lib/cms-config";
-import { CmsContent } from "@/lib/cms-content";
 import {
   extractTocFromRichText,
   type RichTextComponentMap,

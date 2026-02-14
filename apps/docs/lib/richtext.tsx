@@ -26,7 +26,7 @@ import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
-import { ServiceIcon } from "@/lib/service-icons";
+import { ServiceIcon } from "@/components/service-icons";
 import { resolveUploadRenderDimensions } from "@/lib/upload-dimensions";
 
 export type RichTextComponentMap = Record<string, ElementType | undefined>;

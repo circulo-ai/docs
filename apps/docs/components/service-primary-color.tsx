@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useMemo } from "react";
 
-import type { ServiceOption } from "@/lib/service-version-types";
+import type { ServiceOption } from "@/types/service-version";
 
 type ServicePrimaryColorProps = {
   services: ServiceOption[];
