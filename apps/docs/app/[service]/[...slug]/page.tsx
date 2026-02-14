@@ -11,6 +11,8 @@ import { notFound } from "next/navigation";
 import { cloneElement, isValidElement, type ComponentProps } from "react";
 
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
+import { Feedback } from "@/components/feedback/client";
+import { onPageFeedbackAction } from "@/components/feedback/actions";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
 import { getRichTextComponents } from "@/mdx-components";
@@ -151,6 +153,7 @@ export default async function Page(props: LatestAliasProps) {
             a: aliasAwareLink,
           })}
         />
+        <Feedback onSendAction={onPageFeedbackAction} />
       </DocsBody>
     </DocsPage>
   );

@@ -2,13 +2,29 @@ import { getCmsConfig } from "@/lib/cms-config";
 import { renderRichText, type RichTextComponentMap } from "@/lib/richtext";
 import type { TOCItemType } from "fumadocs-core/toc";
 
+import type { BlockFeedback, FeedbackAction } from "@/components/feedback/schema";
+
 type CmsContentProps = {
   content: unknown;
   components?: RichTextComponentMap;
   tocItems?: TOCItemType[];
+  blockFeedbackAction?: FeedbackAction<BlockFeedback>;
 };
 
-export function CmsContent({ content, components, tocItems }: CmsContentProps) {
+export function CmsContent({
+  content,
+  components,
+  tocItems,
+  blockFeedbackAction,
+}: CmsContentProps) {
   const { baseUrl } = getCmsConfig();
-  return <>{renderRichText(content, components, { baseUrl, tocItems })}</>;
+  return (
+    <>
+      {renderRichText(content, components, {
+        baseUrl,
+        tocItems,
+        onBlockFeedbackAction: blockFeedbackAction,
+      })}
+    </>
+  );
 }

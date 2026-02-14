@@ -26,7 +26,16 @@ import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
+import { FeedbackBlock } from "@/components/feedback/client";
+import type {
+  BlockFeedback,
+  FeedbackAction,
+} from "@/components/feedback/schema";
 import { ServiceIcon } from "@/components/service-icons";
+import {
+  createFeedbackBlockBody,
+  createFeedbackBlockId,
+} from "@/lib/feedback-block";
 import { resolveUploadRenderDimensions } from "@/lib/upload-dimensions";
 
 export type RichTextComponentMap = Record<string, ElementType | undefined>;
@@ -972,11 +981,15 @@ const buildConverters = (options: {
   components?: RichTextComponentMap;
   slugger: (value: string) => string;
   tocItems?: TOCItemType[];
+  onBlockFeedbackAction?: FeedbackAction<BlockFeedback>;
 }): JSXConverters => {
-  const { baseUrl, components, slugger, tocItems } = options;
+  const { baseUrl, components, slugger, tocItems, onBlockFeedbackAction } =
+    options;
   const linkComponent = components?.a ?? "a";
   const tableComponent = components?.table ?? "table";
+  const paragraphComponent = components?.p ?? "p";
   const blockOptions: BlockRenderOptions = { baseUrl, tocItems };
+  let feedbackBlockOrder = 0;
 
   return {
     ...defaultJSXConverters,
@@ -1113,6 +1126,32 @@ const buildConverters = (options: {
       callout: ({ node }) =>
         renderBlockByType("callout", getBlockFields(node), blockOptions),
     },
+    paragraph: ({ node, nodesToJSX }) => {
+      const children = nodesToJSX({ nodes: node.children });
+      const paragraphNode = createElement(paragraphComponent, {}, children);
+
+      if (!onBlockFeedbackAction) {
+        return paragraphNode;
+      }
+
+      const blockBody = createFeedbackBlockBody(collectText(node));
+      if (!blockBody) {
+        return paragraphNode;
+      }
+
+      feedbackBlockOrder += 1;
+      const blockId = createFeedbackBlockId(blockBody, feedbackBlockOrder);
+
+      return createElement(
+        FeedbackBlock,
+        {
+          id: blockId,
+          body: blockBody,
+          onSendAction: onBlockFeedbackAction,
+        },
+        paragraphNode,
+      );
+    },
     heading: ({ node, nodesToJSX }) => {
       const depth = getHeadingDepth(node);
       const tag = getHeadingTag(node, depth);
@@ -1207,7 +1246,11 @@ const buildConverters = (options: {
 export const renderRichText = (
   content: unknown,
   components?: RichTextComponentMap,
-  options?: { baseUrl?: string; tocItems?: TOCItemType[] },
+  options?: {
+    baseUrl?: string;
+    tocItems?: TOCItemType[];
+    onBlockFeedbackAction?: FeedbackAction<BlockFeedback>;
+  },
 ): ReactNode => {
   if (!isSerializedEditorState(content)) return null;
   const slugger = createSlugger();
@@ -1216,6 +1259,7 @@ export const renderRichText = (
     components,
     slugger,
     tocItems: options?.tocItems,
+    onBlockFeedbackAction: options?.onBlockFeedbackAction,
   });
   return <RichText data={content} converters={converters} />;
 };
