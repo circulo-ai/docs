@@ -77,7 +77,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col font-sans antialiased">
-        <RootProvider search={{ SearchDialog: DefaultSearchDialog }}>
+        <RootProvider
+          search={{
+            SearchDialog: DefaultSearchDialog,
+            options: {
+              links: docsSettings.extraNavLinks.map(({ label, href }) => [
+                label,
+                href,
+              ]),
+            },
+          }}
+        >
           <ServicePrimaryColor services={serviceVersionOptions.services} />
           <DocsLayoutClient
             tree={tree}

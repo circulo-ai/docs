@@ -147,3 +147,20 @@
 #nd-sidebar > div:nth-child(2) > div:first-child > p:first-of-type {
   margin-top: 0;
 }
+
+#nd-sidebar > div:nth-child(2) > div:first-child > a[data-active="true"] {
+  color: var(--color-fd-sidebar);
+  background-color: var(--color-fd-primary);
+}
+
+#nd-sidebar
+  > div:nth-child(2)
+  > div:first-child
+  > a:hover:not([data-active="true"]) {
+  color: var(--color-fd-primary);
+  background-color: color-mix(
+    in oklab,
+    var(--color-fd-primary) 10%,
+    transparent
+  );
+}
