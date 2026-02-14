@@ -75,6 +75,7 @@ export type DocPage = {
   content: unknown;
   status?: "draft" | "published";
   createdAt?: string;
+  updatedAt?: string;
 };
 
 export type DocsSettings = {
