@@ -4,6 +4,11 @@ import {
   type JSXConverters,
 } from "@payloadcms/richtext-lexical/react";
 import type { TOCItemType } from "fumadocs-core/toc";
+import {
+  createFileSystemGeneratorCache,
+  createGenerator,
+} from "fumadocs-typescript";
+import { AutoTypeTable } from "fumadocs-typescript/ui";
 import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
 import { Banner } from "fumadocs-ui/components/banner";
 import { Callout } from "fumadocs-ui/components/callout";
@@ -23,6 +28,8 @@ import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { TypeTable } from "fumadocs-ui/components/type-table";
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
+import { existsSync } from "node:fs";
+import { dirname, isAbsolute, resolve } from "node:path";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
@@ -87,6 +94,89 @@ const parseStringArray = (value: unknown): string[] => {
     return value.map((item) => asString(item)).filter(isDefined);
   }
   return parseLines(value);
+};
+
+const resolveDocsAppDir = () => {
+  const cwd = process.cwd();
+  const nestedDocsDir = resolve(cwd, "apps", "docs");
+  if (existsSync(nestedDocsDir)) return nestedDocsDir;
+  return cwd;
+};
+
+const DOCS_APP_DIR = resolveDocsAppDir();
+const DOCS_TSCONFIG_PATH = resolve(DOCS_APP_DIR, "tsconfig.json");
+const DOCS_SOURCE_BASE_PATH = existsSync(DOCS_TSCONFIG_PATH)
+  ? dirname(DOCS_TSCONFIG_PATH)
+  : DOCS_APP_DIR;
+const DEFAULT_AUTO_TYPE_TABLE_CACHE_DIR = resolve(
+  DOCS_APP_DIR,
+  ".next",
+  "fumadocs-typescript",
+);
+const autoTypeTableGenerators = new Map<
+  string,
+  ReturnType<typeof createGenerator>
+>();
+
+const resolveDocsPath = (pathValue: string, fallbackRoot: string) =>
+  isAbsolute(pathValue) ? pathValue : resolve(fallbackRoot, pathValue);
+
+const resolveOptionalDocsPath = (
+  value: unknown,
+  fallbackRoot: string,
+): string | undefined => {
+  const pathValue = asString(value)?.trim();
+  if (!pathValue) return undefined;
+  return resolveDocsPath(pathValue, fallbackRoot);
+};
+
+const getAutoTypeTableGenerator = (fields?: JsonRecord) => {
+  const tsconfigPath =
+    resolveOptionalDocsPath(
+      fields?.generatorTsconfigPath,
+      DOCS_SOURCE_BASE_PATH,
+    ) ?? DOCS_TSCONFIG_PATH;
+  const disableCache = asBoolean(fields?.disableGeneratorCache) ?? false;
+  const cacheDir = disableCache
+    ? undefined
+    : (resolveOptionalDocsPath(
+        fields?.generatorCacheDir,
+        DOCS_SOURCE_BASE_PATH,
+      ) ?? DEFAULT_AUTO_TYPE_TABLE_CACHE_DIR);
+  const cacheKey = `${tsconfigPath}::${disableCache ? "no-cache" : cacheDir}`;
+  const cached = autoTypeTableGenerators.get(cacheKey);
+  if (cached) return cached;
+
+  const generator = createGenerator({
+    tsconfigPath,
+    cache:
+      disableCache || !cacheDir
+        ? false
+        : createFileSystemGeneratorCache(cacheDir),
+  });
+  autoTypeTableGenerators.set(cacheKey, generator);
+  return generator;
+};
+
+const resolveAutoTypeTableOptions = (fields?: JsonRecord) => {
+  const optionOverrides = asJsonRecord(fields?.options) ?? {};
+  const rawBasePath = asString(fields?.basePath);
+  const basePath =
+    rawBasePath && rawBasePath.trim().length > 0
+      ? isAbsolute(rawBasePath)
+        ? rawBasePath
+        : resolve(DOCS_SOURCE_BASE_PATH, rawBasePath)
+      : DOCS_SOURCE_BASE_PATH;
+
+  const options: JsonRecord = {
+    ...optionOverrides,
+    basePath,
+  };
+  const allowInternal = asBoolean(fields?.allowInternal);
+  if (allowInternal !== undefined) {
+    options.allowInternal = allowInternal;
+  }
+  return options;
 };
 
 const normalizeSlugSegments = (value: string) =>
@@ -810,6 +900,41 @@ const renderTypeTableFromFields = (fields?: JsonRecord) => {
   return createElement(TypeTable, { type: table });
 };
 
+const renderAutoTypeTableFromFields = (fields?: JsonRecord) => {
+  if (!fields) return null;
+
+  const path = asString(fields.path);
+  const name = asString(fields.name);
+  const type = asString(fields.type);
+
+  if (!path && !type) return null;
+
+  const props: JsonRecord = {
+    ...(asJsonRecord(fields.props) ?? {}),
+    generator: getAutoTypeTableGenerator(fields),
+    options: resolveAutoTypeTableOptions(fields),
+  };
+  if (path) {
+    props.path = path;
+  }
+  if (name) {
+    props.name = name;
+  }
+  if (type) {
+    props.type = type;
+  }
+  const shiki = asJsonRecord(fields.shiki);
+  if (shiki) {
+    props.shiki = shiki;
+  }
+
+  const AutoTypeTableComponent = AutoTypeTable as unknown as ElementType;
+  return createElement(
+    AutoTypeTableComponent,
+    props as unknown as ComponentProps<typeof AutoTypeTable>,
+  );
+};
+
 const renderInlineTocFromFields = (
   fields: JsonRecord | undefined,
   options: BlockRenderOptions,
@@ -957,6 +1082,8 @@ const renderBlockByType = (
   if (normalized === "fumafiles") return renderFilesFromFields(fields, options);
   if (normalized === "fumacodetabs") return renderCodeTabsFromFields(fields);
   if (normalized === "fumatypetable") return renderTypeTableFromFields(fields);
+  if (normalized === "fumaautotypetable")
+    return renderAutoTypeTableFromFields(fields);
   if (normalized === "fumainlinetoc")
     return renderInlineTocFromFields(fields, options);
   if (normalized === "fumagithubinfo")
@@ -1102,6 +1229,12 @@ const buildConverters = (options: {
         renderBlockByType("fumaCodeTabs", getBlockFields(node), blockOptions),
       fumaTypeTable: ({ node }) =>
         renderBlockByType("fumaTypeTable", getBlockFields(node), blockOptions),
+      fumaAutoTypeTable: ({ node }) =>
+        renderBlockByType(
+          "fumaAutoTypeTable",
+          getBlockFields(node),
+          blockOptions,
+        ),
       fumaInlineToc: ({ node }) =>
         renderBlockByType("fumaInlineToc", getBlockFields(node), blockOptions),
       fumaGithubInfo: ({ node }) =>
