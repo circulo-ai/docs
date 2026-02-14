@@ -13,6 +13,7 @@ import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { DocsPageWithFeedback } from "@/components/docs-page-with-feedback";
 import { onPageFeedbackAction } from "@/components/feedback-github/actions";
 import { Feedback } from "@/components/feedback-github/client";
+import { LLMCopyButton, ViewOptions } from "@/components/page-actions";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
 import { getRichTextComponents } from "@/mdx-components";
@@ -126,6 +127,7 @@ export default async function Page(props: LatestAliasProps) {
   ];
   const MDX = page.data.body;
   const RelativeLink = createRelativeLink(source, page);
+  const markdownUrl = `${page.url}.mdx`;
   const aliasAwareLink = (props: ComponentProps<"a">) => {
     const element = RelativeLink(props);
     if (!isAlias) return element;
@@ -148,6 +150,10 @@ export default async function Page(props: LatestAliasProps) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
+        <div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
+          <LLMCopyButton markdownUrl={markdownUrl} />
+          <ViewOptions markdownUrl={markdownUrl} />
+        </div>
         <MDX
           components={getRichTextComponents({
             a: aliasAwareLink,

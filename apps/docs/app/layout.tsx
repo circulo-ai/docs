@@ -1,16 +1,20 @@
 import DefaultSearchDialog from "@/components/default-search-dialog";
 import { DocsLayoutClient } from "@/components/docs-layout-client";
 import { ExtraNavLinks } from "@/components/extra-nav-links";
+import { AISearch, AISearchPanel, AISearchTrigger } from "@/components/search";
 import { ServicePrimaryColor } from "@/components/service-primary-color";
 import { ServiceVersionSwitcher } from "@/components/service-version-switcher";
+import { buttonVariants } from "@/components/ui/button";
 import { getCmsConfig } from "@/lib/cms-config";
 import { baseOptions } from "@/lib/layout.shared";
 import { buildAliasTree } from "@/lib/page-tree";
 import { getServiceVersionOptions } from "@/lib/service-version-options";
 import { resolveSiteUrl } from "@/lib/site-url";
 import { getSource } from "@/lib/source";
+import { cn } from "@/lib/utils";
 import { getDocsSettings } from "@repo/docs-source";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import { MessageCircleIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import { headers } from "next/headers";
@@ -37,6 +41,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const inkeepApiKey = process.env.INKEEP_API_KEY?.trim();
+  const isAskAIEnabled = Boolean(inkeepApiKey);
   const requestHeaders = await headers();
   const cmsConfig = getCmsConfig();
   const [source, serviceVersionOptions, docsSettings] = await Promise.all([
@@ -88,6 +94,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             },
           }}
         >
+          {isAskAIEnabled ? (
+            <AISearch>
+              <AISearchPanel />
+              <AISearchTrigger
+                position="float"
+                className={cn(
+                  buttonVariants({
+                    variant: "secondary",
+                    className:
+                      "w-auto rounded-2xl px-4 py-2 text-fd-muted-foreground shadow-md",
+                  }),
+                )}
+              >
+                <MessageCircleIcon className="size-4" />
+                Ask AI
+              </AISearchTrigger>
+            </AISearch>
+          ) : null}
           <ServicePrimaryColor services={serviceVersionOptions.services} />
           <DocsLayoutClient
             tree={tree}

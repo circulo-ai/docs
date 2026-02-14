@@ -14,6 +14,7 @@ import {
   onPageFeedbackAction,
 } from "@/components/feedback-github/actions";
 import { Feedback } from "@/components/feedback-github/client";
+import { LLMCopyButton, ViewOptions } from "@/components/page-actions";
 import { getCmsConfig } from "@/lib/cms-config";
 import { extractTocFromRichText } from "@/lib/richtext";
 
@@ -41,6 +42,10 @@ export default async function DocsIndex() {
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
+        <div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
+          <LLMCopyButton markdownUrl="/.mdx" />
+          <ViewOptions markdownUrl="/.mdx" />
+        </div>
         <CmsContent
           content={content}
           tocItems={toc}

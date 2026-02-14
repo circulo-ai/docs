@@ -49,6 +49,7 @@ type CmsPageData = PageData & {
   toc?: TOCItemType[];
   full?: boolean;
   lastModified?: string;
+  rawContent?: unknown;
 };
 
 type CmsMetaData = MetaData;
@@ -246,6 +247,7 @@ const buildSource = async () => {
             toc,
             full: true,
             lastModified: page.updatedAt ?? page.createdAt,
+            rawContent: page.content,
           },
         });
       });
