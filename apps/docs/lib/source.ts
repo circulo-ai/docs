@@ -47,6 +47,7 @@ type CmsPageData = PageData & {
   body: (props: { components?: RichTextComponentMap }) => JSX.Element;
   toc?: TOCItemType[];
   full?: boolean;
+  lastModified?: string;
 };
 
 type CmsMetaData = MetaData;
@@ -242,6 +243,7 @@ const buildSource = async () => {
             body,
             toc,
             full: true,
+            lastModified: page.updatedAt ?? page.createdAt,
           },
         });
       });
