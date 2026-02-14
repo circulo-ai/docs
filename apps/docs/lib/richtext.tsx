@@ -1,15 +1,13 @@
-import { existsSync } from "node:fs";
-import { dirname, isAbsolute, resolve } from "node:path";
 import {
   RichText,
   defaultJSXConverters,
   type JSXConverters,
 } from "@payloadcms/richtext-lexical/react";
+import type { TOCItemType } from "fumadocs-core/toc";
 import {
   createFileSystemGeneratorCache,
   createGenerator,
 } from "fumadocs-typescript";
-import type { TOCItemType } from "fumadocs-core/toc";
 import { AutoTypeTable } from "fumadocs-typescript/ui";
 import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
 import { Banner } from "fumadocs-ui/components/banner";
@@ -30,6 +28,8 @@ import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { TypeTable } from "fumadocs-ui/components/type-table";
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
+import { existsSync } from "node:fs";
+import { dirname, isAbsolute, resolve } from "node:path";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
@@ -113,7 +113,10 @@ const DEFAULT_AUTO_TYPE_TABLE_CACHE_DIR = resolve(
   ".next",
   "fumadocs-typescript",
 );
-const autoTypeTableGenerators = new Map<string, ReturnType<typeof createGenerator>>();
+const autoTypeTableGenerators = new Map<
+  string,
+  ReturnType<typeof createGenerator>
+>();
 
 const resolveDocsPath = (pathValue: string, fallbackRoot: string) =>
   isAbsolute(pathValue) ? pathValue : resolve(fallbackRoot, pathValue);
@@ -129,13 +132,17 @@ const resolveOptionalDocsPath = (
 
 const getAutoTypeTableGenerator = (fields?: JsonRecord) => {
   const tsconfigPath =
-    resolveOptionalDocsPath(fields?.generatorTsconfigPath, DOCS_SOURCE_BASE_PATH) ??
-    DOCS_TSCONFIG_PATH;
+    resolveOptionalDocsPath(
+      fields?.generatorTsconfigPath,
+      DOCS_SOURCE_BASE_PATH,
+    ) ?? DOCS_TSCONFIG_PATH;
   const disableCache = asBoolean(fields?.disableGeneratorCache) ?? false;
   const cacheDir = disableCache
     ? undefined
-    : resolveOptionalDocsPath(fields?.generatorCacheDir, DOCS_SOURCE_BASE_PATH) ??
-      DEFAULT_AUTO_TYPE_TABLE_CACHE_DIR;
+    : (resolveOptionalDocsPath(
+        fields?.generatorCacheDir,
+        DOCS_SOURCE_BASE_PATH,
+      ) ?? DEFAULT_AUTO_TYPE_TABLE_CACHE_DIR);
   const cacheKey = `${tsconfigPath}::${disableCache ? "no-cache" : cacheDir}`;
   const cached = autoTypeTableGenerators.get(cacheKey);
   if (cached) return cached;
@@ -1223,7 +1230,11 @@ const buildConverters = (options: {
       fumaTypeTable: ({ node }) =>
         renderBlockByType("fumaTypeTable", getBlockFields(node), blockOptions),
       fumaAutoTypeTable: ({ node }) =>
-        renderBlockByType("fumaAutoTypeTable", getBlockFields(node), blockOptions),
+        renderBlockByType(
+          "fumaAutoTypeTable",
+          getBlockFields(node),
+          blockOptions,
+        ),
       fumaInlineToc: ({ node }) =>
         renderBlockByType("fumaInlineToc", getBlockFields(node), blockOptions),
       fumaGithubInfo: ({ node }) =>

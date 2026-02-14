@@ -712,7 +712,8 @@ export const fumadocsBlocks: Block[] = [
           description:
             'Optional cache directory for the TypeScript generator (absolute or relative to docs app).',
           condition: (_, siblingData) =>
-            !((siblingData as { disableGeneratorCache?: boolean } | undefined)?.disableGeneratorCache),
+            !(siblingData as { disableGeneratorCache?: boolean } | undefined)
+              ?.disableGeneratorCache,
         },
       },
       {
