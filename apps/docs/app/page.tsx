@@ -2,13 +2,13 @@ import { getDocsSettings } from "@repo/docs-source";
 import {
   DocsBody,
   DocsDescription,
-  DocsPage,
   DocsTitle,
 } from "fumadocs-ui/layouts/docs/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CmsContent } from "@/components/cms-content";
+import { DocsPageWithFeedback } from "@/components/docs-page-with-feedback";
 import { getCmsConfig } from "@/lib/cms-config";
 import { extractTocFromRichText } from "@/lib/richtext";
 
@@ -32,13 +32,13 @@ export default async function DocsIndex() {
   const toc = extractTocFromRichText(content);
 
   return (
-    <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
+    <DocsPageWithFeedback toc={toc} tableOfContent={{ style: "clerk" }}>
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
         <CmsContent content={content} tocItems={toc} />
       </DocsBody>
-    </DocsPage>
+    </DocsPageWithFeedback>
   );
 }
 

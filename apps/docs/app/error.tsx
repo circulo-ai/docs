@@ -1,5 +1,6 @@
 "use client";
 
+import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 import { RotateCcwIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect } from "react";
 
@@ -12,7 +13,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 
 type DocsErrorProps = {
   error: Error & { digest?: string };

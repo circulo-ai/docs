@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
+    "@fumadocs/cli": "^1.2.4",
     "@next/env": "^16.1.6",
     "@payloadcms/next": "^3.76.1",
     "@payloadcms/richtext-lexical": "^3.76.1",

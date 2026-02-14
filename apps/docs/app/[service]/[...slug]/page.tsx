@@ -2,7 +2,6 @@ import { getLatestVersion, getServices } from "@repo/docs-source";
 import {
   DocsBody,
   DocsDescription,
-  DocsPage,
   DocsTitle,
 } from "fumadocs-ui/layouts/docs/page";
 import { createRelativeLink } from "fumadocs-ui/mdx";
@@ -11,6 +10,7 @@ import { notFound } from "next/navigation";
 import { cloneElement, isValidElement, type ComponentProps } from "react";
 
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
+import { DocsPageWithFeedback } from "@/components/docs-page-with-feedback";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
 import { getRichTextComponents } from "@/mdx-components";
@@ -136,7 +136,7 @@ export default async function Page(props: LatestAliasProps) {
   };
 
   return (
-    <DocsPage
+    <DocsPageWithFeedback
       toc={page.data.toc}
       tableOfContent={{ style: "clerk" }}
       breadcrumb={{
@@ -152,7 +152,7 @@ export default async function Page(props: LatestAliasProps) {
           })}
         />
       </DocsBody>
-    </DocsPage>
+    </DocsPageWithFeedback>
   );
 }
 
