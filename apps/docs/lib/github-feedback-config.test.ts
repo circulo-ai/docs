@@ -25,7 +25,8 @@ describe("github feedback config", () => {
       DOCS_FEEDBACK_GITHUB_REPO: " docs ",
       DOCS_FEEDBACK_GITHUB_CATEGORY: " Docs Feedback ",
       GITHUB_APP_ID: "123",
-      GITHUB_APP_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nkey\\n-----END PRIVATE KEY-----",
+      GITHUB_APP_PRIVATE_KEY:
+        "-----BEGIN PRIVATE KEY-----\\nkey\\n-----END PRIVATE KEY-----",
     });
 
     expect(config).toEqual({

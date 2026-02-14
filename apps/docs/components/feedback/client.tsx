@@ -59,7 +59,7 @@ const SuccessHint = ({ response }: { response?: ActionResponse }) => {
   if (!response) return null;
 
   return (
-    <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
+    <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
       <CheckCircle2Icon className="size-3.5" />
       Sent
       {response.githubUrl ? (
@@ -189,8 +189,8 @@ export function FeedbackBlock({
   return (
     <div className="group/feedback relative">
       {children}
-      <div className="pointer-events-none absolute top-0 right-0 z-10 -translate-y-1/2 translate-x-full">
-        <div className="pointer-events-auto opacity-0 transition-opacity group-hover/feedback:opacity-100 group-focus-within/feedback:opacity-100">
+      <div className="pointer-events-none absolute top-0 right-0 z-10 translate-x-full -translate-y-1/2">
+        <div className="pointer-events-auto opacity-0 transition-opacity group-focus-within/feedback:opacity-100 group-hover/feedback:opacity-100">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger render={<Button variant="ghost" size="icon-xs" />}>
               <span className="sr-only">Give block feedback</span>
@@ -222,7 +222,12 @@ export function FeedbackBlock({
                 >
                   {state.error ?? " "}
                 </span>
-                <Button type="button" size="sm" onClick={submit} disabled={!canSubmit}>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={submit}
+                  disabled={!canSubmit}
+                >
                   <SendHorizontalIcon />
                   {isPending ? "Sending..." : "Send"}
                 </Button>

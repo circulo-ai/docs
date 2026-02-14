@@ -2,7 +2,10 @@ import { getCmsConfig } from "@/lib/cms-config";
 import { renderRichText, type RichTextComponentMap } from "@/lib/richtext";
 import type { TOCItemType } from "fumadocs-core/toc";
 
-import type { BlockFeedback, FeedbackAction } from "@/components/feedback/schema";
+import type {
+  BlockFeedback,
+  FeedbackAction,
+} from "@/components/feedback/schema";
 
 type CmsContentProps = {
   content: unknown;

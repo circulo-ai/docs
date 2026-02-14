@@ -8,8 +8,8 @@
     "check-types": "next typegen && tsc --noEmit",
     "dev": "next dev --port 3001",
     "lint": "eslint --max-warnings 0",
-    "test": "vitest run",
-    "start": "next start --port 3001"
+    "start": "next start --port 3001",
+    "test": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",

@@ -9,11 +9,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CmsContent } from "@/components/cms-content";
-import { Feedback } from "@/components/feedback/client";
 import {
   onBlockFeedbackAction,
   onPageFeedbackAction,
 } from "@/components/feedback/actions";
+import { Feedback } from "@/components/feedback/client";
 import { getCmsConfig } from "@/lib/cms-config";
 import { extractTocFromRichText } from "@/lib/richtext";
 
