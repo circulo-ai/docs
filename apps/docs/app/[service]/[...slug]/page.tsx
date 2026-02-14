@@ -11,6 +11,8 @@ import { cloneElement, isValidElement, type ComponentProps } from "react";
 
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { DocsPageWithFeedback } from "@/components/docs-page-with-feedback";
+import { onPageFeedbackAction } from "@/components/feedback-github/actions";
+import { Feedback } from "@/components/feedback-github/client";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
 import { getRichTextComponents } from "@/mdx-components";
@@ -151,6 +153,7 @@ export default async function Page(props: LatestAliasProps) {
             a: aliasAwareLink,
           })}
         />
+        <Feedback onSendAction={onPageFeedbackAction} />
       </DocsBody>
     </DocsPageWithFeedback>
   );

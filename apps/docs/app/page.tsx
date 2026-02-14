@@ -9,6 +9,11 @@ import { notFound } from "next/navigation";
 
 import { CmsContent } from "@/components/cms-content";
 import { DocsPageWithFeedback } from "@/components/docs-page-with-feedback";
+import {
+  onBlockFeedbackAction,
+  onPageFeedbackAction,
+} from "@/components/feedback-github/actions";
+import { Feedback } from "@/components/feedback-github/client";
 import { getCmsConfig } from "@/lib/cms-config";
 import { extractTocFromRichText } from "@/lib/richtext";
 
@@ -36,7 +41,12 @@ export default async function DocsIndex() {
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
-        <CmsContent content={content} tocItems={toc} />
+        <CmsContent
+          content={content}
+          tocItems={toc}
+          blockFeedbackAction={onBlockFeedbackAction}
+        />
+        <Feedback onSendAction={onPageFeedbackAction} />
       </DocsBody>
     </DocsPageWithFeedback>
   );

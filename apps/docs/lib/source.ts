@@ -21,6 +21,7 @@ import type { TOCItemType } from "fumadocs-core/toc";
 import { cache, createElement, JSX } from "react";
 
 import { CmsContent } from "@/components/cms-content";
+import { onBlockFeedbackAction } from "@/components/feedback-github/actions";
 import { Badge } from "@/components/ui/badge";
 import { getCmsConfig } from "@/lib/cms-config";
 import {
@@ -230,6 +231,7 @@ const buildSource = async () => {
             content: page.content,
             components: props.components,
             tocItems: toc,
+            blockFeedbackAction: onBlockFeedbackAction,
           });
 
         pages.push({
