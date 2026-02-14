@@ -5,7 +5,7 @@ import type { TOCItemType } from "fumadocs-core/toc";
 import type {
   BlockFeedback,
   FeedbackAction,
-} from "@/components/feedback/schema";
+} from "@/components/feedback-github/schema";
 
 type CmsContentProps = {
   content: unknown;

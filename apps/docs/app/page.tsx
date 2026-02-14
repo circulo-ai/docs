@@ -12,8 +12,8 @@ import { CmsContent } from "@/components/cms-content";
 import {
   onBlockFeedbackAction,
   onPageFeedbackAction,
-} from "@/components/feedback/actions";
-import { Feedback } from "@/components/feedback/client";
+} from "@/components/feedback-github/actions";
+import { Feedback } from "@/components/feedback-github/client";
 import { getCmsConfig } from "@/lib/cms-config";
 import { extractTocFromRichText } from "@/lib/richtext";
 

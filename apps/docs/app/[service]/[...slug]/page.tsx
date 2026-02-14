@@ -11,8 +11,8 @@ import { notFound } from "next/navigation";
 import { cloneElement, isValidElement, type ComponentProps } from "react";
 
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
-import { onPageFeedbackAction } from "@/components/feedback/actions";
-import { Feedback } from "@/components/feedback/client";
+import { onPageFeedbackAction } from "@/components/feedback-github/actions";
+import { Feedback } from "@/components/feedback-github/client";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";
 import { getRichTextComponents } from "@/mdx-components";

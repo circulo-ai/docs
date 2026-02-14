@@ -26,11 +26,11 @@ import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
-import { FeedbackBlock } from "@/components/feedback/client";
+import { FeedbackBlock } from "@/components/feedback-github/client";
 import type {
   BlockFeedback,
   FeedbackAction,
-} from "@/components/feedback/schema";
+} from "@/components/feedback-github/schema";
 import { ServiceIcon } from "@/components/service-icons";
 import {
   createFeedbackBlockBody,
