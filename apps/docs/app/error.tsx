@@ -12,6 +12,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 
 type DocsErrorProps = {
   error: Error & { digest?: string };
@@ -24,7 +25,7 @@ export default function Error({ error, reset }: DocsErrorProps) {
   }, [error]);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl px-4 py-12 md:px-6 md:py-16">
+    <DocsPage>
       <Empty className="border bg-card/40">
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -47,6 +48,6 @@ export default function Error({ error, reset }: DocsErrorProps) {
           </Button>
         </EmptyContent>
       </Empty>
-    </main>
+    </DocsPage>
   );
 }

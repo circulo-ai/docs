@@ -26,7 +26,7 @@ export default function NotFound() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="max-w-none sm:flex-row sm:justify-center">
-          <Button size="lg" nativeButton={false} render={<Link href="d" />}>
+          <Button size="lg" nativeButton={false} render={<Link href="/" />}>
             <ChevronLeftIcon data-icon="inline-start" />
             Return to docs home
           </Button>
