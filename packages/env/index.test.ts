@@ -34,10 +34,14 @@ describe("@repo/env", () => {
     const { readEnv } = await import("./index.js");
     const env = {
       QUOTED: " ' hello ' ",
+      MULTILINE_ESCAPED: "'line-1\\nline-2'",
       BLANK: "    ",
     };
 
     expect(readEnv("QUOTED", { env, load: false })).toBe("hello");
+    expect(readEnv("MULTILINE_ESCAPED", { env, load: false })).toBe(
+      "line-1\nline-2",
+    );
     expect(readEnv("BLANK", { env, load: false })).toBeUndefined();
     expect(
       readEnv("MISSING", { env, load: false, defaultValue: "fallback" }),
