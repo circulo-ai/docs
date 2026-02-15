@@ -43,6 +43,7 @@ import {
   createFeedbackBlockBody,
   createFeedbackBlockId,
 } from "@/lib/feedback-block";
+import { renderInlineTextNode } from "@/lib/richtext-inline-code";
 import { resolveUploadRenderDimensions } from "@/lib/upload-dimensions";
 
 export type RichTextComponentMap = Record<string, ElementType | undefined>;
@@ -1120,6 +1121,12 @@ const buildConverters = (options: {
 
   return {
     ...defaultJSXConverters,
+    text: ({ childIndex, node, parent }) =>
+      renderInlineTextNode({
+        childIndex,
+        node,
+        siblings: getChildren(parent),
+      }),
     upload: ({ node }) => {
       const uploadNode = node as {
         fields?: {
