@@ -1,3 +1,5 @@
+import { readEnv, readMultilineEnv } from "@repo/env";
+
 export type GithubFeedbackConfig = {
   owner: string;
   repo: string;
@@ -6,35 +8,25 @@ export type GithubFeedbackConfig = {
   privateKey: string;
 };
 
-const stripWrappingQuotes = (value: string) => {
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.slice(1, -1);
-  }
-  return value;
-};
-
-const normalizeEnvValue = (value: string | undefined) => {
-  if (typeof value !== "string") return "";
-  return stripWrappingQuotes(value).trim();
-};
-
 export const normalizeMultilineSecret = (value: string) =>
-  stripWrappingQuotes(value).replace(/\\n/g, "\n").trim();
+  value.replace(/\\n/g, "\n").trim();
 
 export const readGithubFeedbackConfig = (
   env: Record<string, string | undefined> = process.env,
 ): GithubFeedbackConfig | null => {
-  const owner = normalizeEnvValue(env.DOCS_FEEDBACK_GITHUB_OWNER);
-  const repo = normalizeEnvValue(env.DOCS_FEEDBACK_GITHUB_REPO);
-  const category =
-    normalizeEnvValue(env.DOCS_FEEDBACK_GITHUB_CATEGORY) || "Docs Feedback";
-  const appId = normalizeEnvValue(env.GITHUB_APP_ID);
-  const rawPrivateKey = normalizeEnvValue(env.GITHUB_APP_PRIVATE_KEY);
+  const envOptions = {
+    env,
+    load: env === process.env,
+  };
 
-  if (!owner || !repo || !appId || !rawPrivateKey) {
+  const owner = readEnv("DOCS_FEEDBACK_GITHUB_OWNER", envOptions);
+  const repo = readEnv("DOCS_FEEDBACK_GITHUB_REPO", envOptions);
+  const category =
+    readEnv("DOCS_FEEDBACK_GITHUB_CATEGORY", envOptions) || "Docs Feedback";
+  const appId = readEnv("GITHUB_APP_ID", envOptions);
+  const privateKey = readMultilineEnv("GITHUB_APP_PRIVATE_KEY", envOptions);
+
+  if (!owner || !repo || !appId || !privateKey) {
     return null;
   }
 
@@ -43,6 +35,6 @@ export const readGithubFeedbackConfig = (
     repo,
     category,
     appId,
-    privateKey: normalizeMultilineSecret(rawPrivateKey),
+    privateKey,
   };
 };

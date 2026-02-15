@@ -1,7 +1,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
-import nextEnv from '@next/env'
+import { loadRootEnv, readBooleanEnv, readEnv } from '@repo/env'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -18,15 +18,13 @@ import { DocsSettings } from './globals/DocsSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-const { loadEnvConfig } = nextEnv
 
-loadEnvConfig(path.resolve(process.cwd(), '../..'))
-loadEnvConfig(process.cwd())
+loadRootEnv()
 
-const s3Bucket = process.env.S3_BUCKET
-const s3Region = process.env.S3_REGION
-const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID
-const s3SecretAccessKey = process.env.S3_SECRET_ACCESS_KEY
+const s3Bucket = readEnv('S3_BUCKET')
+const s3Region = readEnv('S3_REGION')
+const s3AccessKeyId = readEnv('S3_ACCESS_KEY_ID')
+const s3SecretAccessKey = readEnv('S3_SECRET_ACCESS_KEY')
 
 if (!s3Bucket || !s3Region || !s3AccessKeyId || !s3SecretAccessKey) {
   throw new Error(
@@ -34,8 +32,8 @@ if (!s3Bucket || !s3Region || !s3AccessKeyId || !s3SecretAccessKey) {
   )
 }
 
-const s3Endpoint = process.env.S3_ENDPOINT
-const s3ForcePathStyle = process.env.S3_FORCE_PATH_STYLE === 'true'
+const s3Endpoint = readEnv('S3_ENDPOINT')
+const s3ForcePathStyle = readBooleanEnv('S3_FORCE_PATH_STYLE')
 
 export default buildConfig({
   admin: {
@@ -47,13 +45,13 @@ export default buildConfig({
   collections: [Users, Media, Services, DocVersions, DocPageGroups, DocPages, Redirects],
   globals: [DocsSettings],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: readEnv('PAYLOAD_SECRET', { defaultValue: '' }) || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || '',
+      connectionString: readEnv('DATABASE_URL', { defaultValue: '' }) || '',
     },
   }),
   sharp,

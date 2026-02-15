@@ -12,6 +12,7 @@
         "DOCS_EMAIL",
         "DOCS_PASSWORD",
         "DOCS_ALLOW_LOCAL_IP",
+        "DOCS_REVALIDATE_SECRET",
         "INKEEP_API_KEY"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

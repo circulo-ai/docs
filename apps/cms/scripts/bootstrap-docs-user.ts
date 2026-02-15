@@ -1,19 +1,9 @@
 import { getPayload } from 'payload'
+import { readEnv } from '@repo/env'
 import configPromise from '../src/payload.config'
 
-const stripWrappingQuotes = (value: string | undefined) => {
-  if (!value) return undefined
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.slice(1, -1)
-  }
-  return value
-}
-
-const email = stripWrappingQuotes(process.env.DOCS_EMAIL)?.trim()
-const password = stripWrappingQuotes(process.env.DOCS_PASSWORD)
+const email = readEnv('DOCS_EMAIL')
+const password = readEnv('DOCS_PASSWORD')
 
 if (!email || !password) {
   console.log('[bootstrap-docs-user] Skipping: DOCS_EMAIL or DOCS_PASSWORD is not set.')

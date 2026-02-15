@@ -1,11 +1,7 @@
 import { withPayload } from '@payloadcms/next/withPayload'
-import nextEnv from '@next/env'
-import path from 'node:path'
-import process from 'node:process'
+import { loadRootEnv } from '@repo/env'
 
-const projectRoot = path.resolve(process.cwd(), '../..')
-const { loadEnvConfig } = nextEnv
-loadEnvConfig(projectRoot)
+loadRootEnv()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

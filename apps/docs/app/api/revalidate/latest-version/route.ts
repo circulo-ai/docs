@@ -1,3 +1,4 @@
+import { readEnv } from "@repo/env";
 import { revalidateTag } from "next/cache";
 
 import {
@@ -14,7 +15,7 @@ const normalizeServiceSlug = (value: unknown) => {
 };
 
 const isAuthorized = (request: Request) => {
-  const secret = process.env.DOCS_REVALIDATE_SECRET?.trim();
+  const secret = readEnv("DOCS_REVALIDATE_SECRET");
   if (!secret) return false;
 
   return request.headers.get(REVALIDATE_SECRET_HEADER) === secret;

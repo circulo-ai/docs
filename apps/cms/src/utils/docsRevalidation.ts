@@ -1,4 +1,5 @@
 import type { PayloadRequest } from 'payload'
+import { readEnv } from '@repo/env'
 
 const REVALIDATE_SECRET_HEADER = 'x-revalidate-secret'
 
@@ -9,10 +10,10 @@ const normalizeServiceSlug = (value: unknown) => {
 }
 
 const resolveRevalidateUrl = () => {
-  const explicitUrl = process.env.DOCS_REVALIDATE_URL?.trim()
+  const explicitUrl = readEnv('DOCS_REVALIDATE_URL')
   if (explicitUrl) return explicitUrl
 
-  const siteUrl = process.env.DOCS_SITE_URL?.trim()
+  const siteUrl = readEnv('DOCS_SITE_URL')
   if (!siteUrl) return null
 
   try {
@@ -23,7 +24,7 @@ const resolveRevalidateUrl = () => {
 }
 
 const resolveRevalidateSecret = () => {
-  const value = process.env.DOCS_REVALIDATE_SECRET?.trim()
+  const value = readEnv('DOCS_REVALIDATE_SECRET')
   return value && value.length > 0 ? value : null
 }
 

@@ -14,6 +14,7 @@ import { resolveSiteUrl } from "@/lib/site-url";
 import { getSource } from "@/lib/source";
 import { cn } from "@/lib/utils";
 import { getDocsSettings } from "@repo/docs-source";
+import { readEnv } from "@repo/env";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { MessageCircleIcon } from "lucide-react";
 import type { Metadata } from "next";
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const inkeepApiKey = process.env.INKEEP_API_KEY?.trim();
+  const inkeepApiKey = readEnv("INKEEP_API_KEY");
   const isAskAIEnabled = Boolean(inkeepApiKey);
   const requestHeaders = await headers();
   const cmsConfig = getCmsConfig();

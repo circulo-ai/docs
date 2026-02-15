@@ -1,14 +1,11 @@
-import nextEnv from "@next/env";
-import path from "node:path";
+import { loadRootEnv, readBooleanEnv, readEnv } from "@repo/env";
 import process from "node:process";
 
-const projectRoot = path.resolve(process.cwd(), "../..");
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(projectRoot);
+loadRootEnv();
 
 const localhostOrigin = new URL("http://localhost:3000");
 const cmsOrigin = (() => {
-  const configured = process.env.DOCS_CMS_URL;
+  const configured = readEnv("DOCS_CMS_URL");
   if (!configured) return localhostOrigin;
 
   try {
@@ -20,7 +17,7 @@ const cmsOrigin = (() => {
 
 const allowLocalIP =
   process.env.NODE_ENV !== "production" ||
-  process.env.DOCS_ALLOW_LOCAL_IP === "true";
+  readBooleanEnv("DOCS_ALLOW_LOCAL_IP");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

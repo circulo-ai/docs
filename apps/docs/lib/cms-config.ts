@@ -1,3 +1,5 @@
+import { readBooleanEnv, readEnv } from "@repo/env";
+
 type CmsConfig = {
   baseUrl: string;
   includeDrafts: boolean;
@@ -7,23 +9,13 @@ type CmsConfig = {
   };
 };
 
-const stripWrappingQuotes = (value: string | undefined) => {
-  if (!value) return undefined;
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.slice(1, -1);
-  }
-  return value;
-};
-
 export const getCmsConfig = (): CmsConfig => {
-  const baseUrl =
-    stripWrappingQuotes(process.env.DOCS_CMS_URL) ?? "http://localhost:3000";
-  const includeDrafts = process.env.DOCS_INCLUDE_DRAFTS === "true";
-  const email = stripWrappingQuotes(process.env.DOCS_EMAIL);
-  const password = stripWrappingQuotes(process.env.DOCS_PASSWORD);
+  const baseUrl = readEnv("DOCS_CMS_URL", {
+    defaultValue: "http://localhost:3000",
+  });
+  const includeDrafts = readBooleanEnv("DOCS_INCLUDE_DRAFTS");
+  const email = readEnv("DOCS_EMAIL");
+  const password = readEnv("DOCS_PASSWORD");
   const auth =
     email && password
       ? {
