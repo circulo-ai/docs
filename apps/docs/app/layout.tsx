@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getCmsConfig } from "@/lib/cms-config";
 import { baseOptions } from "@/lib/layout.shared";
 import { buildAliasTree } from "@/lib/page-tree";
+import { buildServiceColorStyles } from "@/lib/service-colors";
 import { getServiceVersionOptions } from "@/lib/service-version-options";
 import { resolveSiteUrl } from "@/lib/site-url";
 import { getSource } from "@/lib/source";
@@ -55,12 +56,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     .find((service) => service.slug === serviceSlug)
     ?.primaryColor?.trim();
   const htmlStyle: CSSProperties | undefined = servicePrimaryColor
-    ? ({
-        "--primary": servicePrimaryColor,
-        "--accent": servicePrimaryColor,
-        "--sidebar-primary": servicePrimaryColor,
-        "--sidebar-accent": servicePrimaryColor,
-      } as CSSProperties)
+    ? buildServiceColorStyles(servicePrimaryColor)
     : undefined;
 
   const tree = source.getPageTree();
