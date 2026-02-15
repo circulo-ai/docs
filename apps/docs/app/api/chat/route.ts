@@ -3,8 +3,6 @@ import { convertToModelMessages, streamText } from "ai";
 
 import { ProvideLinksToolSchema } from "@/lib/inkeep-qa-schema";
 
-export const runtime = "edge";
-
 export async function POST(req: Request) {
   const apiKey = process.env.INKEEP_API_KEY;
   if (!apiKey) {

@@ -15,7 +15,13 @@
         "INKEEP_API_KEY"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/node_modules/**",
+        "!.next/standalone/**/.next/node_modules/**",
+        "!.next/standalone/**/node_modules/**"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
