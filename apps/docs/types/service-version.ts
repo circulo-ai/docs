@@ -12,6 +12,7 @@ export type ServiceOption = {
 
 export type VersionOption = {
   version: string;
+  defaultPageSlug?: string;
   isPrerelease?: boolean;
   status?: "draft" | "published";
 };

@@ -9,19 +9,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Archive, Tag } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import type { CSSProperties } from "react";
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 
 import { ServiceIcon } from "@/components/service-icons";
 import { buildServiceColorStyles } from "@/lib/service-colors";
+import {
+  buildServiceLatestHref,
+  buildVersionHref,
+  isKeyboardSelectionEvent,
+  isSamePathname,
+} from "@/lib/service-version-switcher-navigation";
+import { cn } from "@/lib/utils";
 import type {
   ServiceOption,
   ServiceVersionOptions,
   VersionOption,
 } from "@/types/service-version";
-import { Archive, Tag } from "lucide-react";
-import { cn } from "../lib/utils";
 
 const VERSION_SEGMENT_REGEX =
   /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
@@ -106,6 +112,27 @@ export function ServiceVersionSwitcher({
     currentVersion,
   );
 
+  const preventSamePathNavigation = (
+    event: { defaultPrevented: boolean; preventDefault: () => void },
+    href: string,
+  ) => {
+    if (!event.defaultPrevented && isSamePathname(pathname, href)) {
+      event.preventDefault();
+    }
+  };
+
+  const pushIfPathChanged = (href: string) => {
+    if (!isSamePathname(pathname, href)) {
+      router.push(href);
+    }
+  };
+
+  const resolveServiceHref = (serviceSlug: string) => {
+    const latestDefaultPageSlug =
+      versionsByService[serviceSlug]?.[0]?.defaultPageSlug;
+    return buildServiceLatestHref(serviceSlug, latestDefaultPageSlug);
+  };
+
   const SelectedVersionIcon = latestVersion === versionValue ? Tag : Archive;
 
   if (services.length === 0) return null;
@@ -114,9 +141,10 @@ export function ServiceVersionSwitcher({
     <div className="flex flex-col gap-3">
       <Select
         value={serviceValue}
-        onValueChange={(nextService) => {
+        onValueChange={(nextService, eventDetails) => {
           if (!nextService || nextService === serviceValue) return;
-          router.push(`/${nextService}`);
+          if (!isKeyboardSelectionEvent(eventDetails)) return;
+          pushIfPathChanged(resolveServiceHref(nextService));
         }}
       >
         <SelectTrigger className="w-full">
@@ -147,6 +175,20 @@ export function ServiceVersionSwitcher({
               <SelectItem
                 key={service.slug}
                 value={service.slug}
+                nativeButton={false}
+                render={(props) => {
+                  const href = resolveServiceHref(service.slug);
+                  return (
+                    <Link
+                      href={href}
+                      {...props}
+                      onClick={(event) => {
+                        props.onClick?.(event);
+                        preventSamePathNavigation(event, href);
+                      }}
+                    />
+                  );
+                }}
                 style={
                   service.primaryColor
                     ? buildServiceColorStyles(service.primaryColor)
@@ -167,11 +209,12 @@ export function ServiceVersionSwitcher({
       <Select
         value={versionValue}
         disabled={!serviceValue || versions.length === 0}
-        onValueChange={(nextVersion) => {
+        onValueChange={(nextVersion, eventDetails) => {
           if (!nextVersion || !serviceValue || nextVersion === versionValue) {
             return;
           }
-          router.push(`/${serviceValue}/v${nextVersion}`);
+          if (!isKeyboardSelectionEvent(eventDetails)) return;
+          pushIfPathChanged(buildVersionHref(serviceValue, nextVersion));
         }}
       >
         <SelectTrigger className="w-full">
@@ -192,6 +235,20 @@ export function ServiceVersionSwitcher({
                 <SelectItem
                   key={version}
                   value={version}
+                  nativeButton={false}
+                  render={(props) => {
+                    const href = buildVersionHref(serviceValue, version);
+                    return (
+                      <Link
+                        href={href}
+                        {...props}
+                        onClick={(event) => {
+                          props.onClick?.(event);
+                          preventSamePathNavigation(event, href);
+                        }}
+                      />
+                    );
+                  }}
                   className="*:items-center"
                 >
                   <Icon
