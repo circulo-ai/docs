@@ -118,7 +118,7 @@ const findExistingDiscussion = async (
   config: GithubFeedbackConfig,
   title: string,
 ): Promise<DiscussionSummary | null> => {
-  const query = `${title} in:title repo:${config.owner}/${config.repo} author:@me`;
+  const searchQuery = `${title} in:title repo:${config.owner}/${config.repo} author:@me`;
 
   const response = await octokit.graphql<{
     search: {
@@ -126,8 +126,8 @@ const findExistingDiscussion = async (
     };
   }>(
     `
-      query DocsFeedbackSearch($query: String!) {
-        search(type: DISCUSSION, query: $query, first: 1) {
+      query DocsFeedbackSearch($searchQuery: String!) {
+        search(type: DISCUSSION, query: $searchQuery, first: 1) {
           nodes {
             ... on Discussion {
               id
@@ -137,7 +137,7 @@ const findExistingDiscussion = async (
         }
       }
     `,
-    { query },
+    { searchQuery },
   );
 
   return response.search.nodes[0] ?? null;
