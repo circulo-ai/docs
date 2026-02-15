@@ -19,9 +19,13 @@ const stripWrappingQuotes = (value) => {
   return value;
 };
 
+const normalizeEscapedNewlines = (value) => value.replace(/\\n/g, "\n");
+
 const normalizeEnvValue = (value) => {
   if (typeof value !== "string") return undefined;
-  const normalized = stripWrappingQuotes(value.trim()).trim();
+  const normalized = normalizeEscapedNewlines(
+    stripWrappingQuotes(value.trim()),
+  ).trim();
   return normalized.length > 0 ? normalized : undefined;
 };
 
