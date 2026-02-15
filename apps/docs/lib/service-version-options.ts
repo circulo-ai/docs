@@ -87,10 +87,12 @@ const toServiceOption = (
 
 const toVersionOption = (version: {
   version: string;
+  defaultPageSlug: string;
   isPrerelease?: boolean;
   status?: "draft" | "published";
 }): VersionOption => ({
   version: version.version,
+  defaultPageSlug: version.defaultPageSlug,
   isPrerelease: version.isPrerelease,
   status: version.status,
 });
