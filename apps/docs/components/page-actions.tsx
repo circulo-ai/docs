@@ -4,7 +4,7 @@ import { cva } from "class-variance-authority";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const cache = new Map<string, string>();
@@ -41,20 +41,10 @@ export function LLMCopyButton({
   });
 
   return (
-    <button
-      disabled={isLoading}
-      className={cn(
-        buttonVariants({
-          variant: "secondary",
-          size: "sm",
-          className: "gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground",
-        }),
-      )}
-      onClick={onClick}
-    >
+    <Button disabled={isLoading} variant="outline" size="sm" onClick={onClick}>
       {checked ? <Check /> : <Copy />}
       Copy Markdown
-    </button>
+    </Button>
   );
 }
 
