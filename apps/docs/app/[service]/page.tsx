@@ -1,7 +1,6 @@
-import { getLatestVersion } from "@repo/docs-source";
 import { notFound, redirect } from "next/navigation";
 
-import { getCmsConfig } from "@/lib/cms-config";
+import { getLatestVersionCached } from "@/lib/latest-version-cache";
 
 type ServiceRouteProps = {
   params: { service: string } | Promise<{ service: string }>;
@@ -21,8 +20,7 @@ const encodeSlugPath = (slug: string) =>
 export default async function ServiceRoute(props: ServiceRouteProps) {
   const params = await props.params;
   const service = params.service;
-  const config = getCmsConfig();
-  const latest = await getLatestVersion(config, service);
+  const latest = await getLatestVersionCached(service);
 
   if (!latest) {
     notFound();
