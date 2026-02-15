@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useMemo } from "react";
 
+import { serviceColors } from "@/lib/service-colors";
 import type { ServiceOption } from "@/types/service-version";
 
 type ServicePrimaryColorProps = {
@@ -37,26 +38,19 @@ export function ServicePrimaryColor({ services }: ServicePrimaryColorProps) {
   useLayoutEffect(() => {
     const root = document.documentElement;
     if (!serviceSlug) {
-      root.style.removeProperty("--primary");
-      root.style.removeProperty("--accent");
-      root.style.removeProperty("--sidebar-primary");
-      root.style.removeProperty("--sidebar-accent");
+      serviceColors.forEach((color) => root.style.removeProperty(color));
       return;
     }
 
     const primaryColor = servicePrimaryColors.get(serviceSlug);
     if (primaryColor) {
-      root.style.setProperty("--primary", primaryColor);
-      root.style.setProperty("--accent", primaryColor);
-      root.style.setProperty("--sidebar-primary", primaryColor);
-      root.style.setProperty("--sidebar-accent", primaryColor);
+      serviceColors.forEach((color) =>
+        root.style.setProperty(color, primaryColor),
+      );
       return;
     }
 
-    root.style.removeProperty("--primary");
-    root.style.removeProperty("--accent");
-    root.style.removeProperty("--sidebar-primary");
-    root.style.removeProperty("--sidebar-accent");
+    serviceColors.forEach((color) => root.style.removeProperty(color));
   }, [servicePrimaryColors, serviceSlug]);
 
   return null;

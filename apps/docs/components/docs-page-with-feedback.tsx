@@ -1,4 +1,4 @@
-import { Feedback } from "@/components/feedback/client";
+import { Feedback } from "@/components/feedback-page/client";
 import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 import { ComponentProps } from "react";
 

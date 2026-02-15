@@ -14,6 +14,7 @@ import type { CSSProperties } from "react";
 import { useMemo } from "react";
 
 import { ServiceIcon } from "@/components/service-icons";
+import { buildServiceColorStyles } from "@/lib/service-colors";
 import type {
   ServiceOption,
   ServiceVersionOptions,
@@ -148,12 +149,7 @@ export function ServiceVersionSwitcher({
                 value={service.slug}
                 style={
                   service.primaryColor
-                    ? ({
-                        "--primary": service.primaryColor,
-                        "--accent": service.primaryColor,
-                        "--sidebar-primary": service.primaryColor,
-                        "--sidebar-accent": service.primaryColor,
-                      } as CSSProperties)
+                    ? buildServiceColorStyles(service.primaryColor)
                     : undefined
                 }
               >
