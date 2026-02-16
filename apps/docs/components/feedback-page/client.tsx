@@ -110,7 +110,7 @@ export function Feedback({
       onOpenChange={(v) => {
         if (!v) setOpinion(null);
       }}
-      className="border-y py-3"
+      className="border-t py-3 [&:has(+div>*)]:border-b"
     >
       <div className="flex flex-row items-center gap-2">
         <p className="pe-2 text-sm font-medium">How is this guide?</p>
