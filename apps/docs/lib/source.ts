@@ -22,7 +22,6 @@ import { cache, createElement, JSX } from "react";
 
 import { CmsContent } from "@/components/cms-content";
 import { onBlockFeedbackAction } from "@/components/feedback-github/actions";
-import { Badge } from "@/components/ui/badge";
 import { getCmsConfig } from "@/lib/cms-config";
 import {
   extractTocFromRichText,
@@ -122,14 +121,9 @@ const buildNavNodes = (
       if (node.kind === "group") {
         if (children.length === 0) return [];
 
-        const badge = createElement(
-          Badge,
-          { variant: "outline", className: "uppercase" },
-          label,
-        );
         const separator: Separator = {
           type: "separator",
-          name: badge,
+          name: label,
         };
         return [separator, ...children];
       }

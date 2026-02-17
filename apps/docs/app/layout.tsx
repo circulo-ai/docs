@@ -1,4 +1,3 @@
-import DefaultSearchDialog from "@/components/default-search-dialog";
 import { DocsLayoutClient } from "@/components/docs-layout-client";
 import { ExtraNavLinks } from "@/components/extra-nav-links";
 import { AISearch, AISearchPanel, AISearchTrigger } from "@/components/search";
@@ -17,10 +16,10 @@ import { getDocsSettings } from "@repo/docs-source";
 import { readEnv } from "@repo/env";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { MessageCircleIcon } from "lucide-react";
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import { headers } from "next/headers";
-import type { CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import "./globals.css";
 
 const fontSans = Noto_Sans({ variable: "--font-sans" });
@@ -82,7 +81,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <RootProvider
           search={{
-            SearchDialog: DefaultSearchDialog,
             options: {
               links: docsSettings.extraNavLinks.map(({ label, href }) => [
                 label,

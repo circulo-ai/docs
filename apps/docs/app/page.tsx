@@ -42,7 +42,7 @@ export default async function DocsIndex() {
       <DocsTitle>{title}</DocsTitle>
       {description ? <DocsDescription>{description}</DocsDescription> : null}
       <DocsBody>
-        <div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
+        <div className="mb-4 flex items-center gap-2 border-b pb-4">
           <LLMCopyButton markdownUrl="/.mdx" />
           <ViewOptions markdownUrl="/.mdx" />
         </div>

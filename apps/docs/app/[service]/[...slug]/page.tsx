@@ -150,7 +150,7 @@ export default async function Page(props: LatestAliasProps) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
+        <div className="mb-4 flex items-center gap-2 border-b pb-4">
           <LLMCopyButton markdownUrl={markdownUrl} />
           <ViewOptions markdownUrl={markdownUrl} />
         </div>
