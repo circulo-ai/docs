@@ -21,18 +21,57 @@ export type ServiceIcon = {
   customSvg?: Media | number | string | null;
 };
 
+export type ServiceThemeMode = {
+  background?: string;
+  foreground?: string;
+  card?: string;
+  cardForeground?: string;
+  popover?: string;
+  popoverForeground?: string;
+  primary?: string;
+  primaryForeground?: string;
+  secondary?: string;
+  secondaryForeground?: string;
+  muted?: string;
+  mutedForeground?: string;
+  accent?: string;
+  accentForeground?: string;
+  destructive?: string;
+  border?: string;
+  input?: string;
+  ring?: string;
+  chart1?: string;
+  chart2?: string;
+  chart3?: string;
+  chart4?: string;
+  chart5?: string;
+  radius?: string;
+  sidebar?: string;
+  sidebarForeground?: string;
+  sidebarPrimary?: string;
+  sidebarPrimaryForeground?: string;
+  sidebarAccent?: string;
+  sidebarAccentForeground?: string;
+  sidebarBorder?: string;
+  sidebarRing?: string;
+};
+
+export type ServiceTheme = {
+  id: number | string;
+  name: string;
+  light?: ServiceThemeMode;
+  dark?: ServiceThemeMode;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type Service = {
   id: number | string;
   name: string;
   slug: string;
   description?: string;
   icon?: ServiceIcon | string;
-  theme?: {
-    primaryColor?: string;
-    secondaryColor?: string;
-    accentColor?: string;
-    logo?: number | string | null;
-  };
+  theme?: number | string | ServiceTheme | null;
   searchDefaults?: {
     placeholder?: string;
     includeOlderVersions?: boolean;

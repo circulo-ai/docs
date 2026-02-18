@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getCmsConfig } from "@/lib/cms-config";
 import { baseOptions } from "@/lib/layout.shared";
 import { buildAliasTree } from "@/lib/page-tree";
-import { buildServiceColorStyles } from "@/lib/service-colors";
+import { buildServiceThemeOverrideStyles } from "@/lib/service-theme-overrides";
 import { getServiceVersionOptions } from "@/lib/service-version-options";
 import { resolveSiteUrl } from "@/lib/site-url";
 import { getSource } from "@/lib/source";
@@ -52,12 +52,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     getDocsSettings(cmsConfig),
   ]);
   const serviceSlug = requestHeaders.get("x-service-slug");
-  const servicePrimaryColor = serviceVersionOptions.services
-    .find((service) => service.slug === serviceSlug)
-    ?.primaryColor?.trim();
-  const htmlStyle: CSSProperties | undefined = servicePrimaryColor
-    ? buildServiceColorStyles(servicePrimaryColor)
-    : undefined;
+  const serviceTheme = serviceVersionOptions.services.find(
+    (service) => service.slug === serviceSlug,
+  )?.theme;
+  const htmlStyle: CSSProperties | undefined =
+    buildServiceThemeOverrideStyles(serviceTheme);
 
   const tree = source.getPageTree();
   const aliasTree = await buildAliasTree(tree);

@@ -4,6 +4,10 @@ import { getServices, getVersions } from "@repo/docs-source";
 import { cache } from "react";
 
 import { getCmsConfig } from "@/lib/cms-config";
+import {
+  extractServiceThemePreview,
+  resolveServiceThemePrimaryColor,
+} from "@/lib/service-theme-overrides";
 import type {
   ServiceIconValue,
   ServiceOption,
@@ -66,24 +70,49 @@ const resolveServiceIcon = (
   return undefined;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | undefined => {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
+  return value as Record<string, unknown>;
+};
+
+const resolveServiceTheme = (theme: unknown): ServiceOption["theme"] => {
+  const themeRecord = asRecord(theme);
+  if (!themeRecord) return undefined;
+
+  const light = asRecord(themeRecord.light);
+  const dark = asRecord(themeRecord.dark);
+
+  if (!light && !dark) return undefined;
+
+  return {
+    light,
+    dark,
+  };
+};
+
 const toServiceOption = (
   service: {
     slug: string;
     name: string;
     description?: string;
     icon?: unknown;
-    theme?: {
-      primaryColor?: string;
-    };
+    theme?: unknown;
   },
   baseUrl: string,
-): ServiceOption => ({
-  slug: service.slug,
-  name: service.name,
-  description: service.description,
-  icon: resolveServiceIcon(service.icon, baseUrl),
-  primaryColor: service.theme?.primaryColor,
-});
+) => {
+  const theme = resolveServiceTheme(service.theme);
+
+  return {
+    slug: service.slug,
+    name: service.name,
+    description: service.description,
+    icon: resolveServiceIcon(service.icon, baseUrl),
+    theme,
+    themePreview: extractServiceThemePreview(theme),
+    primaryColor: resolveServiceThemePrimaryColor(theme),
+  };
+};
 
 const toVersionOption = (version: {
   version: string;
