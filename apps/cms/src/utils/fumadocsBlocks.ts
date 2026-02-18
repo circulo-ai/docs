@@ -18,6 +18,13 @@ const readEntryKind = (siblingData: unknown): string | undefined => {
   return typeof kind === 'string' ? kind : undefined
 }
 
+const linkTargetOptions = [
+  { label: 'Same tab (_self)', value: '_self' },
+  { label: 'New tab (_blank)', value: '_blank' },
+  { label: 'Parent frame (_parent)', value: '_parent' },
+  { label: 'Top frame (_top)', value: '_top' },
+]
+
 const iconField = ({
   description,
   condition,
@@ -202,6 +209,14 @@ export const fumadocsBlocks: Block[] = [
           {
             name: 'href',
             type: 'text',
+          },
+          {
+            name: 'target',
+            type: 'select',
+            options: linkTargetOptions,
+            admin: {
+              description: 'Where to open this card link.',
+            },
           },
           {
             name: 'external',
