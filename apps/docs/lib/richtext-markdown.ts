@@ -4,6 +4,8 @@ type JsonRecord = Record<string, unknown>;
 
 type MarkdownOptions = {
   baseUrl?: string;
+  currentServiceSlug?: string;
+  currentVersion?: string;
 };
 
 const TEXT_FORMAT_BOLD = 1;
@@ -96,7 +98,10 @@ const collectText = (node: SerializedLexicalNode): string => {
   return getChildren(node).map(collectText).join("");
 };
 
-const resolveInternalLinkHref = (fields: JsonRecord) => {
+const resolveInternalLinkHref = (
+  fields: JsonRecord,
+  options: MarkdownOptions,
+) => {
   const docField = asRecord(fields.doc);
   const relationTo = asString(docField?.relationTo) ?? "";
   const value = relationValueToObject(docField?.value ?? docField);
@@ -105,12 +110,20 @@ const resolveInternalLinkHref = (fields: JsonRecord) => {
     const pageSlug = asString(value.slug);
     const service = relationValueToObject(value.service);
     const version = relationValueToObject(value.version);
-    const serviceSlug = asString(service?.slug);
-    const versionSemver = asString(version?.version);
+    const serviceSlug = asString(service?.slug) ?? options.currentServiceSlug;
+    const versionSemver =
+      options.currentVersion ?? asString(version?.version) ?? undefined;
 
     if (serviceSlug && versionSemver && pageSlug) {
       return {
         href: `/${encodeURIComponent(serviceSlug)}/v${versionSemver}/${encodeSlugPath(pageSlug)}`,
+        isAsset: false,
+      };
+    }
+
+    if (serviceSlug && pageSlug) {
+      return {
+        href: `/${encodeURIComponent(serviceSlug)}/${encodeSlugPath(pageSlug)}`,
         isAsset: false,
       };
     }
@@ -155,7 +168,7 @@ const resolveLinkHref = (
 
   const resolved =
     fields.linkType === "internal"
-      ? resolveInternalLinkHref(fields)
+      ? resolveInternalLinkHref(fields, options)
       : {
           href: asString(fields.url) ?? "",
           isAsset: false,

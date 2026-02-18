@@ -2177,42 +2177,43 @@ export interface DocVersion {
    */
   defaultPageSlug: string;
   /**
+   * Version-owned navigation model. Ordered root items with nested group pages, including per-row published flags.
+   */
+  navItems: (
+    | {
+        page: number | DocPage;
+        published?: boolean | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'pageItem';
+      }
+    | {
+        group: number | DocPageGroup;
+        pages?:
+          | {
+              page: number | DocPage;
+              published?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'groupItem';
+      }
+  )[];
+  /**
+   * Validation warnings. Duplicate published slugs are auto-demoted to draft and listed here.
+   */
+  navWarnings?: string | null;
+  /**
    * Computed sortable key derived from the semver.
    */
   versionKey?: string | null;
   isPrerelease?: boolean | null;
   /**
-   * Automatically derived from doc page statuses for this version.
+   * Automatically derived from published rows in this version navigation.
    */
   status: 'draft' | 'published';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "docPageGroups".
- */
-export interface DocPageGroup {
-  id: number;
-  service: number | Service;
-  version: number | DocVersion;
-  /**
-   * Label used in the docs sidebar (e.g. "Getting Started").
-   */
-  name: string;
-  /**
-   * Auto-generated from the group name.
-   */
-  slug?: string | null;
-  description?: string | null;
-  /**
-   * Manual uses the Order field. Auto uses Created At (oldest first, newest last).
-   */
-  orderMode: 'manual' | 'auto';
-  /**
-   * 1-based manual position. Example: 3 places this group as the third item.
-   */
-  order?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2224,25 +2225,9 @@ export interface DocPage {
   id: number;
   service: number | Service;
   /**
-   * Select a service first. Only versions for that service are available.
-   */
-  version: number | DocVersion;
-  /**
    * Path segments for the page (lowercase kebab-case, use "/" for nested paths).
    */
   slug: string;
-  /**
-   * Select a service and a version to see the related groups.
-   */
-  group?: (number | null) | DocPageGroup;
-  /**
-   * Manual uses the Order field. Auto uses Created At (oldest first, newest last).
-   */
-  orderMode: 'manual' | 'auto';
-  /**
-   * 1-based manual position. Example: 3 places this page as the third item.
-   */
-  order?: number | null;
   title: string;
   content: {
     root: {
@@ -2259,7 +2244,25 @@ export interface DocPage {
     };
     [k: string]: unknown;
   };
-  status: 'draft' | 'published';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docPageGroups".
+ */
+export interface DocPageGroup {
+  id: number;
+  service: number | Service;
+  /**
+   * Label used in the docs sidebar (e.g. "Getting Started").
+   */
+  name: string;
+  /**
+   * Auto-generated from the group name.
+   */
+  slug?: string | null;
+  description?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2544,6 +2547,33 @@ export interface DocVersionsSelect<T extends boolean = true> {
   version?: T;
   adminLabel?: T;
   defaultPageSlug?: T;
+  navItems?:
+    | T
+    | {
+        pageItem?:
+          | T
+          | {
+              page?: T;
+              published?: T;
+              id?: T;
+              blockName?: T;
+            };
+        groupItem?:
+          | T
+          | {
+              group?: T;
+              pages?:
+                | T
+                | {
+                    page?: T;
+                    published?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+      };
+  navWarnings?: T;
   versionKey?: T;
   isPrerelease?: T;
   status?: T;
@@ -2556,12 +2586,9 @@ export interface DocVersionsSelect<T extends boolean = true> {
  */
 export interface DocPageGroupsSelect<T extends boolean = true> {
   service?: T;
-  version?: T;
   name?: T;
   slug?: T;
   description?: T;
-  orderMode?: T;
-  order?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2571,14 +2598,9 @@ export interface DocPageGroupsSelect<T extends boolean = true> {
  */
 export interface DocPagesSelect<T extends boolean = true> {
   service?: T;
-  version?: T;
   slug?: T;
-  group?: T;
-  orderMode?: T;
-  order?: T;
   title?: T;
   content?: T;
-  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }

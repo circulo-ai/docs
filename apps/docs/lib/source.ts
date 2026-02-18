@@ -227,6 +227,8 @@ const buildSource = async () => {
             components: props.components,
             tocItems: toc,
             blockFeedbackAction: onBlockFeedbackAction,
+            currentServiceSlug: serviceSlug,
+            currentVersion: version.version,
           });
 
         pages.push({

@@ -1,5 +1,4 @@
 import type {
-  CollectionAfterChangeHook,
   CollectionAfterDeleteHook,
   CollectionBeforeChangeHook,
   CollectionBeforeDeleteHook,
@@ -7,72 +6,18 @@ import type {
 } from 'payload'
 import { ValidationError } from 'payload'
 
+import {
+  collectDocVersionNavPageIds,
+  dedupePublishedDocVersionNavSlugs,
+  flattenDocVersionNavRows,
+  getRelationId,
+  hasPublishedDocVersionNavRows,
+  normalizeDocVersionNavItems,
+  promoteAndPruneGroupFromDocVersionNavItems,
+  prunePageFromDocVersionNavItems,
+  sameId,
+} from '../utils/versionNav'
 import { editorRoles, hasRole } from './roles'
-
-export const enforcePublishPermissions =
-  (label: string): CollectionBeforeChangeHook =>
-  ({ collection, data, originalDoc, req }) => {
-    const canPublish = hasRole(req.user, editorRoles)
-    const nextStatus = data?.status ?? originalDoc?.status
-    const wasPublished = originalDoc?.status === 'published'
-
-    if (!canPublish) {
-      if (nextStatus === 'published') {
-        throw new ValidationError({
-          collection: collection?.slug,
-          errors: [
-            {
-              path: 'status',
-              message: `${label} can only be published by editors or admins.`,
-            },
-          ],
-          req,
-        })
-      }
-      if (wasPublished) {
-        throw new ValidationError({
-          collection: collection?.slug,
-          errors: [
-            {
-              path: 'status',
-              message: `${label} is already published and can only be edited by editors or admins.`,
-            },
-          ],
-          req,
-        })
-      }
-    }
-
-    return data
-  }
-
-const getRelationId = (value: unknown) => {
-  if (!value) return null
-  if (typeof value === 'string' || typeof value === 'number') return value
-  if (typeof value === 'object' && value !== null && 'id' in value) {
-    const id = (value as { id?: string | number }).id
-    if (id !== undefined) return id
-  }
-  return null
-}
-
-const sameId = (a: string | number | null, b: string | number | null) =>
-  a !== null && b !== null && String(a) === String(b)
-
-type VersionSnapshot = {
-  id: string | number
-  service?: unknown
-  status?: 'draft' | 'published'
-  defaultPageSlug?: string
-}
-
-type PageSnapshot = {
-  id: string | number
-  service?: unknown
-  version?: unknown
-  slug?: string
-  status?: 'draft' | 'published'
-}
 
 const normalizeSlug = (value: unknown) => {
   if (typeof value !== 'string') return ''
@@ -98,175 +43,157 @@ const throwValidationError = (
   })
 }
 
-const countDocPages = async (req: PayloadRequest, where: Record<string, unknown>) => {
-  const result = await req.payload.find({
-    collection: 'docPages',
-    where: where as never,
-    limit: 1,
-    depth: 0,
-    overrideAccess: true,
-    req,
-  })
+const countPublishedRowsByPageId = (navItems: unknown) => {
+  const counts = new Map<string, number>()
 
-  return result.totalDocs
-}
-
-const findVersionByID = async (req: PayloadRequest, versionId: string | number) => {
-  try {
-    const versionDoc = await req.payload.findByID({
-      collection: 'docVersions',
-      id: versionId,
-      req,
-      overrideAccess: true,
-      depth: 0,
+  flattenDocVersionNavRows(normalizeDocVersionNavItems(navItems))
+    .filter((row) => row.published)
+    .forEach((row) => {
+      const key = String(row.pageId)
+      counts.set(key, (counts.get(key) ?? 0) + 1)
     })
 
-    return versionDoc as VersionSnapshot
-  } catch {
-    return null
-  }
+  return counts
 }
 
-const findPageByID = async (req: PayloadRequest, pageId: string | number) => {
-  try {
-    const pageDoc = await req.payload.findByID({
-      collection: 'docPages',
-      id: pageId,
-      req,
-      overrideAccess: true,
-      depth: 0,
-    })
+const hasPublishedEscalation = (beforeNavItems: unknown, afterNavItems: unknown) => {
+  const beforeCounts = countPublishedRowsByPageId(beforeNavItems)
+  const afterCounts = countPublishedRowsByPageId(afterNavItems)
 
-    return pageDoc as PageSnapshot
-  } catch {
-    return null
+  for (const [pageId, afterCount] of afterCounts.entries()) {
+    const beforeCount = beforeCounts.get(pageId) ?? 0
+    if (afterCount > beforeCount) return true
   }
+
+  return false
 }
+
+export const enforcePublishPermissions =
+  (label: string): CollectionBeforeChangeHook =>
+  ({ collection, data, originalDoc, req }) => {
+    const canPublish = hasRole(req.user, editorRoles)
+    const nextStatus = data?.status ?? originalDoc?.status
+    const nextNavItems = data?.navItems ?? originalDoc?.navItems
+    const previousNavItems = originalDoc?.navItems ?? []
+
+    if (!canPublish) {
+      if (hasPublishedEscalation(previousNavItems, nextNavItems)) {
+        throwValidationError(
+          collection?.slug,
+          req,
+          'navItems',
+          `${label} can only publish nav rows when edited by an editor or admin.`,
+        )
+      }
+
+      if (nextStatus === 'published' && !originalDoc) {
+        throwValidationError(
+          collection?.slug,
+          req,
+          'status',
+          `${label} can only be published by editors or admins.`,
+        )
+      }
+    }
+
+    return data
+  }
 
 type VersionStatus = 'draft' | 'published'
 
-export const resolveVersionStatusFromPages = async (
+export const resolveVersionStatusFromNavItems = (navItems: unknown): VersionStatus => {
+  const normalized = normalizeDocVersionNavItems(navItems)
+  return hasPublishedDocVersionNavRows(normalized) ? 'published' : 'draft'
+}
+
+type VersionSnapshot = {
+  id: number | string
+  service?: unknown
+  status?: 'draft' | 'published'
+  defaultPageSlug?: string
+  navItems?: unknown
+}
+
+type PageSnapshot = {
+  id: number | string
+  service?: unknown
+  slug?: string
+}
+
+const findVersionsByService = async (req: PayloadRequest, serviceId: number | string) => {
+  const versions: VersionSnapshot[] = []
+  let page = 1
+
+  while (true) {
+    const result = await req.payload.find({
+      collection: 'docVersions',
+      where: {
+        service: {
+          equals: serviceId,
+        },
+      },
+      page,
+      limit: 100,
+      depth: 0,
+      req,
+      overrideAccess: true,
+    })
+
+    versions.push(...(result.docs as unknown as VersionSnapshot[]))
+    if (!result.hasNextPage || !result.nextPage) break
+    page = result.nextPage
+  }
+
+  return versions
+}
+
+const findPagesByIds = async (
   req: PayloadRequest,
-  versionId: string | number,
-): Promise<VersionStatus> => {
-  const publishedPages = await countDocPages(req, {
-    and: [{ version: { equals: versionId } }, { status: { equals: 'published' } }],
-  })
+  pageIds: Array<number | string>,
+): Promise<PageSnapshot[]> => {
+  if (pageIds.length === 0) return []
 
-  return publishedPages > 0 ? 'published' : 'draft'
-}
-
-export const setVersionStatusFromPages: CollectionBeforeChangeHook = async ({
-  data,
-  originalDoc,
-  operation,
-  req,
-}) => {
-  if (operation === 'create') {
-    return {
-      ...(data ?? {}),
-      status: 'draft',
-    }
-  }
-
-  const versionId = getRelationId(originalDoc?.id)
-  if (!versionId) {
-    return {
-      ...(data ?? {}),
-      status: 'draft',
-    }
-  }
-
-  const status = await resolveVersionStatusFromPages(req, versionId)
-
-  return {
-    ...(data ?? {}),
-    status,
-  }
-}
-
-export const syncVersionStatus = async (req: PayloadRequest, versionId: string | number) => {
-  const versionDoc = await findVersionByID(req, versionId)
-  if (!versionDoc) return
-
-  const currentStatus = versionDoc.status === 'published' ? 'published' : 'draft'
-  const status = await resolveVersionStatusFromPages(req, versionId)
-  if (status === currentStatus) return
-
-  await req.payload.update({
-    collection: 'docVersions',
-    id: versionId,
-    data: {
-      status,
+  const result = await req.payload.find({
+    collection: 'docPages',
+    where: {
+      id: {
+        in: pageIds as never[],
+      },
     },
+    limit: pageIds.length,
+    depth: 0,
     req,
     overrideAccess: true,
-    depth: 0,
   })
+
+  return result.docs as unknown as PageSnapshot[]
 }
 
-const toUniqueVersionIds = (...values: unknown[]) => {
-  const ids = new Map<string, string | number>()
+const buildPageSlugMap = async (req: PayloadRequest, navItems: unknown) => {
+  const pageIds = collectDocVersionNavPageIds(normalizeDocVersionNavItems(navItems))
+  const pages = await findPagesByIds(req, pageIds)
+  const map = new Map<string, string>()
 
-  for (const value of values) {
-    const id = getRelationId(value)
-    if (id === null) continue
-    ids.set(String(id), id)
-  }
+  pages.forEach((page) => {
+    map.set(String(page.id), normalizeSlug(page.slug))
+  })
 
-  return Array.from(ids.values())
+  return map
 }
 
-export const syncVersionStatusesForPageChange: CollectionAfterChangeHook = async ({
-  doc,
-  previousDoc,
-  req,
-}) => {
-  const versionIds = toUniqueVersionIds(doc?.version, previousDoc?.version)
-
-  for (const versionId of versionIds) {
-    await syncVersionStatus(req, versionId)
-  }
+const versionContainsPage = (version: VersionSnapshot, pageId: number | string) => {
+  const target = String(pageId)
+  const rows = flattenDocVersionNavRows(normalizeDocVersionNavItems(version.navItems))
+  return rows.some((row) => String(row.pageId) === target)
 }
 
-export const syncVersionStatusForPageDelete: CollectionAfterDeleteHook = async ({ doc, req }) => {
-  const versionId = getRelationId(doc?.version)
-  if (!versionId) return
-
-  await syncVersionStatus(req, versionId)
+const versionContainsPublishedPage = (version: VersionSnapshot, pageId: number | string) => {
+  const target = String(pageId)
+  const rows = flattenDocVersionNavRows(normalizeDocVersionNavItems(version.navItems))
+  return rows.some((row) => row.published && String(row.pageId) === target)
 }
 
-export const enforcePageServiceMatchesVersion: CollectionBeforeChangeHook = async ({
-  collection,
-  data,
-  originalDoc,
-  req,
-}) => {
-  const collectionSlug = collection?.slug
-  const serviceId = getRelationId(data?.service ?? originalDoc?.service)
-  const versionId = getRelationId(data?.version ?? originalDoc?.version)
-
-  if (!serviceId || !versionId) return data
-
-  const versionDoc = await findVersionByID(req, versionId)
-  if (!versionDoc) {
-    throwValidationError(collectionSlug, req, 'version', 'Selected version could not be found.')
-  }
-
-  const versionServiceId = getRelationId(versionDoc?.service)
-  if (!sameId(serviceId, versionServiceId)) {
-    throwValidationError(
-      collectionSlug,
-      req,
-      'service',
-      'Doc page service must match the selected version service.',
-    )
-  }
-
-  return data
-}
-
-export const enforcePublishedPageState: CollectionBeforeChangeHook = async ({
+export const enforcePageUpdateIntegrity: CollectionBeforeChangeHook = async ({
   collection,
   data,
   originalDoc,
@@ -274,38 +201,41 @@ export const enforcePublishedPageState: CollectionBeforeChangeHook = async ({
 }) => {
   if (!originalDoc) return data
 
-  const collectionSlug = collection?.slug
-  const originalVersionId = getRelationId(originalDoc.version)
+  const pageId = getRelationId(originalDoc.id)
   const originalServiceId = getRelationId(originalDoc.service)
-  const originalSlug = normalizeSlug(originalDoc.slug)
+  if (!pageId || !originalServiceId) return data
 
-  if (!originalVersionId || !originalServiceId || !originalSlug) return data
-
-  const versionDoc = await findVersionByID(req, originalVersionId)
-  if (!versionDoc || versionDoc.status !== 'published') return data
-
-  const nextVersionId = getRelationId(data?.version ?? originalDoc.version)
   const nextServiceId = getRelationId(data?.service ?? originalDoc.service)
+  const originalSlug = normalizeSlug(originalDoc.slug)
   const nextSlug = normalizeSlug(data?.slug ?? originalDoc.slug)
-  const defaultPageSlug = normalizeSlug(versionDoc.defaultPageSlug)
 
-  const isDefaultPage = defaultPageSlug.length > 0 && defaultPageSlug === originalSlug
-  if (isDefaultPage) {
-    if (!sameId(nextVersionId, originalVersionId) || !sameId(nextServiceId, originalServiceId)) {
+  const versions = await findVersionsByService(req, originalServiceId)
+
+  if (!sameId(nextServiceId, originalServiceId)) {
+    const linked = versions.some((version) => versionContainsPage(version, pageId))
+    if (linked) {
       throwValidationError(
-        collectionSlug,
+        collection?.slug,
         req,
-        'version',
-        'This page is the default page of a published version and cannot be moved to another service/version.',
+        'service',
+        'This page is linked in doc version navigation and cannot be moved to another service.',
       )
     }
+  }
 
-    if (nextSlug !== originalSlug) {
+  if (nextSlug === originalSlug || !originalSlug) return data
+
+  for (const version of versions) {
+    if (version.status !== 'published') continue
+    if (!versionContainsPublishedPage(version, pageId)) continue
+
+    const defaultSlug = normalizeSlug(version.defaultPageSlug)
+    if (defaultSlug && defaultSlug === originalSlug) {
       throwValidationError(
-        collectionSlug,
+        collection?.slug,
         req,
         'slug',
-        'This page is the default page of a published version. Change the version default page slug first.',
+        'This page is the default page of a published version. Change defaultPageSlug first.',
       )
     }
   }
@@ -318,28 +248,148 @@ export const enforcePageDeleteIntegrity: CollectionBeforeDeleteHook = async ({
   id,
   req,
 }) => {
-  const collectionSlug = collection?.slug
   const pageId = getRelationId(id)
   if (!pageId) return
 
-  const pageDoc = await findPageByID(req, pageId)
+  let pageDoc: PageSnapshot | null = null
+  try {
+    pageDoc = (await req.payload.findByID({
+      collection: 'docPages',
+      id: pageId,
+      req,
+      depth: 0,
+      overrideAccess: true,
+    })) as unknown as PageSnapshot
+  } catch {
+    pageDoc = null
+  }
+
   if (!pageDoc) return
 
-  const versionId = getRelationId(pageDoc.version)
-  const slug = normalizeSlug(pageDoc.slug)
+  const serviceId = getRelationId(pageDoc.service)
+  if (!serviceId) return
 
-  if (!pageId || !versionId || !slug) return
+  const pageSlug = normalizeSlug(pageDoc.slug)
+  if (!pageSlug) return
 
-  const versionDoc = await findVersionByID(req, versionId)
-  if (!versionDoc || versionDoc.status !== 'published') return
+  const versions = await findVersionsByService(req, serviceId)
+  for (const version of versions) {
+    if (version.status !== 'published') continue
+    if (!versionContainsPublishedPage(version, pageId)) continue
 
-  const defaultPageSlug = normalizeSlug(versionDoc.defaultPageSlug)
-  if (defaultPageSlug.length > 0 && defaultPageSlug === slug) {
-    throwValidationError(
-      collectionSlug,
+    const defaultSlug = normalizeSlug(version.defaultPageSlug)
+    if (defaultSlug && defaultSlug === pageSlug) {
+      throwValidationError(
+        collection?.slug,
+        req,
+        'slug',
+        'Cannot delete the default page of a published version. Change defaultPageSlug first.',
+      )
+    }
+  }
+}
+
+const syncVersionStatusFromNavItems = async (req: PayloadRequest, version: VersionSnapshot) => {
+  const navItems = normalizeDocVersionNavItems(version.navItems)
+  const nextStatus = hasPublishedDocVersionNavRows(navItems) ? 'published' : 'draft'
+  const currentStatus = version.status === 'published' ? 'published' : 'draft'
+  if (nextStatus === currentStatus) return
+
+  await req.payload.update({
+    collection: 'docVersions',
+    id: version.id,
+    data: {
+      status: nextStatus,
+    },
+    req,
+    depth: 0,
+    overrideAccess: true,
+  })
+}
+
+export const pruneDeletedPageFromVersions: CollectionAfterDeleteHook = async ({ doc, req }) => {
+  const pageId = getRelationId(doc?.id)
+  const serviceId = getRelationId((doc as { service?: unknown } | null | undefined)?.service)
+  if (!pageId || !serviceId) return
+
+  const versions = await findVersionsByService(req, serviceId)
+  for (const version of versions) {
+    const normalized = normalizeDocVersionNavItems(version.navItems)
+    const pruned = prunePageFromDocVersionNavItems(normalized, pageId)
+    if (JSON.stringify(pruned) === JSON.stringify(normalized)) continue
+
+    await req.payload.update({
+      collection: 'docVersions',
+      id: version.id,
+      data: {
+        navItems: pruned,
+        navWarnings: null,
+        status: resolveVersionStatusFromNavItems(pruned),
+      } as never,
       req,
-      'slug',
-      'Cannot delete the default page of a published version. Change defaultPageSlug first.',
-    )
+      depth: 0,
+      overrideAccess: true,
+    } as never)
+  }
+}
+
+export const pruneDeletedGroupFromVersions: CollectionAfterDeleteHook = async ({ doc, req }) => {
+  const groupId = getRelationId(doc?.id)
+  const serviceId = getRelationId((doc as { service?: unknown } | null | undefined)?.service)
+  if (!groupId || !serviceId) return
+
+  const versions = await findVersionsByService(req, serviceId)
+  for (const version of versions) {
+    const normalized = normalizeDocVersionNavItems(version.navItems)
+    const nextItems = promoteAndPruneGroupFromDocVersionNavItems(normalized, groupId)
+    if (JSON.stringify(nextItems) === JSON.stringify(normalized)) continue
+
+    const pageSlugById = await buildPageSlugMap(req, nextItems)
+    const deduped = dedupeRows(nextItems, pageSlugById)
+
+    await req.payload.update({
+      collection: 'docVersions',
+      id: version.id,
+      data: {
+        navItems: deduped.items,
+        navWarnings: deduped.warnings.length > 0 ? deduped.warnings.join('\n') : null,
+        status: resolveVersionStatusFromNavItems(deduped.items),
+      } as never,
+      req,
+      depth: 0,
+      overrideAccess: true,
+    } as never)
+  }
+}
+
+const dedupeRows = (
+  navItems: unknown,
+  pageSlugById: Map<string, string>,
+): { items: ReturnType<typeof normalizeDocVersionNavItems>; warnings: string[] } => {
+  const deduped = dedupePublishedDocVersionNavSlugs(
+    normalizeDocVersionNavItems(navItems),
+    pageSlugById,
+  )
+
+  return {
+    items: deduped.items,
+    warnings: deduped.warnings,
+  }
+}
+
+// Keep exported for tests and hook composition.
+export const syncVersionStatus = async (req: PayloadRequest, versionId: number | string) => {
+  try {
+    const version = (await req.payload.findByID({
+      collection: 'docVersions',
+      id: versionId,
+      req,
+      depth: 0,
+      overrideAccess: true,
+    })) as unknown as VersionSnapshot
+
+    await syncVersionStatusFromNavItems(req, version)
+  } catch {
+    // no-op when version does not exist
   }
 }

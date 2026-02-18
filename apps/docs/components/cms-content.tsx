@@ -12,6 +12,8 @@ type CmsContentProps = {
   components?: RichTextComponentMap;
   tocItems?: TOCItemType[];
   blockFeedbackAction?: FeedbackAction<BlockFeedback>;
+  currentServiceSlug?: string;
+  currentVersion?: string;
 };
 
 export function CmsContent({
@@ -19,6 +21,8 @@ export function CmsContent({
   components,
   tocItems,
   blockFeedbackAction,
+  currentServiceSlug,
+  currentVersion,
 }: CmsContentProps) {
   const { baseUrl } = getCmsConfig();
   return (
@@ -27,6 +31,8 @@ export function CmsContent({
         baseUrl,
         tocItems,
         onBlockFeedbackAction: blockFeedbackAction,
+        currentServiceSlug,
+        currentVersion,
       })}
     </>
   );
