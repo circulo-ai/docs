@@ -1,3 +1,4 @@
+import { default as default_e752ad2383c223c102497e985445942f } from '../../../components/ServiceThemeCssImportField'
 import { default as default_be4af43288312f82f19f212cf8fdb1d6 } from '../../../components/ThemeTokenField'
 import { default as default_bca642bad68982b100b7ef193a4b293a } from '../../../components/IconSelectField'
 import { default as default_8829d9a894bc969f394da7eef42dfb90 } from '../../../components/IconCell'
@@ -30,6 +31,7 @@ import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc056
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
+  "./components/ServiceThemeCssImportField#default": default_e752ad2383c223c102497e985445942f,
   "./components/ThemeTokenField#default": default_be4af43288312f82f19f212cf8fdb1d6,
   "./components/IconSelectField#default": default_bca642bad68982b100b7ef193a4b293a,
   "./components/IconCell#default": default_8829d9a894bc969f394da7eef42dfb90,

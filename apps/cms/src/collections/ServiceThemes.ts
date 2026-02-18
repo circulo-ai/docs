@@ -68,6 +68,15 @@ export const ServiceThemes: CollectionConfig = {
       validate: (value: unknown) => validateTrimmedRequired(value, 'Theme name'),
     },
     {
+      name: 'cssImport',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: './components/ServiceThemeCssImportField',
+        },
+      },
+    },
+    {
       type: 'tabs',
       tabs: [
         {
