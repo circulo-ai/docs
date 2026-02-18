@@ -43,7 +43,9 @@ import {
   createFeedbackBlockBody,
   createFeedbackBlockId,
 } from "@/lib/feedback-block";
+import { renderMultilineText } from "@/lib/multiline-text";
 import { renderInlineTextNode } from "@/lib/richtext-inline-code";
+import { isParagraphVisuallyEmpty } from "@/lib/richtext-paragraph";
 import { resolveUploadRenderDimensions } from "@/lib/upload-dimensions";
 
 export type RichTextComponentMap = Record<string, ElementType | undefined>;
@@ -411,8 +413,7 @@ const resolveLinkNewTab = (node: SerializedLexicalNode) => {
 };
 
 const renderTextBlock = (value: unknown) => {
-  const text = asString(value);
-  return text ?? null;
+  return renderMultilineText(value);
 };
 
 const renderCodeBlockFromFields = (fields?: JsonRecord) => {
@@ -664,7 +665,9 @@ const renderStepsFromFields = (fields?: JsonRecord) => {
     <Steps>
       {steps.map((step) => (
         <Step key={step.key}>
-          {step.title ? `${step.title}\n${step.content}` : step.content}
+          {step.title
+            ? renderTextBlock(`${step.title}\n${step.content}`)
+            : renderTextBlock(step.content)}
         </Step>
       ))}
     </Steps>
@@ -1297,8 +1300,15 @@ const buildConverters = (options: {
         renderBlockByType("callout", getBlockFields(node), blockOptions),
     },
     paragraph: ({ node, nodesToJSX }) => {
-      const children = nodesToJSX({ nodes: node.children });
-      const paragraphNode = createElement(paragraphComponent, {}, children);
+      const paragraphChildren = getChildren(node);
+      const children = nodesToJSX({ nodes: paragraphChildren });
+      const paragraphNode = createElement(
+        paragraphComponent,
+        {},
+        isParagraphVisuallyEmpty(paragraphChildren)
+          ? createElement("br")
+          : children,
+      );
 
       if (!onBlockFeedbackAction) {
         return paragraphNode;
