@@ -1,13 +1,12 @@
+import { readEnv } from '@repo/env'
+import Link from 'next/link'
+
 type FeatureCard = {
   description: string
   title: string
 }
 
-type QuickLink = {
-  href: string
-  isExternal?: boolean
-  label: string
-}
+const docsSiteUrl = readEnv('DOCS_SITE_URL')
 
 const featureCards: FeatureCard[] = [
   {
@@ -25,13 +24,6 @@ const featureCards: FeatureCard[] = [
   },
 ]
 
-const quickLinks: QuickLink[] = [
-  { label: 'Open admin panel', href: '/admin' },
-  { label: 'GraphQL endpoint', href: '/api/graphql' },
-  { label: 'REST API', href: '/api', isExternal: false },
-  { label: 'Docs app (local)', href: 'http://localhost:3001/docs', isExternal: true },
-]
-
 export default function HomePage() {
   return (
     <div className="cms-landing">
@@ -43,17 +35,19 @@ export default function HomePage() {
           your docs experience.
         </p>
         <div className="cms-landing__actions">
-          <a className="cms-button cms-button--primary" href="/admin">
+          <Link className="cms-button cms-button--primary" href="/admin">
             Open admin
-          </a>
-          <a
-            className="cms-button cms-button--secondary"
-            href="http://localhost:3001/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Open docs app
-          </a>
+          </Link>
+          {docsSiteUrl && (
+            <Link
+              className="cms-button cms-button--secondary"
+              href={docsSiteUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Open docs app
+            </Link>
+          )}
         </div>
       </header>
 
@@ -67,26 +61,6 @@ export default function HomePage() {
             </article>
           ))}
         </div>
-      </section>
-
-      <section
-        aria-labelledby="cms-links-heading"
-        className="cms-landing__section cms-landing__section--compact"
-      >
-        <h2 id="cms-links-heading">Quick links</h2>
-        <ul className="cms-landing__links">
-          {quickLinks.map((link) => (
-            <li key={link.label}>
-              <a
-                href={link.href}
-                rel={link.isExternal ? 'noopener noreferrer' : undefined}
-                target={link.isExternal ? '_blank' : undefined}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
       </section>
     </div>
   )
