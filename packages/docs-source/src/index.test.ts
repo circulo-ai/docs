@@ -208,6 +208,53 @@ describe("version-owned nav resolution", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("appends payload health diagnostics when cms returns init error", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const rawUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      const url = new URL(rawUrl);
+
+      if (url.pathname === "/api/services") {
+        return new Response(
+          JSON.stringify({
+            message: "There was an error initializing Payload",
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (url.pathname === "/api/health/payload") {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            reason: "postgres_connection_failed",
+            message:
+              "Error: cannot connect to Postgres: connect ECONNREFUSED 127.0.0.1:5432",
+          }),
+          {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      throw new Error(`Unexpected request: ${url.toString()}`);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      getServices(baseConfig, { depth: 0, limit: 10 }),
+    ).rejects.toThrow("Payload init diagnostics (503):");
+  });
+
   it("keeps root ordering between pages and groups", async () => {
     mockCmsRequests({
       navItems: [

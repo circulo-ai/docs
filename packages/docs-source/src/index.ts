@@ -184,6 +184,8 @@ type FetchOptions = {
 };
 
 const normalizeBaseUrl = (baseUrl: string) => baseUrl.replace(/\/+$/, "");
+const PAYLOAD_INIT_ERROR_MESSAGE = "There was an error initializing Payload";
+const PAYLOAD_HEALTH_PATH = "/api/health/payload";
 
 let cachedToken: string | undefined;
 let cachedTokenExpiresAt = 0;
@@ -204,6 +206,24 @@ const buildHeaders = (token?: string) => {
   return headers;
 };
 
+const fetchPayloadInitDiagnostics = async (config: DocsSourceConfig) => {
+  try {
+    const response = await fetch(
+      new URL(PAYLOAD_HEALTH_PATH, normalizeBaseUrl(config.baseUrl)).toString(),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    const body = await response.text().catch(() => "");
+    if (!body) return null;
+    return `Payload init diagnostics (${response.status}): ${body}`;
+  } catch {
+    return null;
+  }
+};
+
 const request = async <T>(
   config: DocsSourceConfig,
   path: string,
@@ -222,7 +242,17 @@ const request = async <T>(
   });
 
   if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
+    let message = await response.text().catch(() => response.statusText);
+    if (
+      path !== PAYLOAD_HEALTH_PATH &&
+      response.status === 500 &&
+      message.includes(PAYLOAD_INIT_ERROR_MESSAGE)
+    ) {
+      const diagnostics = await fetchPayloadInitDiagnostics(config);
+      if (diagnostics) {
+        message = `${message} ${diagnostics}`;
+      }
+    }
     throw new Error(
       `Docs source request failed (${response.status}): ${message}`,
     );
