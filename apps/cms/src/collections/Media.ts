@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { validateTrimmedRequired } from '../utils/fieldValidation'
+import { hasS3Config } from '../utils/s3Config'
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -14,5 +15,5 @@ export const Media: CollectionConfig = {
       validate: (value: unknown) => validateTrimmedRequired(value, 'Alt text'),
     },
   ],
-  upload: { disableLocalStorage: true },
+  upload: { disableLocalStorage: hasS3Config() },
 }

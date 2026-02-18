@@ -1,7 +1,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
-import { loadRootEnv, readBooleanEnv, readEnv } from '@repo/env'
+import { loadRootEnv, readEnv } from '@repo/env'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -16,25 +16,20 @@ import { DocPageGroups } from './collections/DocPageGroups'
 import { DocPages } from './collections/DocPages'
 import { Redirects } from './collections/Redirects'
 import { DocsSettings } from './globals/DocsSettings'
+import { getMissingS3ConfigKeys, readS3Config } from './utils/s3Config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 loadRootEnv()
 
-const s3Bucket = readEnv('S3_BUCKET')
-const s3Region = readEnv('S3_REGION')
-const s3AccessKeyId = readEnv('S3_ACCESS_KEY_ID')
-const s3SecretAccessKey = readEnv('S3_SECRET_ACCESS_KEY')
-
-if (!s3Bucket || !s3Region || !s3AccessKeyId || !s3SecretAccessKey) {
-  throw new Error(
-    'Missing S3 configuration. Set S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY.',
+const s3Config = readS3Config()
+if (!s3Config) {
+  const missing = getMissingS3ConfigKeys().join(', ')
+  console.warn(
+    `[payload] S3 storage disabled because these env vars are missing: ${missing}. Media uploads will use local filesystem storage.`,
   )
 }
-
-const s3Endpoint = readEnv('S3_ENDPOINT')
-const s3ForcePathStyle = readBooleanEnv('S3_FORCE_PATH_STYLE')
 
 export default buildConfig({
   admin: {
@@ -65,21 +60,23 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [
-    s3Storage({
-      collections: {
-        media: true,
-      },
-      bucket: s3Bucket,
-      config: {
-        credentials: {
-          accessKeyId: s3AccessKeyId,
-          secretAccessKey: s3SecretAccessKey,
-        },
-        region: s3Region,
-        ...(s3Endpoint ? { endpoint: s3Endpoint } : {}),
-        ...(s3ForcePathStyle ? { forcePathStyle: true } : {}),
-      },
-    }),
-  ],
+  plugins: s3Config
+    ? [
+        s3Storage({
+          collections: {
+            media: true,
+          },
+          bucket: s3Config.bucket,
+          config: {
+            credentials: {
+              accessKeyId: s3Config.accessKeyId,
+              secretAccessKey: s3Config.secretAccessKey,
+            },
+            region: s3Config.region,
+            ...(s3Config.endpoint ? { endpoint: s3Config.endpoint } : {}),
+            ...(s3Config.forcePathStyle ? { forcePathStyle: true } : {}),
+          },
+        }),
+      ]
+    : [],
 })
