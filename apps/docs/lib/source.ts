@@ -21,7 +21,7 @@ import type { TOCItemType } from "fumadocs-core/toc";
 import { cache, createElement, JSX } from "react";
 
 import { CmsContent } from "@/components/cms-content";
-import { onBlockFeedbackAction } from "@/components/feedback-github/actions";
+import { onBlockFeedbackAction } from "@/components/feedback/actions";
 import { getCmsConfig } from "@/lib/cms-config";
 import {
   extractTocFromRichText,

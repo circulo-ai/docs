@@ -11,8 +11,8 @@ import { cloneElement, isValidElement, type ComponentProps } from "react";
 
 import { DocsBreadcrumb } from "@/components/docs-breadcrumb";
 import { DocsPageWithFeedback } from "@/components/docs-page-with-feedback";
-import { onPageFeedbackAction } from "@/components/feedback-github/actions";
-import { Feedback } from "@/components/feedback-github/client";
+import { onPageFeedbackAction } from "@/components/feedback/actions";
+import { Feedback } from "@/components/feedback/client";
 import { LLMCopyButton, ViewOptions } from "@/components/page-actions";
 import { getCmsConfig } from "@/lib/cms-config";
 import { getSource } from "@/lib/source";

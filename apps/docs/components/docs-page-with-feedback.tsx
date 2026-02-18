@@ -1,4 +1,3 @@
-import { Feedback } from "@/components/feedback-page/client";
 import { cn } from "@/lib/utils";
 import { DocsPage } from "fumadocs-ui/layouts/docs/page";
 import { ComponentProps } from "react";
@@ -14,13 +13,6 @@ export function DocsPageWithFeedback({
       {...props}
     >
       {children}
-      <Feedback
-        onSendAction={async (feedback) => {
-          "use server";
-          console.log(feedback);
-          return await { githubUrl: undefined };
-        }}
-      />
     </DocsPage>
   );
 }
