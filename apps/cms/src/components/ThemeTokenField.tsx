@@ -21,6 +21,7 @@ type ThemeTokenFieldAdminConfig = {
     placeholder?: string
   }
 }
+type UseFieldArgs = NonNullable<Parameters<typeof useField>[0]>
 
 const resolvePreviewColor = (value: string) => {
   const trimmed = value.trim()
@@ -55,7 +56,7 @@ const ThemeTokenField: TextFieldClientComponent = (props) => {
     value,
   } = useField({
     potentiallyStalePath: pathFromProps,
-    validate: validate as any,
+    validate: validate as UseFieldArgs['validate'],
   })
 
   const styles = useMemo(() => mergeFieldStyles(field), [field])

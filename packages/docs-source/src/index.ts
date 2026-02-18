@@ -814,6 +814,7 @@ const compareOrderedNodes = (
   a.title.localeCompare(b.title);
 
 const stripOrder = (nodes: OrderedNavNode[]): NavNode[] =>
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   nodes.map(({ position: _, children, ...node }) =>
     children && children.length > 0
       ? { ...node, children: stripOrder(children) }

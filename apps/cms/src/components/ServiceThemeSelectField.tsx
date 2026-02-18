@@ -1,6 +1,11 @@
 'use client'
 
-import type { OptionObject, StaticDescription } from 'payload'
+import type {
+  OptionObject,
+  RelationshipFieldClientComponent,
+  RelationshipFieldClientProps,
+  StaticDescription,
+} from 'payload'
 import type { OptionProps, SingleValueProps } from 'react-select'
 
 import {
@@ -28,6 +33,8 @@ type ThemeOption = OptionObject & {
   preview?: ThemePreview
   isDefault?: boolean
 }
+type ReactSelectProps = React.ComponentProps<typeof ReactSelect>
+type UseFieldArgs = NonNullable<Parameters<typeof useField>[0]>
 
 type RelationshipFieldAdminConfig = {
   className?: string
@@ -167,15 +174,10 @@ const parseRelationshipValue = (value: string): number | string | null => {
   return trimmed
 }
 
-const ServiceThemeSelectField = (props: any) => {
-  const { field, onChange: onChangeFromProps, path: pathFromProps, readOnly, validate } = props
+const ServiceThemeSelectField: RelationshipFieldClientComponent = (props) => {
+  const { field, path: pathFromProps, readOnly, validate } = props
 
-  const relationshipField = field as {
-    admin?: RelationshipFieldAdminConfig
-    label?: unknown
-    localized?: boolean
-    required?: boolean
-  }
+  const relationshipField = field as RelationshipFieldClientProps['field']
 
   const { className, description, placeholder } = (relationshipField.admin ??
     {}) as RelationshipFieldAdminConfig
@@ -189,7 +191,7 @@ const ServiceThemeSelectField = (props: any) => {
     value,
   } = useField({
     potentiallyStalePath: pathFromProps,
-    validate: validate as any,
+    validate: validate as UseFieldArgs['validate'],
   })
 
   const [fetchedOptions, setFetchedOptions] = useState<ThemeOption[]>([])
@@ -236,10 +238,17 @@ const ServiceThemeSelectField = (props: any) => {
     (option: ThemeOption | null) => {
       if (readOnly || disabled) return
       const nextValue = parseRelationshipValue(option?.value ?? '')
-      onChangeFromProps?.(nextValue)
       setValue(nextValue)
     },
-    [disabled, onChangeFromProps, readOnly, setValue],
+    [disabled, readOnly, setValue],
+  )
+
+  const onSelectChange = useCallback<NonNullable<ReactSelectProps['onChange']>>(
+    (nextValue) => {
+      if (Array.isArray(nextValue)) return
+      onChange(nextValue ? (nextValue as ThemeOption) : null)
+    },
+    [onChange],
   )
 
   return (
@@ -259,7 +268,7 @@ const ServiceThemeSelectField = (props: any) => {
         CustomComponent={LabelComponent}
         Fallback={
           <FieldLabel
-            label={relationshipField.label as any}
+            label={relationshipField.label}
             localized={relationshipField.localized}
             path={path}
             required={relationshipField.required}
@@ -283,7 +292,7 @@ const ServiceThemeSelectField = (props: any) => {
           isMulti={false}
           isSortable={false}
           isLoading={isLoading}
-          onChange={(nextValue) => onChange((nextValue as ThemeOption | null) ?? null)}
+          onChange={onSelectChange}
           options={options}
           placeholder={placeholder ?? 'Select a theme'}
           showError={showError}

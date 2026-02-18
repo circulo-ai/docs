@@ -1,6 +1,6 @@
 'use client'
 
-import type { DefaultCellComponentProps } from 'payload'
+import type { ClientField, DefaultCellComponentProps } from 'payload'
 
 import { icons } from 'lucide-react'
 import React from 'react'
@@ -30,6 +30,12 @@ const resolveLucide = (iconName?: string) => {
   return icons[iconName as keyof typeof icons] ?? icons[FALLBACK_ICON]
 }
 
+const renderLucide = (iconName?: string) =>
+  React.createElement(resolveLucide(iconName), {
+    'aria-hidden': 'true',
+    size: 16,
+  })
+
 const getCustomSvgMeta = (customSvg: unknown) => {
   if (!customSvg || typeof customSvg !== 'object') return {}
   const record = customSvg as Record<string, unknown>
@@ -43,14 +49,15 @@ const getCustomSvgMeta = (customSvg: unknown) => {
   }
 }
 
-const IconCell: React.FC<DefaultCellComponentProps<any, IconGroupValue>> = ({ cellData }) => {
+const IconCell: React.FC<DefaultCellComponentProps<ClientField, IconGroupValue>> = ({
+  cellData,
+}) => {
   if (!cellData) return null
 
   if (typeof cellData === 'string') {
-    const LucideIcon = resolveLucide(cellData)
     return (
       <span className="inline-flex items-center gap-2">
-        <LucideIcon aria-hidden="true" size={16} />
+        {renderLucide(cellData)}
         <span>{cellData}</span>
       </span>
     )
@@ -63,6 +70,7 @@ const IconCell: React.FC<DefaultCellComponentProps<any, IconGroupValue>> = ({ ce
     if (url) {
       return (
         <span className="inline-flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img alt={alt ?? filename ?? 'Custom icon'} height={16} src={url} width={16} />
           <span>{filename ?? 'Custom SVG'}</span>
         </span>
@@ -73,10 +81,9 @@ const IconCell: React.FC<DefaultCellComponentProps<any, IconGroupValue>> = ({ ce
   }
 
   const lucideName = cellData.lucide
-  const LucideIcon = resolveLucide(lucideName)
   return (
     <span className="inline-flex items-center gap-2">
-      <LucideIcon aria-hidden="true" size={16} />
+      {renderLucide(lucideName)}
       <span>{lucideName ?? FALLBACK_ICON}</span>
     </span>
   )

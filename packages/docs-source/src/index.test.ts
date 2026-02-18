@@ -107,6 +107,7 @@ describe("version-owned nav resolution", () => {
 
   it("falls back to anonymous requests when login fails for published content", async () => {
     const fetchMock = vi.fn(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async (input: string | URL | Request, init?: RequestInit) => {
         const rawUrl =
           typeof input === "string"

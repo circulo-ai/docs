@@ -24,7 +24,7 @@ export async function GET() {
   try {
     await getPayload({
       config,
-      cron: true,
+      cron: false,
     })
 
     return Response.json(

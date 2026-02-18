@@ -27,6 +27,7 @@ import { components as SelectComponents } from 'react-select'
 
 type IconOption = OptionObject & { value: string }
 type ReactSelectProps = React.ComponentProps<typeof ReactSelect>
+type UseFieldArgs = NonNullable<Parameters<typeof useField>[0]>
 type IconSelectAdminConfig = {
   className?: string
   description?: unknown
@@ -38,15 +39,22 @@ type IconSelectAdminConfig = {
 const resolveIcon = (iconName?: string) =>
   iconName ? (icons[iconName as keyof typeof icons] ?? null) : null
 
+const renderIcon = (iconName?: string) => {
+  const icon = resolveIcon(iconName)
+  if (!icon) return null
+  return React.createElement(icon, {
+    'aria-hidden': 'true',
+    size: 16,
+  })
+}
+
 const IconLabel: React.FC<{ iconName?: string; label: React.ReactNode }> = ({
   iconName,
   label,
 }) => {
-  const Icon = resolveIcon(iconName)
-
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-      {Icon ? <Icon aria-hidden="true" size={16} /> : null}
+      {renderIcon(iconName)}
       <span>{label}</span>
     </span>
   )
@@ -122,7 +130,7 @@ const IconSelectField: SelectFieldClientComponent = (props) => {
     value,
   } = useField({
     potentiallyStalePath: pathFromProps,
-    validate: validate as any,
+    validate: validate as UseFieldArgs['validate'],
   })
 
   const onChange = useCallback<NonNullable<ReactSelectProps['onChange']>>(
