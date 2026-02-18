@@ -521,7 +521,10 @@ const getHeadingDepth = (node: SerializedLexicalNode): number => {
 };
 
 const normalizeParagraph = (value: string): string =>
-  value.replace(/\n{3,}/g, "\n\n").trim();
+  value
+    .replace(/(?: {2}\n){2,}/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
 const renderListItem = (
   node: SerializedLexicalNode,
