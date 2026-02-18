@@ -53,6 +53,8 @@ type JsonRecord = Record<string, unknown>;
 type BlockRenderOptions = {
   baseUrl?: string;
   tocItems?: TOCItemType[];
+  currentServiceSlug?: string;
+  currentVersion?: string;
 };
 
 const isDefined = <T,>(value: T | null | undefined): value is T =>
@@ -324,7 +326,10 @@ const resolveIconNode = (
   return undefined;
 };
 
-const resolveInternalLinkHref = (fields: JsonRecord) => {
+const resolveInternalLinkHref = (
+  fields: JsonRecord,
+  options: Pick<BlockRenderOptions, "currentServiceSlug" | "currentVersion">,
+) => {
   const docField = asRecord(fields.doc);
   const relationTo = asString(docField?.relationTo) ?? "";
   const value = relationValueToObject(docField?.value ?? docField);
@@ -333,12 +338,20 @@ const resolveInternalLinkHref = (fields: JsonRecord) => {
     const pageSlug = asString(value.slug);
     const service = relationValueToObject(value.service);
     const version = relationValueToObject(value.version);
-    const serviceSlug = asString(service?.slug);
-    const versionSemver = asString(version?.version);
+    const serviceSlug = asString(service?.slug) ?? options.currentServiceSlug;
+    const versionSemver =
+      options.currentVersion ?? asString(version?.version) ?? undefined;
 
     if (serviceSlug && versionSemver && pageSlug) {
       return {
         href: `/${encodeURIComponent(serviceSlug)}/v${versionSemver}/${encodeSlugPath(pageSlug)}`,
+        isAsset: false,
+      };
+    }
+
+    if (serviceSlug && pageSlug) {
+      return {
+        href: `/${encodeURIComponent(serviceSlug)}/${encodeSlugPath(pageSlug)}`,
         isAsset: false,
       };
     }
@@ -374,12 +387,15 @@ const resolveInternalLinkHref = (fields: JsonRecord) => {
   };
 };
 
-const resolveLinkHref = (node: SerializedLexicalNode) => {
+const resolveLinkHref = (
+  node: SerializedLexicalNode,
+  options: Pick<BlockRenderOptions, "currentServiceSlug" | "currentVersion">,
+) => {
   const fields = asRecord((node as { fields?: unknown }).fields);
   if (!fields) return { href: "", isAsset: false };
 
   if (fields.linkType === "internal") {
-    return resolveInternalLinkHref(fields);
+    return resolveInternalLinkHref(fields, options);
   }
 
   const url = asString(fields.url);
@@ -1110,13 +1126,27 @@ const buildConverters = (options: {
   slugger: (value: string) => string;
   tocItems?: TOCItemType[];
   onBlockFeedbackAction?: FeedbackAction<BlockFeedback>;
+  currentServiceSlug?: string;
+  currentVersion?: string;
 }): JSXConverters => {
-  const { baseUrl, components, slugger, tocItems, onBlockFeedbackAction } =
-    options;
+  const {
+    baseUrl,
+    components,
+    slugger,
+    tocItems,
+    onBlockFeedbackAction,
+    currentServiceSlug,
+    currentVersion,
+  } = options;
   const linkComponent = components?.a ?? "a";
   const tableComponent = components?.table ?? "table";
   const paragraphComponent = components?.p ?? "p";
-  const blockOptions: BlockRenderOptions = { baseUrl, tocItems };
+  const blockOptions: BlockRenderOptions = {
+    baseUrl,
+    tocItems,
+    currentServiceSlug,
+    currentVersion,
+  };
   let feedbackBlockOrder = 0;
 
   return {
@@ -1328,7 +1358,7 @@ const buildConverters = (options: {
     },
     link: ({ node, nodesToJSX }) => {
       const children = nodesToJSX({ nodes: node.children });
-      const { href: rawHref, isAsset } = resolveLinkHref(node);
+      const { href: rawHref, isAsset } = resolveLinkHref(node, blockOptions);
       const href = isAsset ? prefixAssetUrl(baseUrl, rawHref) : rawHref;
       const newTab = resolveLinkNewTab(node);
       const props: ComponentProps<"a"> = {
@@ -1342,7 +1372,7 @@ const buildConverters = (options: {
     },
     autolink: ({ node, nodesToJSX }) => {
       const children = nodesToJSX({ nodes: node.children });
-      const { href: rawHref, isAsset } = resolveLinkHref(node);
+      const { href: rawHref, isAsset } = resolveLinkHref(node, blockOptions);
       const href = isAsset ? prefixAssetUrl(baseUrl, rawHref) : rawHref;
       const newTab = resolveLinkNewTab(node);
       const props: ComponentProps<"a"> = {
@@ -1390,6 +1420,8 @@ export const renderRichText = (
     baseUrl?: string;
     tocItems?: TOCItemType[];
     onBlockFeedbackAction?: FeedbackAction<BlockFeedback>;
+    currentServiceSlug?: string;
+    currentVersion?: string;
   },
 ): ReactNode => {
   if (!isSerializedEditorState(content)) return null;
@@ -1400,6 +1432,8 @@ export const renderRichText = (
     slugger,
     tocItems: options?.tocItems,
     onBlockFeedbackAction: options?.onBlockFeedbackAction,
+    currentServiceSlug: options?.currentServiceSlug,
+    currentVersion: options?.currentVersion,
   });
   return <RichText data={content} converters={converters} />;
 };

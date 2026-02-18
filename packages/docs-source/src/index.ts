@@ -85,6 +85,7 @@ export type DocVersion = {
   service: number | string | Service;
   version: string;
   defaultPageSlug: string;
+  navItems?: DocVersionNavItem[];
   versionKey?: string;
   isPrerelease?: boolean;
   status?: "draft" | "published";
@@ -93,29 +94,41 @@ export type DocVersion = {
 export type DocPageGroup = {
   id: number | string;
   service: number | string | Service;
-  version: number | string | DocVersion;
   name: string;
   slug?: string;
-  orderMode?: "manual" | "auto";
-  order?: number;
   createdAt?: string;
+  updatedAt?: string;
   description?: string;
 };
 
 export type DocPage = {
   id: number | string;
   service: number | string | Service;
-  version: number | string | DocVersion;
-  group?: number | string | DocPageGroup | null;
-  orderMode?: "manual" | "auto";
-  order?: number;
   slug: string;
   title: string;
   content: unknown;
-  status?: "draft" | "published";
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type DocVersionNavPageRow = {
+  page: number | string | DocPage;
+  published?: boolean;
+};
+
+export type DocVersionNavItem =
+  | {
+      kind?: "page";
+      blockType?: "pageItem";
+      page: number | string | DocPage;
+      published?: boolean;
+    }
+  | {
+      kind?: "group";
+      blockType?: "groupItem";
+      group: number | string | DocPageGroup;
+      pages?: DocVersionNavPageRow[];
+    };
 
 export type ExtraNavLinkVariant =
   | "default"
@@ -420,37 +433,6 @@ const getVersionById = async (
     await resolveAuthToken(config),
   );
 
-const getVersionId = async (
-  config: DocsSourceConfig,
-  serviceId: number | string,
-  version: string,
-): Promise<number | string> => {
-  const token = await resolveAuthToken(config);
-  const response = await request<PayloadListResponse<DocVersion>>(
-    config,
-    "/api/docVersions",
-    {
-      params: {
-        depth: "0",
-        limit: "1",
-        "where[service][equals]": String(serviceId),
-        "where[version][equals]": version,
-        ...getStatusFilter(config),
-      },
-    },
-    token,
-  );
-
-  const doc = response.docs[0];
-  if (!doc) {
-    throw new Error(
-      `Doc version "${version}" not found for service "${serviceId}".`,
-    );
-  }
-
-  return doc.id;
-};
-
 export const getServices = async (
   config: DocsSourceConfig,
   options: { depth?: number; limit?: number } = {},
@@ -581,137 +563,191 @@ export const getPage = async (
     slug: string;
   },
 ): Promise<DocPage | null> => {
-  const token = await resolveAuthToken(config);
   const serviceId = await getServiceId(config, params.serviceSlug);
-  const versionId = await getVersionId(config, serviceId, params.version);
+  const version = await getVersion(config, {
+    serviceSlug: params.serviceSlug,
+    version: params.version,
+  });
+  if (!version) return null;
 
-  const response = await request<PayloadListResponse<DocPage>>(
-    config,
-    "/api/docPages",
-    {
-      params: {
-        depth: "2",
-        limit: "1",
-        "where[service][equals]": String(serviceId),
-        "where[version][equals]": String(versionId),
-        "where[slug][equals]": params.slug,
-        ...getStatusFilter(config),
-      },
-    },
-    token,
-  );
+  const pages = await getPagesForService(config, serviceId);
+  const pageById = new Map<string, DocPage>();
+  pages.forEach((page) => pageById.set(String(page.id), page));
 
-  return response.docs[0] ?? null;
+  const targetSlug = normalizeDocSlug(params.slug);
+  const rows = flattenVisibleNavRows(version.navItems, config.includeDrafts);
+  for (const row of rows) {
+    const page = pageById.get(String(row.pageId));
+    if (!page) continue;
+    if (normalizeDocSlug(page.slug) !== targetSlug) continue;
+    return page;
+  }
+
+  return null;
 };
 
-const isPopulatedDocPageGroup = (
-  value: DocPage["group"],
-): value is DocPageGroup =>
-  typeof value === "object" &&
-  value !== null &&
-  "id" in value &&
-  "name" in value;
+type NormalizedNavRow = {
+  pageId: number | string;
+  published: boolean;
+  groupId: number | string | null;
+  rootIndex: number;
+  groupPageIndex: number | null;
+};
+
+type NormalizedNavItem =
+  | {
+      kind: "page";
+      pageId: number | string;
+      published: boolean;
+    }
+  | {
+      kind: "group";
+      groupId: number | string;
+      pages: Array<{
+        pageId: number | string;
+        published: boolean;
+      }>;
+    };
+
+const asArray = (value: unknown) => (Array.isArray(value) ? value : []);
+const asBoolean = (value: unknown, fallback: boolean) =>
+  typeof value === "boolean" ? value : fallback;
+
+const relationValueToId = (value: unknown): number | string | null => {
+  if (!value) return null;
+  if (typeof value === "number" || typeof value === "string") return value;
+  const record = asRecord(value);
+  if (!record) return null;
+  const nestedValue = asRecord(record.value);
+  if (
+    nestedValue &&
+    (typeof nestedValue.id === "number" || typeof nestedValue.id === "string")
+  ) {
+    return nestedValue.id;
+  }
+  if (typeof record.id === "number" || typeof record.id === "string")
+    return record.id;
+  return null;
+};
+
+const normalizeNavItems = (value: unknown): NormalizedNavItem[] => {
+  const items: NormalizedNavItem[] = [];
+
+  for (const candidate of asArray(value)) {
+    const record = asRecord(candidate);
+    if (!record) continue;
+
+    const rawKind = asString(
+      record.kind || record.type || record.blockType,
+    ).toLowerCase();
+    if (rawKind === "page" || rawKind === "pageitem") {
+      const pageId = relationValueToId(record.page);
+      if (pageId === null) continue;
+      items.push({
+        kind: "page",
+        pageId,
+        published: asBoolean(record.published, true),
+      });
+      continue;
+    }
+
+    if (rawKind === "group" || rawKind === "groupitem") {
+      const groupId = relationValueToId(record.group);
+      if (groupId === null) continue;
+
+      const pages = asArray(record.pages)
+        .map((entry) => asRecord(entry))
+        .filter((entry): entry is Record<string, unknown> => Boolean(entry))
+        .map((entry) => {
+          const pageId = relationValueToId(entry.page);
+          if (pageId === null) return null;
+          return {
+            pageId,
+            published: asBoolean(entry.published, true),
+          };
+        })
+        .filter(
+          (
+            entry,
+          ): entry is {
+            pageId: number | string;
+            published: boolean;
+          } => Boolean(entry),
+        );
+
+      items.push({
+        kind: "group",
+        groupId,
+        pages,
+      });
+    }
+  }
+
+  return items;
+};
+
+const flattenVisibleNavRows = (
+  navItems: unknown,
+  includeDrafts = false,
+): NormalizedNavRow[] => {
+  const rows: NormalizedNavRow[] = [];
+
+  normalizeNavItems(navItems).forEach((item, rootIndex) => {
+    if (item.kind === "page") {
+      if (!includeDrafts && !item.published) return;
+      rows.push({
+        pageId: item.pageId,
+        published: item.published,
+        groupId: null,
+        rootIndex,
+        groupPageIndex: null,
+      });
+      return;
+    }
+
+    item.pages.forEach((row, groupPageIndex) => {
+      if (!includeDrafts && !row.published) return;
+      rows.push({
+        pageId: row.pageId,
+        published: row.published,
+        groupId: item.groupId,
+        rootIndex,
+        groupPageIndex,
+      });
+    });
+  });
+
+  return rows;
+};
+
+const getPagesForService = async (
+  config: DocsSourceConfig,
+  serviceId: number | string,
+): Promise<DocPage[]> =>
+  fetchAll<DocPage>(config, "/api/docPages", {
+    depth: "0",
+    limit: "100",
+    sort: "slug",
+    "where[service][equals]": String(serviceId),
+  });
+
+const getPageGroupsForService = async (
+  config: DocsSourceConfig,
+  serviceId: number | string,
+): Promise<DocPageGroup[]> =>
+  fetchAll<DocPageGroup>(config, "/api/docPageGroups", {
+    depth: "0",
+    limit: "100",
+    sort: "slug",
+    "where[service][equals]": String(serviceId),
+  });
+
+const normalizeDocSlug = (value: string) =>
+  value.trim().replace(/^\/+/, "").replace(/\/+$/, "").toLowerCase();
 
 type OrderedNavNode = NavNode & {
   position: number;
   children?: OrderedNavNode[];
-};
-
-type OrderMode = "manual" | "auto";
-
-type Orderable = {
-  id: number | string;
-  orderMode?: "manual" | "auto";
-  order?: number;
-  createdAt?: string;
-  slug?: string;
-  title?: string;
-};
-
-const resolveOrderMode = (value: unknown): OrderMode =>
-  value === "auto" ? "auto" : "manual";
-
-const resolveManualPosition = (value: number | null | undefined) => {
-  if (typeof value !== "number" || !Number.isFinite(value)) return 1;
-  const normalized = Math.floor(value);
-  return normalized < 1 ? 1 : normalized;
-};
-
-const resolveCreatedAtOrder = (value: string | null | undefined) => {
-  const parsed = Date.parse(value ?? "");
-  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
-};
-
-const compareOrderableFallback = (
-  a: Pick<Orderable, "id" | "slug" | "title">,
-  b: Pick<Orderable, "id" | "slug" | "title">,
-) =>
-  (a.slug ?? "").localeCompare(b.slug ?? "") ||
-  (a.title ?? "").localeCompare(b.title ?? "") ||
-  String(a.id).localeCompare(String(b.id));
-
-const arrangeOrderables = <T extends Orderable>(items: T[]): T[] => {
-  const manual = items
-    .filter((item) => resolveOrderMode(item.orderMode) === "manual")
-    .sort(
-      (a, b) =>
-        resolveManualPosition(a.order) - resolveManualPosition(b.order) ||
-        compareOrderableFallback(a, b),
-    );
-
-  const auto = items
-    .filter((item) => resolveOrderMode(item.orderMode) === "auto")
-    .sort(
-      (a, b) =>
-        resolveCreatedAtOrder(a.createdAt) -
-          resolveCreatedAtOrder(b.createdAt) || compareOrderableFallback(a, b),
-    );
-
-  const manualSlots = new Map<number, T>();
-  const overflowManual: Array<{ slot: number; item: T }> = [];
-
-  for (const item of manual) {
-    let slot = resolveManualPosition(item.order);
-    while (manualSlots.has(slot)) {
-      slot += 1;
-    }
-
-    if (slot <= items.length) {
-      manualSlots.set(slot, item);
-      continue;
-    }
-
-    overflowManual.push({ slot, item });
-  }
-
-  const arranged: T[] = [];
-  let autoIndex = 0;
-  for (let slot = 1; slot <= items.length; slot += 1) {
-    const manualAtSlot = manualSlots.get(slot);
-    if (manualAtSlot) {
-      arranged.push(manualAtSlot);
-      continue;
-    }
-
-    const autoAtSlot = auto[autoIndex];
-    if (autoAtSlot) {
-      arranged.push(autoAtSlot);
-      autoIndex += 1;
-    }
-  }
-
-  overflowManual
-    .sort((a, b) => a.slot - b.slot || compareOrderableFallback(a.item, b.item))
-    .forEach(({ item }) => arranged.push(item));
-
-  while (autoIndex < auto.length) {
-    const remainingAuto = auto[autoIndex];
-    if (!remainingAuto) break;
-    arranged.push(remainingAuto);
-    autoIndex += 1;
-  }
-
-  return arranged;
 };
 
 const compareOrderedNodes = (
@@ -759,7 +795,11 @@ const buildSlugTree = (
             (options.pagePositions?.get(String(b.id)) ??
               Number.MAX_SAFE_INTEGER) || a.slug.localeCompare(b.slug),
       )
-    : arrangeOrderables([...pages]);
+    : [...pages].sort(
+        (a, b) =>
+          a.slug.localeCompare(b.slug) ||
+          String(a.id).localeCompare(String(b.id)),
+      );
 
   orderedPages.forEach((page, index) => {
     const segments = page.slug.split("/").filter(Boolean);
@@ -822,116 +862,6 @@ const buildSlugTree = (
     .sort(compareOrderedNodes);
 };
 
-const buildNavTree = (pages: DocPage[]): NavNode[] => {
-  const grouped = new Map<
-    string,
-    {
-      id: string;
-      title: string;
-      slug: string;
-      pages: DocPage[];
-      orderMode?: "manual" | "auto";
-      order?: number;
-      createdAt?: string;
-    }
-  >();
-  const ungrouped: DocPage[] = [];
-
-  pages.forEach((page) => {
-    if (!isPopulatedDocPageGroup(page.group)) {
-      ungrouped.push(page);
-      return;
-    }
-
-    const groupTitle = page.group.name.trim();
-    if (!groupTitle.length) {
-      ungrouped.push(page);
-      return;
-    }
-
-    const groupKey = String(page.group.id);
-    const existing = grouped.get(groupKey);
-    if (existing) {
-      existing.pages.push(page);
-      return;
-    }
-
-    const groupSlug =
-      typeof page.group.slug === "string" && page.group.slug.length > 0
-        ? page.group.slug
-        : groupKey;
-    grouped.set(groupKey, {
-      id: groupKey,
-      title: groupTitle,
-      slug: `__group__/${groupSlug}`,
-      pages: [page],
-      orderMode: page.group.orderMode,
-      order: page.group.order,
-      createdAt: page.group.createdAt,
-    });
-  });
-
-  const rootOrderables: Array<
-    | (Orderable & { kind: "page"; pageId: string })
-    | (Orderable & { kind: "group"; groupId: string })
-  > = [
-    ...ungrouped.map((page) => ({
-      kind: "page" as const,
-      id: `page:${String(page.id)}`,
-      pageId: String(page.id),
-      slug: page.slug,
-      title: page.title,
-      orderMode: page.orderMode,
-      order: page.order,
-      createdAt: page.createdAt,
-    })),
-    ...Array.from(grouped.values()).map((group) => ({
-      kind: "group" as const,
-      id: `group:${group.id}`,
-      groupId: group.id,
-      slug: group.slug,
-      title: group.title,
-      orderMode: group.orderMode,
-      order: group.order,
-      createdAt: group.createdAt,
-    })),
-  ];
-
-  const orderedRoot = arrangeOrderables(rootOrderables);
-  const ungroupedPositions = new Map<string, number>();
-  const groupPositions = new Map<string, number>();
-
-  orderedRoot.forEach((item, index) => {
-    if (item.kind === "page") {
-      ungroupedPositions.set(item.pageId, index);
-      return;
-    }
-
-    groupPositions.set(item.groupId, index);
-  });
-
-  const nav: OrderedNavNode[] = buildSlugTree(ungrouped, {
-    pagePositions: ungroupedPositions,
-  });
-
-  const groupNodes = Array.from(grouped.values())
-    .map(
-      (group): OrderedNavNode => ({
-        kind: "group",
-        title: group.title,
-        slug: group.slug,
-        position: groupPositions.get(group.id) ?? Number.MAX_SAFE_INTEGER,
-        children: buildSlugTree(group.pages),
-      }),
-    )
-    .filter((group) => (group.children?.length ?? 0) > 0);
-
-  nav.push(...groupNodes);
-  nav.sort(compareOrderedNodes);
-
-  return stripOrder(nav);
-};
-
 export const getNav = async (
   config: DocsSourceConfig,
   params: {
@@ -940,16 +870,73 @@ export const getNav = async (
   },
 ): Promise<NavNode[]> => {
   const serviceId = await getServiceId(config, params.serviceSlug);
-  const versionId = await getVersionId(config, serviceId, params.version);
+  const version = await getVersion(config, {
+    serviceSlug: params.serviceSlug,
+    version: params.version,
+  });
+  if (!version) return [];
 
-  const pages = await fetchAll<DocPage>(config, "/api/docPages", {
-    depth: "1",
-    limit: "100",
-    sort: "slug",
-    "where[service][equals]": String(serviceId),
-    "where[version][equals]": String(versionId),
-    ...getStatusFilter(config),
+  const [allPages, allGroups] = await Promise.all([
+    getPagesForService(config, serviceId),
+    getPageGroupsForService(config, serviceId),
+  ]);
+  const pageById = new Map<string, DocPage>();
+  allPages.forEach((page) => pageById.set(String(page.id), page));
+
+  const groupById = new Map<string, DocPageGroup>();
+  allGroups.forEach((group) => groupById.set(String(group.id), group));
+
+  const navItems = normalizeNavItems(version.navItems);
+  const includeDrafts = Boolean(config.includeDrafts);
+
+  const ungrouped: DocPage[] = [];
+  const ungroupedPositions = new Map<string, number>();
+  const groupNodes: OrderedNavNode[] = [];
+
+  navItems.forEach((item, rootIndex) => {
+    if (item.kind === "page") {
+      if (!includeDrafts && !item.published) return;
+      const page = pageById.get(String(item.pageId));
+      if (!page) return;
+      ungrouped.push(page);
+      ungroupedPositions.set(String(page.id), rootIndex);
+      return;
+    }
+
+    const group = groupById.get(String(item.groupId));
+    if (!group) return;
+
+    const pages: DocPage[] = [];
+    const pagePositions = new Map<string, number>();
+    item.pages.forEach((row, rowIndex) => {
+      if (!includeDrafts && !row.published) return;
+      const page = pageById.get(String(row.pageId));
+      if (!page) return;
+      pages.push(page);
+      pagePositions.set(String(page.id), rowIndex);
+    });
+
+    const children = buildSlugTree(pages, {
+      pagePositions,
+    });
+    if (children.length === 0) return;
+
+    groupNodes.push({
+      kind: "group",
+      title: group.name,
+      slug:
+        typeof group.slug === "string" && group.slug.length > 0
+          ? group.slug
+          : String(group.id),
+      position: rootIndex,
+      children,
+    });
   });
 
-  return buildNavTree(pages);
+  const nav: OrderedNavNode[] = [
+    ...buildSlugTree(ungrouped, { pagePositions: ungroupedPositions }),
+    ...groupNodes,
+  ].sort(compareOrderedNodes);
+
+  return stripOrder(nav);
 };

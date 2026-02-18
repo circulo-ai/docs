@@ -18,6 +18,8 @@ type LLMDocumentInput = {
   url: string;
   description?: string | null;
   content?: unknown;
+  currentServiceSlug?: string;
+  currentVersion?: string;
 };
 
 const normalizeParagraph = (value: string) =>
@@ -28,6 +30,8 @@ export const formatLLMDocument = ({
   url,
   description,
   content,
+  currentServiceSlug,
+  currentVersion,
 }: LLMDocumentInput): string => {
   const { baseUrl } = getCmsConfig();
   const sections: string[] = [`# ${title} (${url})`];
@@ -40,6 +44,8 @@ export const formatLLMDocument = ({
   if (richTextHasContent(content)) {
     const markdown = richTextToMarkdown(content, {
       baseUrl,
+      currentServiceSlug,
+      currentVersion,
     });
 
     if (markdown.length > 0) {
@@ -51,10 +57,16 @@ export const formatLLMDocument = ({
 };
 
 export async function getLLMText(page: LLMPageLike): Promise<string> {
+  const parsed = page.url.match(
+    /^\/([^/]+)\/v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)(?:\/|$)/,
+  );
+
   return formatLLMDocument({
     title: page.data.title ?? "Untitled",
     url: page.url,
     description: page.data.description,
     content: page.data.rawContent,
+    currentServiceSlug: parsed?.[1],
+    currentVersion: parsed?.[2],
   });
 }

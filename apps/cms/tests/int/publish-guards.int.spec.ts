@@ -2,15 +2,13 @@ import { ValidationError } from 'payload'
 import { describe, expect, it, vi } from 'vitest'
 
 import {
+  enforcePublishPermissions,
   enforcePageDeleteIntegrity,
-  enforcePageServiceMatchesVersion,
-  enforcePublishedPageState,
-  resolveVersionStatusFromPages,
-  syncVersionStatus,
+  enforcePageUpdateIntegrity,
+  pruneDeletedGroupFromVersions,
+  pruneDeletedPageFromVersions,
+  resolveVersionStatusFromNavItems,
 } from '../../src/access/publish'
-
-const collectionDocPages = { slug: 'docPages' } as never
-const context = {} as never
 
 const createReq = () => {
   const find = vi.fn()
@@ -35,124 +33,240 @@ const createReq = () => {
   }
 }
 
-describe('publish state guards', () => {
-  it('derives draft status when a version has no published pages', async () => {
-    const { req, find } = createReq()
-    find.mockResolvedValueOnce({ totalDocs: 0 })
-
-    await expect(resolveVersionStatusFromPages(req as never, 9)).resolves.toBe('draft')
+describe('publish guards for version-owned nav', () => {
+  it('derives draft status when there are no published nav rows', () => {
+    expect(
+      resolveVersionStatusFromNavItems([{ blockType: 'pageItem', page: 1, published: false }]),
+    ).toBe('draft')
   })
 
-  it('derives published status when a version has at least one published page', async () => {
-    const { req, find } = createReq()
-    find.mockResolvedValueOnce({ totalDocs: 1 })
-
-    await expect(resolveVersionStatusFromPages(req as never, 9)).resolves.toBe('published')
-  })
-
-  it('syncs version status to published when any published page exists', async () => {
-    const { req, find, findByID, update } = createReq()
-    findByID.mockResolvedValueOnce({
-      id: 9,
-      status: 'draft',
-    })
-    find.mockResolvedValueOnce({ totalDocs: 1 })
-    update.mockResolvedValueOnce({})
-
-    await syncVersionStatus(req as never, 9)
-
-    expect(update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collection: 'docVersions',
-        id: 9,
-        data: {
-          status: 'published',
-        },
-      }),
-    )
-  })
-
-  it('blocks saving a page when selected service does not match version service', async () => {
-    const { req, findByID } = createReq()
-    findByID.mockResolvedValueOnce({
-      id: 11,
-      service: 7,
-      status: 'published',
-      defaultPageSlug: 'intro',
-    })
-
-    await expect(
-      enforcePageServiceMatchesVersion({
-        collection: collectionDocPages,
-        context,
-        operation: 'create',
-        data: {
-          service: 8,
-          version: 11,
-          status: 'draft',
-        },
-        originalDoc: null as never,
-        req: req as never,
-      }),
-    ).rejects.toBeInstanceOf(ValidationError)
-  })
-
-  it('allows unpublishing the last published page of a version', async () => {
-    const { req, findByID } = createReq()
-    findByID.mockResolvedValueOnce({
-      id: 22,
-      service: 5,
-      status: 'published',
-      defaultPageSlug: 'intro',
-    })
-
-    await expect(
-      enforcePublishedPageState({
-        collection: collectionDocPages,
-        context,
-        operation: 'update',
-        data: {
-          status: 'draft',
-        },
-        originalDoc: {
-          id: 101,
-          service: 5,
-          version: 22,
-          slug: 'guide',
-          status: 'published',
-        },
-        req: req as never,
-      }),
-    ).resolves.toEqual(
-      expect.objectContaining({
-        status: 'draft',
-      }),
-    )
+  it('derives published status when any nav row is published', () => {
+    expect(
+      resolveVersionStatusFromNavItems([
+        { blockType: 'pageItem', page: 1, published: false },
+        { blockType: 'pageItem', page: 2, published: true },
+      ]),
+    ).toBe('published')
   })
 
   it('blocks deleting the default page of a published version', async () => {
-    const { req, findByID } = createReq()
+    const { req, find, findByID } = createReq()
     findByID.mockResolvedValueOnce({
       id: 101,
       service: 5,
-      version: 22,
       slug: 'intro',
-      status: 'published',
     })
-    findByID.mockResolvedValueOnce({
-      id: 22,
-      service: 5,
-      status: 'published',
-      defaultPageSlug: 'intro',
+    find.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 22,
+          service: 5,
+          status: 'published',
+          defaultPageSlug: 'intro',
+          navItems: [{ blockType: 'pageItem', page: 101, published: true }],
+        },
+      ],
+      totalDocs: 1,
+      hasNextPage: false,
+      nextPage: null,
     })
 
     await expect(
       enforcePageDeleteIntegrity({
-        collection: collectionDocPages,
-        context,
+        collection: { slug: 'docPages' } as never,
+        context: {} as never,
         id: 101,
         req: req as never,
       }),
     ).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('blocks changing slug for a page that is published default in a version', async () => {
+    const { req, find } = createReq()
+    find.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 22,
+          service: 5,
+          status: 'published',
+          defaultPageSlug: 'intro',
+          navItems: [{ blockType: 'pageItem', page: 101, published: true }],
+        },
+      ],
+      totalDocs: 1,
+      hasNextPage: false,
+      nextPage: null,
+    })
+
+    await expect(
+      enforcePageUpdateIntegrity({
+        collection: { slug: 'docPages' } as never,
+        context: {} as never,
+        operation: 'update',
+        data: {
+          slug: 'new-intro',
+        },
+        originalDoc: {
+          id: 101,
+          service: 5,
+          slug: 'intro',
+        } as never,
+        req: req as never,
+      }),
+    ).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('promotes grouped rows to root when a group is deleted', async () => {
+    const { req, find, update } = createReq()
+    find.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 22,
+          service: 5,
+          status: 'draft',
+          navItems: [
+            {
+              blockType: 'groupItem',
+              group: 77,
+              pages: [{ page: 101, published: true }],
+            },
+          ],
+        },
+      ],
+      totalDocs: 1,
+      hasNextPage: false,
+      nextPage: null,
+    })
+    find.mockResolvedValueOnce({
+      docs: [{ id: 101, slug: 'intro' }],
+      totalDocs: 1,
+      hasNextPage: false,
+      nextPage: null,
+    })
+    update.mockResolvedValue({})
+
+    await pruneDeletedGroupFromVersions({
+      collection: { slug: 'docPageGroups' } as never,
+      context: {} as never,
+      doc: {
+        id: 77,
+        service: 5,
+      } as never,
+      id: 77 as never,
+      req: req as never,
+    })
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'docVersions',
+        id: 22,
+        data: expect.objectContaining({
+          navItems: [{ blockType: 'pageItem', page: 101, published: true }],
+          status: 'published',
+        }),
+      }),
+    )
+  })
+
+  it('prunes deleted page references and re-syncs version status', async () => {
+    const { req, find, update } = createReq()
+    find.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 22,
+          service: 5,
+          status: 'published',
+          navItems: [{ blockType: 'pageItem', page: 101, published: true }],
+        },
+      ],
+      totalDocs: 1,
+      hasNextPage: false,
+      nextPage: null,
+    })
+    update.mockResolvedValue({})
+
+    await pruneDeletedPageFromVersions({
+      collection: { slug: 'docPages' } as never,
+      context: {} as never,
+      doc: {
+        id: 101,
+        service: 5,
+      } as never,
+      id: 101 as never,
+      req: req as never,
+    })
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'docVersions',
+        id: 22,
+        data: expect.objectContaining({
+          navItems: [],
+          status: 'draft',
+        }),
+      }),
+    )
+  })
+
+  it('prevents writers from publishing nav rows', async () => {
+    const hook = enforcePublishPermissions('Doc version')
+
+    expect(() =>
+      hook({
+        collection: { slug: 'docVersions' } as never,
+        context: {} as never,
+        operation: 'update',
+        data: {
+          status: 'published',
+          navItems: [{ blockType: 'pageItem', page: 101, published: true }],
+        },
+        originalDoc: {
+          status: 'draft',
+          navItems: [{ blockType: 'pageItem', page: 101, published: false }],
+        } as never,
+        req: {
+          user: {
+            id: 2,
+            roles: ['writer'],
+          },
+        } as never,
+      }),
+    ).toThrow(ValidationError)
+  })
+
+  it('allows writers to edit structure when published rows are unchanged', async () => {
+    const hook = enforcePublishPermissions('Doc version')
+
+    const result = hook({
+      collection: { slug: 'docVersions' } as never,
+      context: {} as never,
+      operation: 'update',
+      data: {
+        status: 'published',
+        navItems: [
+          { blockType: 'pageItem', page: 101, published: true },
+          { blockType: 'pageItem', page: 202, published: false },
+        ],
+      },
+      originalDoc: {
+        status: 'published',
+        navItems: [
+          { blockType: 'pageItem', page: 101, published: true },
+          { blockType: 'groupItem', group: 77, pages: [{ page: 201, published: false }] },
+        ],
+      } as never,
+      req: {
+        user: {
+          id: 2,
+          roles: ['writer'],
+        },
+      } as never,
+    })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        navItems: expect.any(Array),
+      }),
+    )
   })
 })
