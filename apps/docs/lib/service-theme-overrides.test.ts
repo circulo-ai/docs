@@ -66,4 +66,43 @@ describe("service theme overrides", () => {
       "--service-dark-background",
     );
   });
+
+  it("can include semantic CSS variables used directly by UI components", () => {
+    const styles = buildServiceThemeOverrideStyles(
+      {
+        light: {
+          accent: "oklch(0.9 0.04 180)",
+          accentForeground: "oklch(0.2 0.01 250)",
+        },
+      },
+      { includeSemanticTokens: true },
+    );
+
+    expect(styles).toMatchObject({
+      "--service-light-accent": "oklch(0.9 0.04 180)",
+      "--service-light-accent-foreground": "oklch(0.2 0.01 250)",
+      "--accent": "oklch(0.9 0.04 180)",
+      "--accent-foreground": "oklch(0.2 0.01 250)",
+    });
+  });
+
+  it("prefers dark semantic token values when semanticColorMode is dark", () => {
+    const styles = buildServiceThemeOverrideStyles(
+      {
+        light: {
+          accent: "oklch(0.9 0.04 180)",
+        },
+        dark: {
+          accent: "oklch(0.35 0.09 250)",
+        },
+      },
+      { includeSemanticTokens: true, semanticColorMode: "dark" },
+    );
+
+    expect(styles).toMatchObject({
+      "--service-light-accent": "oklch(0.9 0.04 180)",
+      "--service-dark-accent": "oklch(0.35 0.09 250)",
+      "--accent": "oklch(0.35 0.09 250)",
+    });
+  });
 });

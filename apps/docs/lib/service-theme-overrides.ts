@@ -87,6 +87,11 @@ export type ServiceThemePalettePreview = {
   accent?: string;
 };
 
+export type BuildServiceThemeOverrideStylesOptions = {
+  includeSemanticTokens?: boolean;
+  semanticColorMode?: "light" | "dark";
+};
+
 const toTokenFieldName = (token: ServiceThemeToken) =>
   token.replace(/-([a-z0-9])/g, (_, char: string) => char.toUpperCase());
 
@@ -113,8 +118,16 @@ export const SERVICE_THEME_OVERRIDE_VARIABLES = [
   ),
 ];
 
+const SERVICE_THEME_SEMANTIC_TOKENS = Array.from(
+  new Set<ServiceThemeToken>([
+    ...SERVICE_THEME_LIGHT_TOKENS,
+    ...SERVICE_THEME_DARK_TOKENS,
+  ]),
+);
+
 export const buildServiceThemeOverrideStyles = (
   theme: ServiceThemeOverridesInput | null | undefined,
+  options: BuildServiceThemeOverrideStylesOptions = {},
 ): CSSProperties | undefined => {
   if (!theme) return undefined;
 
@@ -131,6 +144,21 @@ export const buildServiceThemeOverrideStyles = (
     const value = readTokenValue(theme.dark, token);
     if (value) {
       styles[`--service-dark-${token}`] = value;
+    }
+  }
+
+  if (options.includeSemanticTokens) {
+    const semanticColorMode = options.semanticColorMode ?? "light";
+    for (const token of SERVICE_THEME_SEMANTIC_TOKENS) {
+      const value =
+        semanticColorMode === "dark"
+          ? (readTokenValue(theme.dark, token) ??
+            readTokenValue(theme.light, token))
+          : (readTokenValue(theme.light, token) ??
+            readTokenValue(theme.dark, token));
+      if (value) {
+        styles[`--${token}`] = value;
+      }
     }
   }
 
