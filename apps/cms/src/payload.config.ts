@@ -10,6 +10,7 @@ import sharp from 'sharp'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Services } from './collections/Services'
+import { ServiceThemes } from './collections/ServiceThemes'
 import { DocVersions } from './collections/DocVersions'
 import { DocPageGroups } from './collections/DocPageGroups'
 import { DocPages } from './collections/DocPages'
@@ -42,7 +43,16 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Services, DocVersions, DocPageGroups, DocPages, Redirects],
+  collections: [
+    Users,
+    Media,
+    ServiceThemes,
+    Services,
+    DocVersions,
+    DocPageGroups,
+    DocPages,
+    Redirects,
+  ],
   globals: [DocsSettings],
   editor: lexicalEditor(),
   secret: readEnv('PAYLOAD_SECRET', { defaultValue: '' }) || '',

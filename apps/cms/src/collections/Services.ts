@@ -141,35 +141,15 @@ export const Services: CollectionConfig = {
     },
     {
       name: 'theme',
-      type: 'group',
-      fields: [
-        {
-          name: 'primaryColor',
-          type: 'text',
-          admin: {
-            description: 'CSS color token for primary UI elements.',
-          },
+      type: 'relationship',
+      relationTo: 'serviceThemes',
+      admin: {
+        description:
+          'Optional service theme. Leave empty to use the default values from docs globals.css.',
+        components: {
+          Field: './components/ServiceThemeSelectField',
         },
-        {
-          name: 'secondaryColor',
-          type: 'text',
-          admin: {
-            description: 'CSS color token for secondary UI elements.',
-          },
-        },
-        {
-          name: 'accentColor',
-          type: 'text',
-          admin: {
-            description: 'CSS color token for accents and highlights.',
-          },
-        },
-        {
-          name: 'logo',
-          type: 'upload',
-          relationTo: 'media',
-        },
-      ],
+      },
     },
     {
       name: 'searchDefaults',

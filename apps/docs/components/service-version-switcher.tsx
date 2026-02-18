@@ -15,7 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, type CSSProperties } from "react";
 
 import { ServiceIcon } from "@/components/service-icons";
-import { buildServiceColorStyles } from "@/lib/service-colors";
+import { buildServiceThemeOverrideStyles } from "@/lib/service-theme-overrides";
 import {
   buildServiceLatestHref,
   buildVersionHref,
@@ -38,6 +38,8 @@ type ParsedPath = {
   service?: string;
   version?: string;
 };
+
+type ThemePreview = ServiceOption["themePreview"];
 
 const parseDocsPath = (pathname: string): ParsedPath => {
   const segments = pathname.split("/").filter(Boolean);
@@ -79,6 +81,39 @@ const resolveServiceCssColor = (primaryColor?: string) => {
   if (CSS_COLOR_FUNCTION_REGEX.test(normalized)) return normalized;
   return `hsl(${normalized})`;
 };
+
+const normalizePreviewColor = (value?: string) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+function ServiceThemePalette({ preview }: { preview?: ThemePreview }) {
+  const values = [
+    normalizePreviewColor(preview?.background),
+    normalizePreviewColor(preview?.primary),
+    normalizePreviewColor(preview?.secondary),
+    normalizePreviewColor(preview?.accent),
+  ];
+
+  if (!values.some(Boolean)) return null;
+
+  return (
+    <span
+      aria-hidden="true"
+      className="grid h-4 w-4 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded border"
+    >
+      {values.map((value, index) => (
+        <span
+          key={index}
+          className="block"
+          style={
+            value ? ({ backgroundColor: value } as CSSProperties) : undefined
+          }
+        />
+      ))}
+    </span>
+  );
+}
 
 export function ServiceVersionSwitcher({
   services,
@@ -166,6 +201,7 @@ export function ServiceVersionSwitcher({
             <span className="truncate">
               {serviceLabel || "Select a service"}
             </span>
+            <ServiceThemePalette preview={selectedService?.themePreview} />
           </SelectValue>
         </SelectTrigger>
         <SelectContent alignItemWithTrigger={false}>
@@ -189,17 +225,14 @@ export function ServiceVersionSwitcher({
                     />
                   );
                 }}
-                style={
-                  service.primaryColor
-                    ? buildServiceColorStyles(service.primaryColor)
-                    : undefined
-                }
+                style={buildServiceThemeOverrideStyles(service.theme)}
               >
                 <ServiceOptionContent
                   description={service.description}
                   icon={service.icon}
                   name={service.name}
                   primaryColor={service.primaryColor}
+                  themePreview={service.themePreview}
                 />
               </SelectItem>
             ))}
@@ -280,6 +313,7 @@ type ServiceOptionContentProps = {
   icon?: ServiceOption["icon"];
   name: string;
   primaryColor?: string;
+  themePreview?: ThemePreview;
 };
 
 function ServiceOptionContent({
@@ -287,6 +321,7 @@ function ServiceOptionContent({
   icon,
   name,
   primaryColor,
+  themePreview,
 }: ServiceOptionContentProps) {
   const trimmedDescription = description?.trim();
   const serviceColor = resolveServiceCssColor(primaryColor);
@@ -308,6 +343,7 @@ function ServiceOptionContent({
           </span>
         )}
       </span>
+      <ServiceThemePalette preview={themePreview} />
     </>
   );
 }

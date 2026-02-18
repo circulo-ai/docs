@@ -3,7 +3,10 @@
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useMemo } from "react";
 
-import { serviceColors } from "@/lib/service-colors";
+import {
+  buildServiceThemeOverrideStyles,
+  SERVICE_THEME_OVERRIDE_VARIABLES,
+} from "@/lib/service-theme-overrides";
 import type { ServiceOption } from "@/types/service-version";
 
 type ServicePrimaryColorProps = {
@@ -23,12 +26,13 @@ const parseServiceSlug = (pathname: string): string | undefined => {
 
 export function ServicePrimaryColor({ services }: ServicePrimaryColorProps) {
   const pathname = usePathname() ?? "";
-  const servicePrimaryColors = useMemo(
+  const serviceThemeStyles = useMemo(
     () =>
       new Map(
-        services
-          .filter((service) => typeof service.primaryColor === "string")
-          .map((service) => [service.slug, service.primaryColor?.trim()]),
+        services.map((service) => [
+          service.slug,
+          buildServiceThemeOverrideStyles(service.theme),
+        ]),
       ),
     [services],
   );
@@ -37,21 +41,25 @@ export function ServicePrimaryColor({ services }: ServicePrimaryColorProps) {
 
   useLayoutEffect(() => {
     const root = document.documentElement;
+    SERVICE_THEME_OVERRIDE_VARIABLES.forEach((cssVar) =>
+      root.style.removeProperty(cssVar),
+    );
+
     if (!serviceSlug) {
-      serviceColors.forEach((color) => root.style.removeProperty(color));
       return;
     }
 
-    const primaryColor = servicePrimaryColors.get(serviceSlug);
-    if (primaryColor) {
-      serviceColors.forEach((color) =>
-        root.style.setProperty(color, primaryColor),
-      );
+    const themeStyles = serviceThemeStyles.get(serviceSlug);
+    if (!themeStyles) {
       return;
     }
 
-    serviceColors.forEach((color) => root.style.removeProperty(color));
-  }, [servicePrimaryColors, serviceSlug]);
+    Object.entries(themeStyles).forEach(([key, value]) => {
+      if (typeof value === "string" && value.trim()) {
+        root.style.setProperty(key, value);
+      }
+    });
+  }, [serviceThemeStyles, serviceSlug]);
 
   return null;
 }

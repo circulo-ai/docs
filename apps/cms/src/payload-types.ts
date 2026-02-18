@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    serviceThemes: ServiceTheme;
     services: Service;
     docVersions: DocVersion;
     docPageGroups: DocPageGroup;
@@ -83,6 +84,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    serviceThemes: ServiceThemesSelect<false> | ServiceThemesSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     docVersions: DocVersionsSelect<false> | DocVersionsSelect<true>;
     docPageGroups: DocPageGroupsSelect<false> | DocPageGroupsSelect<true>;
@@ -172,6 +174,272 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "serviceThemes".
+ */
+export interface ServiceTheme {
+  id: number;
+  name: string;
+  light: {
+    /**
+     * :root --background
+     */
+    background: string;
+    /**
+     * :root --foreground
+     */
+    foreground: string;
+    /**
+     * :root --card
+     */
+    card: string;
+    /**
+     * :root --card-foreground
+     */
+    cardForeground: string;
+    /**
+     * :root --popover
+     */
+    popover: string;
+    /**
+     * :root --popover-foreground
+     */
+    popoverForeground: string;
+    /**
+     * :root --primary
+     */
+    primary: string;
+    /**
+     * :root --primary-foreground
+     */
+    primaryForeground: string;
+    /**
+     * :root --secondary
+     */
+    secondary: string;
+    /**
+     * :root --secondary-foreground
+     */
+    secondaryForeground: string;
+    /**
+     * :root --muted
+     */
+    muted: string;
+    /**
+     * :root --muted-foreground
+     */
+    mutedForeground: string;
+    /**
+     * :root --accent
+     */
+    accent: string;
+    /**
+     * :root --accent-foreground
+     */
+    accentForeground: string;
+    /**
+     * :root --destructive
+     */
+    destructive: string;
+    /**
+     * :root --border
+     */
+    border: string;
+    /**
+     * :root --input
+     */
+    input: string;
+    /**
+     * :root --ring
+     */
+    ring: string;
+    /**
+     * :root --chart-1
+     */
+    chart1: string;
+    /**
+     * :root --chart-2
+     */
+    chart2: string;
+    /**
+     * :root --chart-3
+     */
+    chart3: string;
+    /**
+     * :root --chart-4
+     */
+    chart4: string;
+    /**
+     * :root --chart-5
+     */
+    chart5: string;
+    /**
+     * :root --radius
+     */
+    radius: string;
+    /**
+     * :root --sidebar
+     */
+    sidebar: string;
+    /**
+     * :root --sidebar-foreground
+     */
+    sidebarForeground: string;
+    /**
+     * :root --sidebar-primary
+     */
+    sidebarPrimary: string;
+    /**
+     * :root --sidebar-primary-foreground
+     */
+    sidebarPrimaryForeground: string;
+    /**
+     * :root --sidebar-accent
+     */
+    sidebarAccent: string;
+    /**
+     * :root --sidebar-accent-foreground
+     */
+    sidebarAccentForeground: string;
+    /**
+     * :root --sidebar-border
+     */
+    sidebarBorder: string;
+    /**
+     * :root --sidebar-ring
+     */
+    sidebarRing: string;
+  };
+  dark: {
+    /**
+     * .dark --background
+     */
+    background: string;
+    /**
+     * .dark --foreground
+     */
+    foreground: string;
+    /**
+     * .dark --card
+     */
+    card: string;
+    /**
+     * .dark --card-foreground
+     */
+    cardForeground: string;
+    /**
+     * .dark --popover
+     */
+    popover: string;
+    /**
+     * .dark --popover-foreground
+     */
+    popoverForeground: string;
+    /**
+     * .dark --primary
+     */
+    primary: string;
+    /**
+     * .dark --primary-foreground
+     */
+    primaryForeground: string;
+    /**
+     * .dark --secondary
+     */
+    secondary: string;
+    /**
+     * .dark --secondary-foreground
+     */
+    secondaryForeground: string;
+    /**
+     * .dark --muted
+     */
+    muted: string;
+    /**
+     * .dark --muted-foreground
+     */
+    mutedForeground: string;
+    /**
+     * .dark --accent
+     */
+    accent: string;
+    /**
+     * .dark --accent-foreground
+     */
+    accentForeground: string;
+    /**
+     * .dark --destructive
+     */
+    destructive: string;
+    /**
+     * .dark --border
+     */
+    border: string;
+    /**
+     * .dark --input
+     */
+    input: string;
+    /**
+     * .dark --ring
+     */
+    ring: string;
+    /**
+     * .dark --chart-1
+     */
+    chart1: string;
+    /**
+     * .dark --chart-2
+     */
+    chart2: string;
+    /**
+     * .dark --chart-3
+     */
+    chart3: string;
+    /**
+     * .dark --chart-4
+     */
+    chart4: string;
+    /**
+     * .dark --chart-5
+     */
+    chart5: string;
+    /**
+     * .dark --sidebar
+     */
+    sidebar: string;
+    /**
+     * .dark --sidebar-foreground
+     */
+    sidebarForeground: string;
+    /**
+     * .dark --sidebar-primary
+     */
+    sidebarPrimary: string;
+    /**
+     * .dark --sidebar-primary-foreground
+     */
+    sidebarPrimaryForeground: string;
+    /**
+     * .dark --sidebar-accent
+     */
+    sidebarAccent: string;
+    /**
+     * .dark --sidebar-accent-foreground
+     */
+    sidebarAccentForeground: string;
+    /**
+     * .dark --sidebar-border
+     */
+    sidebarBorder: string;
+    /**
+     * .dark --sidebar-ring
+     */
+    sidebarRing: string;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1873,21 +2141,10 @@ export interface Service {
      */
     customSvg?: (number | null) | Media;
   };
-  theme?: {
-    /**
-     * CSS color token for primary UI elements.
-     */
-    primaryColor?: string | null;
-    /**
-     * CSS color token for secondary UI elements.
-     */
-    secondaryColor?: string | null;
-    /**
-     * CSS color token for accents and highlights.
-     */
-    accentColor?: string | null;
-    logo?: (number | null) | Media;
-  };
+  /**
+   * Optional service theme. Leave empty to use the default values from docs globals.css.
+   */
+  theme?: (number | null) | ServiceTheme;
   searchDefaults?: {
     /**
      * Placeholder text for the search input.
@@ -2065,6 +2322,10 @@ export interface PayloadLockedDocument {
         value: number | Media;
       } | null)
     | ({
+        relationTo: 'serviceThemes';
+        value: number | ServiceTheme;
+      } | null)
+    | ({
         relationTo: 'services';
         value: number | Service;
       } | null)
@@ -2169,6 +2430,86 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "serviceThemes_select".
+ */
+export interface ServiceThemesSelect<T extends boolean = true> {
+  name?: T;
+  light?:
+    | T
+    | {
+        background?: T;
+        foreground?: T;
+        card?: T;
+        cardForeground?: T;
+        popover?: T;
+        popoverForeground?: T;
+        primary?: T;
+        primaryForeground?: T;
+        secondary?: T;
+        secondaryForeground?: T;
+        muted?: T;
+        mutedForeground?: T;
+        accent?: T;
+        accentForeground?: T;
+        destructive?: T;
+        border?: T;
+        input?: T;
+        ring?: T;
+        chart1?: T;
+        chart2?: T;
+        chart3?: T;
+        chart4?: T;
+        chart5?: T;
+        radius?: T;
+        sidebar?: T;
+        sidebarForeground?: T;
+        sidebarPrimary?: T;
+        sidebarPrimaryForeground?: T;
+        sidebarAccent?: T;
+        sidebarAccentForeground?: T;
+        sidebarBorder?: T;
+        sidebarRing?: T;
+      };
+  dark?:
+    | T
+    | {
+        background?: T;
+        foreground?: T;
+        card?: T;
+        cardForeground?: T;
+        popover?: T;
+        popoverForeground?: T;
+        primary?: T;
+        primaryForeground?: T;
+        secondary?: T;
+        secondaryForeground?: T;
+        muted?: T;
+        mutedForeground?: T;
+        accent?: T;
+        accentForeground?: T;
+        destructive?: T;
+        border?: T;
+        input?: T;
+        ring?: T;
+        chart1?: T;
+        chart2?: T;
+        chart3?: T;
+        chart4?: T;
+        chart5?: T;
+        sidebar?: T;
+        sidebarForeground?: T;
+        sidebarPrimary?: T;
+        sidebarPrimaryForeground?: T;
+        sidebarAccent?: T;
+        sidebarAccentForeground?: T;
+        sidebarBorder?: T;
+        sidebarRing?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services_select".
  */
 export interface ServicesSelect<T extends boolean = true> {
@@ -2182,14 +2523,7 @@ export interface ServicesSelect<T extends boolean = true> {
         lucide?: T;
         customSvg?: T;
       };
-  theme?:
-    | T
-    | {
-        primaryColor?: T;
-        secondaryColor?: T;
-        accentColor?: T;
-        logo?: T;
-      };
+  theme?: T;
   searchDefaults?:
     | T
     | {
