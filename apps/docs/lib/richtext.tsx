@@ -33,11 +33,11 @@ import { dirname, isAbsolute, resolve } from "node:path";
 import type { ComponentProps, ElementType, ReactNode } from "react";
 import { createElement } from "react";
 
-import { FeedbackBlock } from "@/components/feedback-github/client";
+import { FeedbackBlock } from "@/components/feedback/client";
 import type {
   BlockFeedback,
   FeedbackAction,
-} from "@/components/feedback-github/schema";
+} from "@/components/feedback/schema";
 import { ServiceIcon } from "@/components/service-icons";
 import {
   resolveCmsLinkRel,
