@@ -24,6 +24,24 @@ const expectFieldType = (field: Field, type: string) => {
   expect(field).toHaveProperty('type', type)
 }
 
+const expectSelectOptions = (field: Field, expected: string[]) => {
+  if (!('type' in field) || field.type !== 'select') {
+    throw new Error('Expected select field')
+  }
+
+  const values = (field.options ?? [])
+    .map((option) => {
+      if (typeof option === 'string') return option
+      if (option && typeof option === 'object' && 'value' in option) {
+        return typeof option.value === 'string' ? option.value : ''
+      }
+      return ''
+    })
+    .filter(Boolean)
+
+  expect(values).toEqual(expected)
+}
+
 const arrayFields = (field: Field): Field[] => {
   if (!('type' in field) || field.type !== 'array') {
     throw new Error('Expected array field')
@@ -70,6 +88,9 @@ describe('fumadocs block prop exposure', () => {
     expectFieldType(byName(cards.fields, 'props'), 'json')
     const cardsArray = arrayFields(byName(cards.fields, 'cards'))
     expectIconSelectorGroup(byName(cardsArray, 'icon'))
+    const cardTarget = byName(cardsArray, 'target')
+    expectFieldType(cardTarget, 'select')
+    expectSelectOptions(cardTarget, ['_self', '_blank', '_parent', '_top'])
     expectFieldType(byName(cardsArray, 'props'), 'json')
 
     const accordions = bySlug('fumaAccordions')

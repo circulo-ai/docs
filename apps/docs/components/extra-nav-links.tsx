@@ -3,6 +3,7 @@ import { Link2, icons, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { resolveCmsLinkRel, resolveCmsLinkTarget } from "@/lib/cms-link-target";
 
 const resolveIcon = (iconName?: string): LucideIcon => {
   if (!iconName) return Link2;
@@ -29,13 +30,14 @@ export function ExtraNavLinks({ links }: ExtraNavLinksProps) {
     <div className="mt-6 flex flex-col gap-3">
       {extraNavLinks.map(({ label, href, icon, variant, target }) => {
         const Icon = resolveIcon(icon);
-        const rel = target === "_blank" ? "noopener noreferrer" : undefined;
+        const resolvedTarget = resolveCmsLinkTarget(target);
+        const rel = resolveCmsLinkRel(resolvedTarget);
         return (
           <Button
             key={`${label}:${href}`}
             variant={variant ?? "outline"}
             nativeButton={false}
-            render={<Link href={href} target={target} rel={rel} />}
+            render={<Link href={href} target={resolvedTarget} rel={rel} />}
           >
             <Icon />
             {label}

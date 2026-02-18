@@ -40,6 +40,10 @@ import type {
 } from "@/components/feedback-github/schema";
 import { ServiceIcon } from "@/components/service-icons";
 import {
+  resolveCmsLinkRel,
+  resolveCmsLinkTargetWithFallback,
+} from "@/lib/cms-link-target";
+import {
   createFeedbackBlockBody,
   createFeedbackBlockId,
 } from "@/lib/feedback-block";
@@ -405,9 +409,13 @@ const resolveLinkHref = (
   };
 };
 
-const resolveLinkNewTab = (node: SerializedLexicalNode) => {
+const resolveLinkTarget = (node: SerializedLexicalNode) => {
   const fields = asRecord((node as { fields?: unknown }).fields);
-  return Boolean(fields && asBoolean(fields.newTab));
+  if (!fields) return undefined;
+  return resolveCmsLinkTargetWithFallback(
+    fields.target,
+    asBoolean(fields.newTab),
+  );
 };
 
 const renderTextBlock = (value: unknown) => {
@@ -501,6 +509,14 @@ const renderCardsFromFields = (
       const href = asString(card.href) ?? asString(cardProps.href);
       const external =
         asBoolean(card.external) ?? asBoolean(cardProps.external);
+      const target = resolveCmsLinkTargetWithFallback(
+        asString(card.target) ?? asString(cardProps.target),
+        external,
+      );
+      const rel =
+        asString(card.rel) ??
+        asString(cardProps.rel) ??
+        resolveCmsLinkRel(target);
       const icon = resolveIconNode(card.icon, options?.baseUrl);
 
       const resolvedCardProps: JsonRecord = { ...cardProps };
@@ -508,7 +524,9 @@ const renderCardsFromFields = (
       resolvedCardProps.title = title;
       assignIfDefined(resolvedCardProps, "description", description);
       assignIfDefined(resolvedCardProps, "href", href);
-      assignIfDefined(resolvedCardProps, "external", external?.toString());
+      assignIfDefined(resolvedCardProps, "external", external);
+      assignIfDefined(resolvedCardProps, "target", target);
+      assignIfDefined(resolvedCardProps, "rel", rel);
       if (icon) {
         resolvedCardProps.icon = icon;
       }
@@ -1360,13 +1378,16 @@ const buildConverters = (options: {
       const children = nodesToJSX({ nodes: node.children });
       const { href: rawHref, isAsset } = resolveLinkHref(node, blockOptions);
       const href = isAsset ? prefixAssetUrl(baseUrl, rawHref) : rawHref;
-      const newTab = resolveLinkNewTab(node);
+      const target = resolveLinkTarget(node);
       const props: ComponentProps<"a"> = {
         href: href || undefined,
       };
-      if (newTab) {
-        props.target = "_blank";
-        props.rel = "noreferrer noopener";
+      const rel = resolveCmsLinkRel(target);
+      if (target) {
+        props.target = target;
+      }
+      if (rel) {
+        props.rel = rel;
       }
       return createElement(linkComponent, props, children);
     },
@@ -1374,13 +1395,16 @@ const buildConverters = (options: {
       const children = nodesToJSX({ nodes: node.children });
       const { href: rawHref, isAsset } = resolveLinkHref(node, blockOptions);
       const href = isAsset ? prefixAssetUrl(baseUrl, rawHref) : rawHref;
-      const newTab = resolveLinkNewTab(node);
+      const target = resolveLinkTarget(node);
       const props: ComponentProps<"a"> = {
         href: href || undefined,
       };
-      if (newTab) {
-        props.target = "_blank";
-        props.rel = "noreferrer noopener";
+      const rel = resolveCmsLinkRel(target);
+      if (target) {
+        props.target = target;
+      }
+      if (rel) {
+        props.rel = rel;
       }
       return createElement(linkComponent, props, children);
     },
