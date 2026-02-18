@@ -4,17 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "DOCS_CMS_URL",
-        "DOCS_SITE_URL",
-        "DOCS_INCLUDE_DRAFTS",
-        "DOCS_EMAIL",
-        "DOCS_PASSWORD",
-        "DOCS_ALLOW_LOCAL_IP",
-        "DOCS_REVALIDATE_SECRET",
-        "INKEEP_API_KEY"
-      ],
+      "env": ["NODE_ENV"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [
         ".next/**",

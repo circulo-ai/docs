@@ -3,9 +3,11 @@ import { loadRootEnv } from '@repo/env'
 
 loadRootEnv()
 
+const isWindows = globalThis.process?.platform === 'win32'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  ...(isWindows ? {} : { output: 'standalone' }),
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
