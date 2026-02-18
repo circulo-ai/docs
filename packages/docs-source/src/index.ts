@@ -188,6 +188,11 @@ const normalizeBaseUrl = (baseUrl: string) => baseUrl.replace(/\/+$/, "");
 let cachedToken: string | undefined;
 let cachedTokenExpiresAt = 0;
 const DEFAULT_TOKEN_TTL_MS = 10 * 60 * 1000;
+let cachedAnonymousAuthUntil = 0;
+const AUTH_RETRY_DELAY_MS = 60 * 1000;
+
+const canFallbackToAnonymous = (config: DocsSourceConfig) =>
+  !config.includeDrafts;
 
 const buildHeaders = (token?: string) => {
   const headers: Record<string, string> = {
@@ -232,32 +237,52 @@ const resolveAuthToken = async (config: DocsSourceConfig) => {
     return cachedToken;
   }
   if (!config.auth) return undefined;
+  if (canFallbackToAnonymous(config) && cachedAnonymousAuthUntil > now) {
+    return undefined;
+  }
 
-  const response = await fetch(
-    new URL("/api/users/login", normalizeBaseUrl(config.baseUrl)).toString(),
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  try {
+    const response = await fetch(
+      new URL("/api/users/login", normalizeBaseUrl(config.baseUrl)).toString(),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(config.auth),
       },
-      body: JSON.stringify(config.auth),
-    },
-  );
-
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Docs source login failed (${response.status}): ${message}`,
     );
-  }
 
-  const data = (await response.json()) as { token?: string };
-  if (!data.token) {
-    throw new Error("Docs source login did not return a token.");
+    if (!response.ok) {
+      const message = await response.text().catch(() => response.statusText);
+      if (canFallbackToAnonymous(config)) {
+        cachedAnonymousAuthUntil = now + AUTH_RETRY_DELAY_MS;
+        return undefined;
+      }
+      throw new Error(
+        `Docs source login failed (${response.status}): ${message}`,
+      );
+    }
+
+    const data = (await response.json()) as { token?: string };
+    if (!data.token) {
+      if (canFallbackToAnonymous(config)) {
+        cachedAnonymousAuthUntil = now + AUTH_RETRY_DELAY_MS;
+        return undefined;
+      }
+      throw new Error("Docs source login did not return a token.");
+    }
+    cachedToken = data.token;
+    cachedTokenExpiresAt = now + DEFAULT_TOKEN_TTL_MS;
+    cachedAnonymousAuthUntil = 0;
+    return data.token;
+  } catch (error) {
+    if (canFallbackToAnonymous(config)) {
+      cachedAnonymousAuthUntil = now + AUTH_RETRY_DELAY_MS;
+      return undefined;
+    }
+    throw error;
   }
-  cachedToken = data.token;
-  cachedTokenExpiresAt = now + DEFAULT_TOKEN_TTL_MS;
-  return data.token;
 };
 
 const fetchAll = async <T>(

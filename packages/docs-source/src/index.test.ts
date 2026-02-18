@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getNav, getPage, type DocPage } from "./index.js";
+import { getNav, getPage, getServices, type DocPage } from "./index.js";
 
 const baseConfig = {
   baseUrl: "https://cms.example.test",
@@ -103,6 +103,109 @@ describe("version-owned nav resolution", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("falls back to anonymous requests when login fails for published content", async () => {
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const rawUrl =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+        const url = new URL(rawUrl);
+
+        if (url.pathname === "/api/users/login") {
+          return new Response(
+            JSON.stringify({ errors: [{ message: "Something went wrong." }] }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
+        }
+
+        if (url.pathname === "/api/services") {
+          return jsonResponse(
+            payloadList([{ id: 1, slug: "billing", name: "Billing" }]),
+          );
+        }
+
+        throw new Error(`Unexpected request: ${url.toString()}`);
+      },
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const services = await getServices(
+      {
+        ...baseConfig,
+        auth: {
+          email: "docs@example.test",
+          password: "secret",
+        },
+      },
+      { depth: 0, limit: 10 },
+    );
+
+    expect(services).toEqual([{ id: 1, slug: "billing", name: "Billing" }]);
+
+    const servicesCall = fetchMock.mock.calls.find((call) => {
+      const input = call[0];
+      const rawUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      return new URL(rawUrl).pathname === "/api/services";
+    });
+
+    const headers = new Headers((servicesCall?.[1] as RequestInit)?.headers);
+    expect(headers.get("authorization")).toBeNull();
+  });
+
+  it("keeps throwing login failures when drafts are enabled", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const rawUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      const url = new URL(rawUrl);
+
+      if (url.pathname === "/api/users/login") {
+        return new Response(
+          JSON.stringify({ errors: [{ message: "Something went wrong." }] }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      throw new Error(`Unexpected request: ${url.toString()}`);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      getServices(
+        {
+          ...baseConfig,
+          includeDrafts: true,
+          auth: {
+            email: "docs@example.test",
+            password: "secret",
+          },
+        },
+        { depth: 0, limit: 10 },
+      ),
+    ).rejects.toThrow("Docs source login failed (500)");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("keeps root ordering between pages and groups", async () => {
