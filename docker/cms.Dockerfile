@@ -49,4 +49,4 @@ COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms ./apps/cms
 USER nextjs
 EXPOSE 3000
 WORKDIR /app/apps/cms
-CMD ["node", "/app/node_modules/next/dist/bin/next", "start", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["node", "/app/apps/cms/node_modules/next/dist/bin/next", "start", "-p", "3000", "-H", "0.0.0.0"]
