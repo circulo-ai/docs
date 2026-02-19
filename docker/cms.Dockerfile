@@ -44,9 +44,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001 -G nodejs
-COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms/.next/static ./apps/cms/.next/static
-COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms/public ./apps/cms/public
+COPY --from=builder --chown=nextjs:nodejs /repo/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms ./apps/cms
 USER nextjs
 EXPOSE 3000
-CMD ["node", "apps/cms/server.js"]
+WORKDIR /app/apps/cms
+CMD ["node", "/app/node_modules/next/dist/bin/next", "start", "-p", "3000", "-H", "0.0.0.0"]
