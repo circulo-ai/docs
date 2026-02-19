@@ -33,17 +33,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    pid: "service:postgres"
+    network_mode: "service:postgres"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       APP_DB_USER: ${APP_DB_USER:?APP_DB_USER is required}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATA: /var/lib/postgresql/data/pgdata
     entrypoint: ["/bin/sh", "/scripts/01-create-app-user.sh"]
     volumes:
       - ./docker/postgres/init:/scripts:ro
-    networks:
-      - backend
+      - postgres_data:/var/lib/postgresql/data
 
   postgres-backup:
     image: postgres:16-alpine
