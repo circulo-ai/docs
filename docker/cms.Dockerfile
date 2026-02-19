@@ -46,6 +46,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001 -G nodejs
 COPY --from=builder --chown=nextjs:nodejs /repo/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms ./apps/cms
+COPY --from=builder --chown=nextjs:nodejs /repo/packages/env ./packages/env
 USER nextjs
 EXPOSE 3000
 WORKDIR /app/apps/cms
