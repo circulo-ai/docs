@@ -137,6 +137,8 @@ services:
       PGUSER: ${APP_DB_USER:?APP_DB_USER is required}
       PGPASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
       PGDATABASE: ${POSTGRES_DB:?POSTGRES_DB is required}
+      DB_ADMIN_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      DB_ADMIN_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:?PAYLOAD_SECRET is required}
       DOCS_EMAIL: ${DOCS_EMAIL:-}
       DOCS_PASSWORD: ${DOCS_PASSWORD:-}
@@ -146,7 +148,7 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY is required}
       S3_ENDPOINT: http://minio:9000
       S3_FORCE_PATH_STYLE: "true"
-    command: /bin/sh -c "pnpm --filter ./apps/cms payload migrate && pnpm --filter ./apps/cms payload run scripts/bootstrap-docs-user.ts"
+    command: /bin/sh -c "sh ./docker/cms/reconcile-db-user.sh && pnpm --filter ./apps/cms payload migrate && pnpm --filter ./apps/cms payload run scripts/bootstrap-docs-user.ts"
     networks:
       - backend
 
@@ -183,6 +185,8 @@ services:
       PGUSER: ${APP_DB_USER:?APP_DB_USER is required}
       PGPASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
       PGDATABASE: ${POSTGRES_DB:?POSTGRES_DB is required}
+      DB_ADMIN_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      DB_ADMIN_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:?PAYLOAD_SECRET is required}
       DOCS_REVALIDATE_URL: ${DOCS_REVALIDATE_URL:-http://docs:3001/api/revalidate/latest-version}
       DOCS_REVALIDATE_SECRET: ${DOCS_REVALIDATE_SECRET:-}

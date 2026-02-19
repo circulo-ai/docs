@@ -3,7 +3,7 @@
 FROM node:22-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN apk add --no-cache libc6-compat && corepack enable
+RUN apk add --no-cache libc6-compat postgresql-client && corepack enable
 WORKDIR /repo
 
 FROM base AS deps
@@ -43,11 +43,13 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001 -G nodejs
+RUN apk add --no-cache postgresql-client && addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001 -G nodejs
 COPY --from=builder --chown=nextjs:nodejs /repo/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /repo/apps/cms ./apps/cms
 COPY --from=builder --chown=nextjs:nodejs /repo/packages/env ./packages/env
+COPY --from=builder --chown=nextjs:nodejs /repo/docker/cms/reconcile-db-user.sh /usr/local/bin/reconcile-db-user.sh
+RUN chmod +x /usr/local/bin/reconcile-db-user.sh
 USER nextjs
 EXPOSE 3000
 WORKDIR /app/apps/cms
-CMD ["node", "/app/apps/cms/node_modules/next/dist/bin/next", "start", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["/bin/sh", "-c", "reconcile-db-user.sh && exec node /app/apps/cms/node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0"]
