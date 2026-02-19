@@ -31,6 +31,29 @@ if (!s3Config) {
   )
 }
 
+const buildPoolConfig = () => {
+  const host = readEnv('PGHOST')
+  const user = readEnv('PGUSER')
+  const database = readEnv('PGDATABASE')
+  const password = readEnv('PGPASSWORD')
+  const portValue = readEnv('PGPORT')
+  const parsedPort = portValue ? Number.parseInt(portValue, 10) : undefined
+
+  if (host && user && database) {
+    return {
+      host,
+      user,
+      database,
+      ...(password ? { password } : {}),
+      ...(parsedPort && Number.isInteger(parsedPort) ? { port: parsedPort } : {}),
+    }
+  }
+
+  return {
+    connectionString: readEnv('DATABASE_URL', { defaultValue: '' }) || '',
+  }
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -55,9 +78,7 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
-    pool: {
-      connectionString: readEnv('DATABASE_URL', { defaultValue: '' }) || '',
-    },
+    pool: buildPoolConfig(),
   }),
   sharp,
   plugins: s3Config
