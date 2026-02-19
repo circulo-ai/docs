@@ -14,7 +14,6 @@ COPY packages/env/package.json packages/env/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
 COPY packages/prettier-config/package.json packages/prettier-config/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
-COPY packages/ui/package.json packages/ui/package.json
 RUN pnpm install --frozen-lockfile --filter ./apps/docs... --filter ./packages/env...
 
 FROM base AS builder
