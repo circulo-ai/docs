@@ -24,6 +24,19 @@ After you click the `Deploy` button above, you'll want to have standalone copy o
 
 That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
 
+### Testing
+
+- `pnpm test` runs the deterministic integration suite that does not require external services.
+- `pnpm run test:int:db` runs Postgres-backed integration specs (`*.db.int.spec.ts`) and requires a reachable CMS database.
+- `pnpm run test:e2e` runs Playwright tests and auto-installs Chromium if missing. It also requires a running Postgres-backed app.
+- `pnpm run test:full` runs all of the above in sequence.
+
+For local DB-backed tests, start dependencies first:
+
+```sh
+docker compose -f docker-compose.local.yml up -d postgres minio minio-init
+```
+
 #### Docker (Optional)
 
 If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.

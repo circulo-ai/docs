@@ -13,9 +13,11 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
-    "test": "pnpm run test:int && pnpm run test:e2e",
-    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
+    "test": "pnpm run test:int",
+    "test:full": "pnpm run test:int && pnpm run test:int:db && pnpm run test:e2e",
+    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright install chromium && pnpm exec playwright test",
+    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "test:int:db": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.db.config.mts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "^3.76.1",

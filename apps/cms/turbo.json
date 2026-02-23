@@ -6,8 +6,7 @@
         "NEXT_RUNTIME",
         "CMS_PAYLOAD_INIT_ATTEMPTS",
         "CMS_PAYLOAD_INIT_RETRY_DELAY_MS",
-        "CMS_FAIL_FAST_PAYLOAD_INIT",
-        "CMS_SKIP_STARTUP_PAYLOAD_INIT"
+        "CMS_FAIL_FAST_PAYLOAD_INIT"
       ]
     },
     "dev": {
@@ -15,8 +14,7 @@
         "NEXT_RUNTIME",
         "CMS_PAYLOAD_INIT_ATTEMPTS",
         "CMS_PAYLOAD_INIT_RETRY_DELAY_MS",
-        "CMS_FAIL_FAST_PAYLOAD_INIT",
-        "CMS_SKIP_STARTUP_PAYLOAD_INIT"
+        "CMS_FAIL_FAST_PAYLOAD_INIT"
       ]
     }
   }
