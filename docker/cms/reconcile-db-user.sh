@@ -19,6 +19,30 @@ required_var "DB_ADMIN_USER" "${DB_ADMIN_USER:-}"
 required_var "DB_ADMIN_PASSWORD" "${DB_ADMIN_PASSWORD:-}"
 
 DB_ADMIN_DATABASE="${DB_ADMIN_DATABASE:-postgres}"
+DB_WAIT_MAX_ATTEMPTS="${DB_WAIT_MAX_ATTEMPTS:-60}"
+DB_WAIT_INTERVAL_SECONDS="${DB_WAIT_INTERVAL_SECONDS:-2}"
+
+wait_for_postgres_ready() {
+  attempt=1
+  while [ "$attempt" -le "$DB_WAIT_MAX_ATTEMPTS" ]; do
+    if pg_isready \
+      --host "$PGHOST" \
+      --port "$PGPORT" \
+      --dbname "$DB_ADMIN_DATABASE" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    if [ "$attempt" -lt "$DB_WAIT_MAX_ATTEMPTS" ]; then
+      sleep "$DB_WAIT_INTERVAL_SECONDS"
+    fi
+
+    attempt=$((attempt + 1))
+  done
+
+  echo "Postgres is unreachable at $PGHOST:$PGPORT after $DB_WAIT_MAX_ATTEMPTS attempts." >&2
+  echo "Hint: verify postgres service networking/start order in Dokploy before DB auth recovery." >&2
+  return 1
+}
 
 app_login_ok() {
   PGPASSWORD="$PGPASSWORD" psql \
@@ -28,6 +52,10 @@ app_login_ok() {
     --dbname "$PGDATABASE" \
     --command 'SELECT 1;' >/dev/null 2>&1
 }
+
+if ! wait_for_postgres_ready; then
+  exit 1
+fi
 
 if app_login_ok; then
   exit 0
@@ -44,7 +72,7 @@ admin_login_ok() {
 
 if ! admin_login_ok; then
   echo "App role authentication failed and DB admin authentication failed." >&2
-  echo "Hint: run one-time DB auth recovery inside postgres container to re-sync POSTGRES_PASSWORD and APP_DB_PASSWORD." >&2
+  echo "Hint: run one-time DB auth recovery inside postgres container to re-sync POSTGRES_PASSWORD and APP_DB_PASSWORD, then redeploy." >&2
   exit 1
 fi
 

@@ -21,6 +21,8 @@ PGPORT="${PGPORT:-5432}"
 PGDATA="${PGDATA:-/var/lib/postgresql/data/pgdata}"
 PG_HBA_CONF="$PGDATA/pg_hba.conf"
 PG_HBA_BACKUP="$PGDATA/pg_hba.conf.bak.codex"
+DB_WAIT_MAX_ATTEMPTS="${DB_WAIT_MAX_ATTEMPTS:-60}"
+DB_WAIT_INTERVAL_SECONDS="${DB_WAIT_INTERVAL_SECONDS:-2}"
 
 admin_login_ok() {
   PGPASSWORD="$POSTGRES_PASSWORD" psql \
@@ -38,6 +40,27 @@ app_login_ok() {
     --username "$APP_DB_USER" \
     --dbname "$POSTGRES_DB" \
     --command 'SELECT 1;' >/dev/null 2>&1
+}
+
+wait_for_postgres_ready() {
+  attempt=1
+  while [ "$attempt" -le "$DB_WAIT_MAX_ATTEMPTS" ]; do
+    if pg_isready \
+      --host "$PGHOST" \
+      --port "$PGPORT" \
+      --dbname postgres >/dev/null 2>&1; then
+      return 0
+    fi
+
+    if [ "$attempt" -lt "$DB_WAIT_MAX_ATTEMPTS" ]; then
+      sleep "$DB_WAIT_INTERVAL_SECONDS"
+    fi
+
+    attempt=$((attempt + 1))
+  done
+
+  echo "ERROR: postgres is unreachable at $PGHOST:$PGPORT after $DB_WAIT_MAX_ATTEMPTS attempts." >&2
+  return 1
 }
 
 reload_postgres_auth() {
@@ -144,6 +167,10 @@ SQL
 
   return 0
 }
+
+if ! wait_for_postgres_ready; then
+  exit 1
+fi
 
 if ! admin_login_ok; then
   echo "WARN: postgres admin authentication failed in postgres-init." >&2
