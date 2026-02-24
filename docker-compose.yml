@@ -25,7 +25,9 @@ services:
       retries: 10
       start_period: 20s
     networks:
-      - backend
+      backend:
+        aliases:
+          - docs-postgres
 
   postgres-init:
     image: postgres:16-alpine
@@ -56,7 +58,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: docs-postgres
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -136,7 +138,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
-      PGHOST: postgres
+      PGHOST: docs-postgres
       PGPORT: "5432"
       PGUSER: ${APP_DB_USER:?APP_DB_USER is required}
       PGPASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
@@ -184,7 +186,7 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: "3000"
       NEXT_TELEMETRY_DISABLED: "1"
-      PGHOST: postgres
+      PGHOST: docs-postgres
       PGPORT: "5432"
       PGUSER: ${APP_DB_USER:?APP_DB_USER is required}
       PGPASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
